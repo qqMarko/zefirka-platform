@@ -1,0 +1,245 @@
+/* ========================================= */
+/* 📦 ПІДКЛЮЧЕННЯ ПЛАТФОРМЕНИХ МОДУЛІВ       */
+/* ========================================= */
+@import './platform-desktop.css';
+@import './platform-ios.css';
+@import './platform-android.css';
+
+/* ========================================================= */
+/* 🚀 1. ПОВЕРТАЄМО НАТИВНИЙ БРАУЗЕРНИЙ СКРОЛ !              */
+/* ========================================================= */
+/* Примусово перебиваємо всі блокування скролу з platform-desktop.css */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+    position: static !important;
+    height: auto !important;
+    min-height: 100vh;
+    background-color: #030305;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    
+    /* 🔥 ВОСКРЕСІННЯ СКРОЛУ КОЛІЩАТКОМ */
+    overflow-y: auto !important; 
+    overflow-x: hidden !important;
+    overscroll-behavior: auto !important;
+}
+
+#root, #root > div {
+    position: static !important;
+    height: auto !important;
+    min-height: 100vh;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: visible !important;
+}
+
+.main-content-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 0 auto !important;
+    height: auto !important;
+    width: 100%;
+    /* Блок більше не має власного скролу! Скролиться вся сторінка */
+    overflow: visible !important; 
+}
+
+.page-content {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0 5vw 40px 5vw !important;
+    width: 100%;
+    flex: 1 0 auto !important;
+}
+
+/* ========================================= */
+/* 🔥 2. ЛОК ФОНУ ТІЛЬКИ КОЛИ ВІДКРИТО ЧАТ   */
+/* ========================================= */
+/* Коли відкривається чат, React вішає клас .chat-active і ми намертво блокуємо сторінку */
+body.chat-active {
+    overflow: hidden !important; 
+    height: 100dvh !important;
+}
+
+body.chat-active #root,
+body.chat-active #root > div {
+    height: 100dvh !important;
+    overflow: hidden !important;
+}
+
+body.chat-active .main-content-wrapper {
+    height: 100% !important;
+    flex: 1 1 0 !important;
+    overflow: hidden !important;
+}
+
+body.chat-active .page-content {
+    padding: 0 2vw 0 2vw !important;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Фікс для інпутів (Рятує від автозуму в Safari на iOS) */
+input, textarea, select {
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    font-size: 16px !important;
+}
+
+/* ========================================= */
+/* 3. ДИЗАЙН РОЗУМНОГО СКРОЛБАРУ             */
+/* ========================================= */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 20px; border: 2px solid transparent; background-clip: content-box; transition: all 0.3s ease; }
+::-webkit-scrollbar-thumb:hover { background: rgba(233, 30, 99, 0.5); border: 0px solid transparent; }
+::-webkit-scrollbar-thumb:active { background: #e91e63; }
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; border: none; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 3px; border: none; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #e91e63; }
+
+/* ========================================= */
+/* 4. UI КОМПОНЕНТИ ТА КАРТКИ                */
+/* ========================================= */
+.premium-create-btn { background: linear-gradient(45deg, #e91e63, #ff4081); border: none; color: white; padding: 10px 24px; border-radius: 24px; cursor: pointer; font-weight: 900; font-size: 13px; letter-spacing: 1px; font-family: inherit; transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(233, 30, 99, 0.4); text-transform: uppercase; }
+.premium-create-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(233, 30, 99, 0.6); }
+.premium-create-btn:active { transform: translateY(0); }
+.benefit-card { background: linear-gradient(145deg, rgba(15, 15, 20, 0.9), rgba(5, 5, 8, 0.95)); border: 1px solid rgba(255, 255, 255, 0.03); padding: 30px; border-radius: 16px; transition: all 0.4s ease; position: relative; overflow: hidden; }
+.benefit-card:hover { transform: translateY(-5px); border-color: rgba(233, 30, 99, 0.3); box-shadow: 0 10px 40px rgba(233, 30, 99, 0.1); }
+.model-card { background: linear-gradient(180deg, rgba(20, 15, 25, 0.4) 0%, rgba(10, 5, 15, 0.6) 100%); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; overflow: hidden; transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+.model-card:hover { transform: translateY(-8px) scale(1.02); border-color: rgba(255, 0, 127, 0.5); box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 20px rgba(255, 0, 127, 0.2); }
+.model-card-image { transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); filter: brightness(0.9); }
+.model-card:hover .model-card-image { transform: scale(1.05); filter: brightness(1.05); }
+
+/* ========================================= */
+/* 5. ФІЛЬТРИ, ПОВЗУНКИ ТА ЕЛЕМЕНТИ          */
+/* ========================================= */
+.filter-pill { padding: 8px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; color: #aaa; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.3s ease; white-space: nowrap; }
+.filter-pill:hover { background: rgba(255,255,255,0.08); color: white; }
+.filter-pill.active { background: #e91e63; color: white; border-color: #e91e63; box-shadow: 0 0 15px rgba(233, 30, 99, 0.5); }
+.neon-range { -webkit-appearance: none; width: 100%; height: 4px; background: #1a1a1a; border-radius: 2px; outline: none; }
+.neon-range::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: #e91e63; border-radius: 50%; cursor: pointer; box-shadow: 0 0 10px #e91e63; transition: 0.2s; }
+.neon-checkbox { width: 20px; height: 20px; border: 2px solid #333; border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+.neon-checkbox.active { border-color: #e91e63; background: #e91e63; box-shadow: 0 0 10px #e91e63; }
+.premium-slider { -webkit-appearance: none; width: 100%; height: 6px; background: linear-gradient(to right, var(--slider-color) var(--slider-percent), rgba(255,255,255,0.1) var(--slider-percent)); border-radius: 10px; outline: none; transition: all 0.3s ease; }
+.premium-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; background: #fff; border: 4px solid var(--slider-color); border-radius: 50%; cursor: pointer; box-shadow: 0 0 15px var(--slider-color), 0 0 5px rgba(0,0,0,0.5); transition: 0.2s cubic-bezier(0.25, 1, 0.5, 1); }
+.premium-slider::-webkit-slider-thumb:hover { transform: scale(1.2); box-shadow: 0 0 20px var(--slider-color), 0 0 10px rgba(0,0,0,0.8); }
+.premium-slider::-webkit-slider-thumb:active { transform: scale(1.1); }
+
+/* ========================================= */
+/* 6. ПРЕМІУМ БУРГЕР-МЕНЮ ТА ІКОНКИ          */
+/* ========================================= */
+.premium-burger-wrapper { display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); box-sizing: border-box; }
+.premium-burger-wrapper:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5); }
+.premium-burger { display: flex; flex-direction: column; justify-content: space-between; width: 24px; height: 16px; }
+.premium-burger .line { height: 2px; background: var(--burger-accent, #e91e63); border-radius: 4px; transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); box-shadow: 0 0 8px var(--burger-accent, #e91e63); }
+.premium-burger .line:nth-child(2) { width: 60%; }
+.premium-burger-wrapper:hover .line:nth-child(2) { width: 100%; }
+.premium-burger-wrapper:hover .line { background: #fff; box-shadow: 0 0 10px #fff; }
+
+/* ========================================= */
+/* 7. АВТОРИЗАЦІЯ ТА МОДАЛЬНІ ВІКНА          */
+/* ========================================= */
+.auth-input-group { position: relative; margin-bottom: 20px; width: 100%; }
+.auth-input { width: 100%; box-sizing: border-box; padding: 18px 20px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 16px; outline: none; font-size: 15px; transition: all 0.3s ease; }
+.auth-input:focus { border-color: #e91e63; background: rgba(233, 30, 99, 0.05); box-shadow: 0 0 15px rgba(233,30,99,0.2); }
+.role-switch-btn { flex: 1; padding: 12px; border-radius: 12px; font-weight: bold; font-size: 13px; transition: 0.3s; text-align: center; cursor: pointer; }
+.model-profile-layout { flex-direction: row; }
+.modal-left-side { width: 48%; height: 100%; }
+.modal-right-side { width: 52%; height: 100%; }
+.modal-info-scroll { padding: 50px 60px; }
+.sticky-bottom-action { padding: 30px 60px; }
+
+/* ========================================= */
+/* 8. АНІМАЦІЇ ТА ЕФЕКТИ ХОВЕРУ              */
+/* ========================================= */
+.fade-in-up { animation: fadeInUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+.modal-pop { animation: modalPop 0.4s cubic-bezier(0.22, 1, 0.36, 1); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+@keyframes modalPop { from { opacity: 0; transform: scale(0.95) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.logo-glow { text-shadow: 0 0 15px rgba(255, 255, 255, 0.5); transition: all 0.3s ease; }
+.logo-glow:hover { text-shadow: 0 0 25px #e91e63, 0 0 50px #e91e63; transform: translateX(-50%) scale(1.05) !important; }
+.menu-hover { transition: all 0.2s ease; }
+.menu-hover:hover { filter: brightness(1.3); }
+.hover-scale { transition: transform 0.2s ease; }
+.hover-scale:hover { transform: scale(1.02); }
+.hover-glow:hover { box-shadow: 0 0 20px rgba(255,255,255,0.2); background: rgba(255,255,255,0.1) !important; }
+
+.mobile-back-btn, .mobile-lang-pill { display: none; }
+
+/* =================================================== */
+/* 9. АДАПТИВНІСТЬ ТА МОБІЛЬНА ВЕРСІЯ (< 1024px)      */
+/* =================================================== */
+@media screen and (max-width: 1024px) {
+    .benefit-card { padding: 20px; }
+    .dispute-grid { grid-template-columns: 1fr !important; }
+}
+
+@media screen and (max-width: 768px) {
+    /* Переконуємось, що мобілки теж скроляться нормально */
+    html, body { overflow-y: auto !important; height: auto !important; min-height: 100dvh; }
+    #root, #root > div { overflow: visible !important; height: auto !important; min-height: 100dvh; }
+
+    .main-header { width: calc(100% - 20px) !important; margin: 10px auto 30px auto !important; padding: 0 15px !important; height: 60px !important; border-radius: 16px !important; top: 10px !important; }
+    .premium-burger-wrapper { width: 42px !important; height: 42px !important; border-radius: 12px !important; }
+    .premium-burger { width: 22px !important; height: 14px !important; }
+    .mobile-burger { width: 32px !important; height: 32px !important; }
+    .mobile-user { width: 28px !important; height: 28px !important; }
+    .mobile-logo { font-size: 22px !important; letter-spacing: 2px !important; }
+    .premium-create-btn { padding: 0 !important; width: 34px !important; height: 34px !important; border-radius: 50% !important; justify-content: center !important; }
+    .premium-create-btn svg { margin: 0 !important; width: 18px !important; height: 18px !important; }
+
+    .hide-mobile-text, .header-lang-selector { display: none !important; }
+    .mobile-back-btn { display: flex !important; }
+    .create-btn { padding: 8px !important; }
+
+    .mobile-lang-pill { display: flex !important; position: fixed; bottom: 25px; left: 0; right: 0; margin: 0 auto; width: max-content; background: rgba(10, 10, 15, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.15); padding: 10px 24px; border-radius: 30px; z-index: 2000; gap: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); font-weight: bold; transition: opacity 0.4s ease, transform 0.4s ease !important; }
+    .mobile-lang-pill.hidden { opacity: 0 !important; pointer-events: none !important; transform: translateY(30px) !important; }
+
+    .cabinet-stats-container { flex-direction: column !important; align-items: stretch !important; gap: 15px !important;}
+    .cabinet-stats-container > div { width: 100% !important; justify-content: center !important; text-align: center; }
+    .cabinet-stats-container button { flex: 1; justify-content: center !important; }
+    .cabinet-action-btn { padding: 12px !important; font-size: 13px !important; }
+    .stat-big-num { font-size: 26px !important; word-break: break-word; }
+    .stats-grid { display: flex !important; flex-direction: column !important; gap: 15px !important; }
+    .chart-container-mobile { overflow-x: auto !important; padding-bottom: 15px !important; -webkit-overflow-scrolling: touch; width: 100% !important; }
+    .chart-svg-mobile { min-width: 800px !important; } 
+
+    .modal-pop { width: 95% !important; max-width: 100% !important; height: auto !important; max-height: 90vh !important; overflow-y: auto !important; overflow-x: hidden !important; box-sizing: border-box !important; margin: 0 auto !important; }
+    .modal-pop[style*="550px"] { max-width: 100% !important; height: 85vh !important; width: 92vw !important; bottom: 15px !important; right: 4vw !important; }
+
+    .wallet-grid { display: flex !important; flex-direction: column !important; gap: 15px !important; width: 100% !important;}
+    .wallet-grid > div { width: 100% !important; box-sizing: border-box !important; }
+    .wallet-qr-container img { max-width: 150px !important; height: auto !important; margin: 0 auto; }
+    .wallet-method-btn { padding: 12px 4px !important; font-size: 11px !important; gap: 6px !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; min-height: 65px !important; height: auto !important; text-align: center !important; line-height: 1.1 !important; }
+    .wallet-method-btn svg { width: 20px !important; height: 20px !important; flex-shrink: 0 !important; }
+
+    .model-profile-layout { flex-direction: column !important; height: auto !important; max-height: 90vh !important; border-radius: 20px !important; padding: 0 !important; overflow-y: auto !important; overflow-x: hidden !important; }
+    .modal-left-side { width: 100% !important; height: 400px !important; flex-shrink: 0 !important; }
+    .modal-right-side { width: 100% !important; height: auto !important; display: block !important; }
+    .modal-info-scroll { padding: 20px !important; overflow-y: visible !important; }
+    .sticky-bottom-action { position: relative !important; padding: 20px !important; background: transparent !important; }
+    .modal-right-side h1 { font-size: 32px !important; }
+
+    .create-profile-modal-bg { padding: 20px 10px !important; box-sizing: border-box !important; }
+    .create-profile-grid { display: flex !important; flex-direction: column !important; gap: 15px !important; width: 100% !important; max-height: none !important; overflow: visible !important; box-sizing: border-box !important; }
+    .create-profile-left { padding: 20px 15px !important; box-sizing: border-box !important; width: 100% !important; }
+    .create-profile-preview { width: 100% !important; box-sizing: border-box !important; }
+    .cp-block { padding: 15px !important; box-sizing: border-box !important; width: 100% !important; }
+    .form-row-3 { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; width: 100% !important; }
+    .form-row-2 { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 8px !important; width: 100% !important; }
+    .mobile-input-fix { padding: 14px 10px !important; min-width: 0 !important; width: 100% !important; box-sizing: border-box !important; }
+    .center-text-mobile { text-align: center !important; padding-left: 0 !important; padding-right: 0 !important; }
+    .messenger-btns-mobile { display: flex !important; flex-wrap: wrap !important; gap: 8px !important; }
+    .messenger-btns-mobile button { flex: 1 1 30% !important; font-size: 12px !important; padding: 12px 5px !important; }
+
+    .vip-grid { display: flex !important; flex-direction: column !important; gap: 15px !important; width: 100% !important; }
+
+    .messages-container { height: 80vh !important; min-height: unset !important; flex-direction: column !important; width: 100% !important; box-sizing: border-box !important; }
+    .messages-sidebar { width: 100% !important; border-right: none !important; box-sizing: border-box !important; }
+    .messages-chat-area { width: 100% !important; box-sizing: border-box !important; }
+    .hide-on-mobile { display: none !important; }
+}

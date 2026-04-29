@@ -1,0 +1,11 @@
+/* ============================================== */
+/* 🍏 ЕКСКЛЮЗИВНО ДЛЯ iOS (iPhone / iPad / Safari) */
+/* ============================================== */
+@supports (-webkit-touch-callout: none) {
+    @media (max-width: 768px) {
+        html, body {
+            /* Вбиваємо ефект гумки при відтягуванні екрану */
+            overscroll-behavior: none !important; 
+        }
+    }
+}
