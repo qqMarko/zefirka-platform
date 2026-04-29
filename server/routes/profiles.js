@@ -1,5 +1,6 @@
 import express from 'express';
 import Profile from '../models/Profile.js';
+import { getIO } from '../sockets/socketManager.js'; // 🚀
 
 const router = express.Router();
 
@@ -8,7 +9,6 @@ router.get('/', async (req, res) => {
         const { page = 1, limit = 12, maxAge, maxPrice, fetishes, hair, body, genders, userId, fetchAll } = req.query;
         let query = {};
         
-        // 🔥 СУПЕР ФІКС: Жорстко ігноруємо пусті рядки та слова "undefined", "null", "[]"
         const isValid = (val) => val && val !== 'undefined' && val !== 'null' && val !== '' && val !== '[]';
 
         if (isValid(maxAge)) query.age = { $lte: Number(maxAge) };
@@ -23,12 +23,10 @@ router.get('/', async (req, res) => {
             query.userId = userId;
         }
 
-        // 🟢 ФІКС МОДЕРАЦІЇ: Якщо це запит каталогу (не адмінка і не особистий кабінет)
         if (fetchAll !== 'true' && !isValid(userId)) {
             query.isApproved = true; 
         }
 
-        // 🚀 Виводимо в консоль терміналу, що саме сервер зараз шукає (для контролю)
         console.log("🔍 Бекенд шукає анкети за запитом:", query); 
 
         const sortLogic = { vLevel: -1, bumpedAt: -1, createdAt: -1 };
@@ -61,19 +59,16 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Не передано userId' });
         }
 
-        // 🔥 КРОК 3: НАДІЙНИЙ ЗАХИСТ НА БЕКЕНДІ (Матриця лімітів)
-        // Динамічний імпорт User, щоб не було помилок циклічної залежності
         const User = (await import('../models/User.js')).default;
         const user = await User.findById(userId);
         
         if (!user) return res.status(404).json({ success: false, message: 'Юзера не знайдено' });
 
-        let maxProfiles = 1; // Безкоштовно
+        let maxProfiles = 1; 
         if (user.vipPackage === 'diamond') maxProfiles = 10;
         else if (user.vipPackage === 'premium') maxProfiles = 5;
         else if (user.vipPackage === 'start') maxProfiles = 3;
 
-        // Рахуємо, скільки анкет вже є у цієї моделі
         const currentProfilesCount = await Profile.countDocuments({ userId: user._id });
 
         if (currentProfilesCount >= maxProfiles) {
@@ -84,9 +79,13 @@ router.post('/', async (req, res) => {
             });
         }
 
-        // Якщо все ок - зберігаємо анкету
         const newProfile = new Profile(req.body);
         const savedProfile = await newProfile.save();
+        
+        // 🚀 СИГНАЛ: НОВА АНКЕТА (Для адмінки)
+        const io = getIO();
+        if (io) io.emit('global_sync', { action: 'reload_catalog' });
+
         console.log("✅ [MONGOOSE] АНКЕТА ЗБЕРЕЖЕНА! Фотки в базі:", savedProfile.photos);
         res.status(201).json({ success: true, data: savedProfile }); 
     } catch (error) { 
@@ -98,6 +97,11 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => { 
     try { 
         const updated = await Profile.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        
+        // 🚀 СИГНАЛ: АНКЕТА ОНОВЛЕНА
+        const io = getIO();
+        if (io) io.emit('global_sync', { action: 'reload_catalog' });
+
         res.json({ success: true, data: updated }); 
     } catch (error) { 
         res.status(500).json({ success: false }); 
@@ -107,6 +111,11 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => { 
     try { 
         await Profile.findByIdAndDelete(req.params.id); 
+
+        // 🚀 СИГНАЛ: АНКЕТА ВИДАЛЕНА
+        const io = getIO();
+        if (io) io.emit('global_sync', { action: 'reload_catalog' });
+
         res.json({ success: true }); 
     } catch (error) { 
         res.status(500).json({ success: false }); 

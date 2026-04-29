@@ -7,6 +7,7 @@ import Profile from '../models/Profile.js';
 import Dispute from '../models/Dispute.js';
 import TopUpRequest from '../models/TopUpRequest.js'; 
 import Chat from '../models/Chat.js'; 
+import { getIO } from '../sockets/socketManager.js'; // 🚀 Імпорт сокетів
 
 const getTransporter = () => nodemailer.createTransport({ 
     service: 'gmail', auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS } 
@@ -39,7 +40,6 @@ export default (sendNotification) => {
         } catch (error) { res.status(500).json({ success: false }); } 
     });
 
-    // РОУТ БАНУ (ТОЙ, ЩО ВАМ ПОТРІБЕН)
     router.post('/users/:id/toggle-ban', async (req, res) => {
         try {
             const user = await User.findById(req.params.id);
@@ -48,8 +48,13 @@ export default (sendNotification) => {
             user.isBanned = !user.isBanned; 
             await user.save();
             
+            // 🚀 СИГНАЛ МИТТЄВОГО БАНУ/РОЗБАНУ
+            const io = getIO();
+            if (io) io.emit(`instant_sync_${user._id}`, { action: user.isBanned ? 'ban' : 'unban' });
+
             if (user.isBanned) { 
-                await Profile.deleteMany({ userId: user._id }); 
+                await Profile.deleteMany({ userId: user._id });
+                if (io) io.emit('global_sync', { action: 'reload_catalog' }); // Оновлюємо каталог
                 if(sendNotification) sendNotification(user._id, `🛑 Ваш акаунт було заблоковано адміністратором.`); 
                 await sendSmartEmail(user, '🛑 Акаунт заблоковано', 'Ваш акаунт на платформі ZEFIRKA було заблоковано адміністратором за порушення правил. Усі ваші анкети видалено з каталогу.');
             }
@@ -78,11 +83,15 @@ export default (sendNotification) => {
             
             user.trustScore = tScore;
             await user.save();
+
+            // 🚀 СИГНАЛ ОНОВЛЕННЯ БАЛАНСУ
+            const io = getIO();
+            if (io) io.emit(`instant_sync_${user._id}`, { action: 'update_data' });
+
             res.json({ success: true, balance: user.balance, trustScore: user.trustScore });
         } catch (error) { res.status(500).json({ success: false }); }
     });
 
-    // 🚀 ДОДАНО РОУТ ЗМІНИ РЕЙТИНГУ (ДЛЯ АРБІТРАЖУ)
     router.post('/users/:id/update-trust', async (req, res) => {
         try {
             const { score } = req.body;
@@ -91,11 +100,15 @@ export default (sendNotification) => {
 
             user.trustScore = (user.trustScore || 100) + Number(score);
             await user.save();
+
+            // 🚀 СИГНАЛ ОНОВЛЕННЯ РЕЙТИНГУ
+            const io = getIO();
+            if (io) io.emit(`instant_sync_${user._id}`, { action: 'update_data' });
+
             res.json({ success: true, trustScore: user.trustScore });
         } catch (err) { res.status(500).json({ success: false }); }
     });
 
-    // 🔥 SHADOW LOGIN (ТЕЛЕПОРТАЦІЯ)
     router.post('/users/:id/shadow-login', async (req, res) => {
         try {
             const user = await User.findById(req.params.id);
@@ -103,13 +116,7 @@ export default (sendNotification) => {
 
             const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '24h' });
 
-            res.json({
-                success: true,
-                token,
-                userId: user._id,
-                role: user.role,
-                email: user.email
-            });
+            res.json({ success: true, token, userId: user._id, role: user.role, email: user.email });
         } catch (error) { 
             console.error("Shadow login error:", error);
             res.status(500).json({ success: false }); 
@@ -120,6 +127,11 @@ export default (sendNotification) => {
     router.post('/profiles/:id/verify', async (req, res) => { 
         try { 
             const profile = await Profile.findByIdAndUpdate(req.params.id, { vLevel: req.body.vLevel }, { new: true });
+            
+            // 🚀 ГЛОБАЛЬНЕ ОНОВЛЕННЯ (Бо змінився значок VIP/Вериф на анкеті)
+            const io = getIO();
+            if (io) io.emit('global_sync', { action: 'reload_catalog' });
+
             res.json({ success: true, profile: profile }); 
         } catch (error) { res.status(500).json({ success: false }); } 
     });
@@ -132,6 +144,10 @@ export default (sendNotification) => {
             );
 
             const profile = await Profile.findById(req.params.id);
+
+            // 🚀 ГЛОБАЛЬНЕ ОНОВЛЕННЯ (Анкета з'явилась в каталозі)
+            const io = getIO();
+            if (io) io.emit('global_sync', { action: 'reload_catalog' });
 
             if (profile) {
                 if(sendNotification) sendNotification(profile.userId, `✅ Вашу анкету "${profile.name}" схвалено модератором і опубліковано в каталозі!`);
@@ -170,6 +186,10 @@ export default (sendNotification) => {
                 await user.save();
                 if(sendNotification) sendNotification(user._id, `💳 Ваш баланс поповнено на ${topup.amount} ₴! Заявка схвалена.`);
                 await sendSmartEmail(user, '💳 Поповнення успішне', `Ваш баланс успішно поповнено на <b>${topup.amount} UAH</b>. Кошти вже на вашому рахунку!`);
+                
+                // 🚀 СИГНАЛ ОНОВЛЕННЯ БАЛАНСУ ЮЗЕРУ
+                const io = getIO();
+                if (io) io.emit(`instant_sync_${user._id}`, { action: 'update_data' });
             }
 
             topup.status = 'approved';
@@ -246,6 +266,13 @@ export default (sendNotification) => {
             user.vipPackage = 'none';
             user.vipExpiresAt = null;
             await user.save();
+
+            // 🚀 СИГНАЛ ОНОВЛЕННЯ ПРОФІЛЮ ТА КАТАЛОГУ
+            const io = getIO();
+            if (io) {
+                io.emit(`instant_sync_${user._id}`, { action: 'update_data' });
+                io.emit('global_sync', { action: 'reload_catalog' });
+            }
 
             res.json({ success: true, message: 'VIP статус успішно знято!' });
         } catch (error) {

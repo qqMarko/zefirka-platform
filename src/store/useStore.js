@@ -168,6 +168,37 @@ const useStore = create((set, get) => ({
         socket.on('user_status_change', ({ userId, status, lastSeen }) => {
             get().setOnlineUser(userId, { status, lastSeen });
         });
+
+        // 🚀 НОВЕ: МИТТЄВА ПЕРСОНАЛЬНА СИНХРОНІЗАЦІЯ (Бани, VIP, Баланс)
+        socket.off(`instant_sync_${userId}`);
+        socket.on(`instant_sync_${userId}`, (data) => {
+            console.log("⚡ Миттєва синхронізація:", data);
+            
+            // Якщо прилетів бан - вибиваємо миттєво
+            if (data.action === 'ban') {
+                set({ isBannedStatus: true });
+                localStorage.setItem('zefirka_banned_device', 'true');
+            } 
+            // Якщо розбан - пускаємо
+            else if (data.action === 'unban') {
+                set({ isBannedStatus: false });
+                localStorage.removeItem('zefirka_banned_device');
+            }
+            
+            // В будь-якому випадку приховано оновлюємо баланс, VIP і анкети юзера
+            get().loadBalance(userId);
+            if (get().userRole === 'model') {
+                get().loadMyModels(userId);
+            }
+        });
+
+        // 🚀 НОВЕ: ГЛОБАЛЬНА СИНХРОНІЗАЦІЯ (Для всіх юзерів одразу)
+        socket.off('global_sync');
+        socket.on('global_sync', (data) => {
+            if (data.action === 'reload_catalog') {
+                get().loadCatalog(); // Миттєво оновлює стрічку анкет для всіх
+            }
+        });
     },
 
     login: (id, role, userEmail, token, twoFactorEnabled = false, emailNotifications = true) => { 

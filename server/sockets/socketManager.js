@@ -6,7 +6,12 @@ import { sendSmartEmail } from '../services/emailService.js';
 const onlineUsers = new Map();
 const pendingEmails = new Map();
 
+// 🚀 Створюємо змінну для зберігання інстансу сокетів
+let ioInstance; 
+
 export const initSockets = (io) => {
+    ioInstance = io; // 🚀 Зберігаємо io при старті сервера
+
     io.on('connection', (socket) => {
         
         socket.on('user_connected', (userId) => {
@@ -89,8 +94,8 @@ export const initSockets = (io) => {
                         senderRole: data.senderRole, 
                         text: data.text, 
                         time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                        timestamp: Date.now(), // 🚀 ДОДАНО ТОЧНИЙ ЧАС ДЛЯ ТАЙМЕРА
-                        image: data.image || null // 🚀 ДОДАНО ПІДТРИМКУ ФОТО
+                        timestamp: Date.now(),
+                        image: data.image || null
                     };
                     dispute.messages.push(newMsg); 
                     await dispute.save();
@@ -113,4 +118,10 @@ export const initSockets = (io) => {
             }
         });
     });
+};
+
+// 🚀 ФУНКЦІЯ ДЛЯ ВІДПРАВКИ СИГНАЛІВ З БЕКЕНДУ
+export const getIO = () => {
+    if (!ioInstance) console.warn("Socket.io ще не ініціалізовано!");
+    return ioInstance;
 };
