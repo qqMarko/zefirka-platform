@@ -13,7 +13,6 @@ import { useAppSockets } from './hooks/useAppSockets';
 import { useProfileActions } from './hooks/useProfileActions'; 
 import { useSupportLogic } from './hooks/useSupportLogic';     
 
-// Компоненти та сторінки
 import Header from './components/Header'; 
 import WalletModal from './components/WalletModal';
 import StatsModal from './components/StatsModal';
@@ -32,7 +31,6 @@ import DisputesTab from './components/DisputesTab';
 import CabinetPage from './components/CabinetPage'; 
 import CatalogPage from './components/CatalogPage'; 
 
-// Модалки
 import BannedScreen from './components/BannedScreen';
 import VerifyPromoModal from './components/VerifyPromoModal';
 import ConfirmActionModal from './components/ConfirmActionModal';
@@ -87,7 +85,6 @@ const ZefirkaPlatform = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [showVipModal, setShowVipModal] = useState(false); 
     
-    // Стейти фільтрів
     const [selectedFetishes, setSelectedFetishes] = useState([]);
     const [selectedHair, setSelectedHair] = useState([]);
     const [selectedBody, setSelectedBody] = useState([]);
@@ -118,7 +115,6 @@ const ZefirkaPlatform = () => {
     const allowedPackages = ['premium', 'diamond', 'guest', 'priority', 'concierge'];
     const hasDisputeAccess = userRole === 'admin' || allowedPackages.includes(userPkg) || hasHighVLevel;
 
-    // --- EFFECTS ---
     useEffect(() => { 
         if (userUniqueId) { loadBalance(userUniqueId); loadNotifications(userUniqueId); }
     }, [userUniqueId, loadBalance, loadNotifications]);
@@ -143,7 +139,21 @@ const ZefirkaPlatform = () => {
 
     useAppSockets({ userUniqueId, setSupportMessages, setShowSupport, setHasActiveDisputeAlert });
 
-    // 🚀 ОСЬ ТУТ ВИПРАВЛЕНО НАЗВУ ПОДІЇ НА new_dispute_${userUniqueId}
+    // 🚀 МИТТЄВЕ ОТРИМАННЯ ПОВІДОМЛЕНЬ ВІД ПІДТРИМКИ (ТА ПРО ЗАКРИТТЯ)
+    useEffect(() => {
+        if (!userUniqueId || !socket) return;
+        
+        socket.off(`support_reply_${userUniqueId}`);
+        socket.on(`support_reply_${userUniqueId}`, (newMsg) => {
+            setSupportMessages(prev => [...prev, { ...newMsg, id: Date.now() }]);
+            if (newMsg.text.includes('🔒')) {
+                toast.success('Запит успішно вирішено та закрито!', { duration: 4000, style: { background: '#111', color: '#fff', border: `1px solid #4caf50` } });
+            }
+        });
+
+        return () => { socket.off(`support_reply_${userUniqueId}`); };
+    }, [userUniqueId, setSupportMessages]);
+
     useEffect(() => {
         if (isLoggedIn && userUniqueId) {
             const checkDispute = async () => {
@@ -156,10 +166,8 @@ const ZefirkaPlatform = () => {
             const timer = setTimeout(checkDispute, 800);
 
             if (socket) {
-                // Сервер відправляє 'new_dispute_ID', тому ми слухаємо саме цю подію
                 socket.on(`new_dispute_${userUniqueId}`, (dispute) => {
                     setActiveDisputeForMe(dispute);
-                    // Примусово розгортаємо вікно, навіть якщо раніше воно було згорнуте
                     setIsDisputeMinimized(false);
                     localStorage.setItem('zefir_dispute_minimized', 'false');
                     toast.error("⚖️ Проти вас відкрито скаргу в Арбітражі!", { duration: 8000 });

@@ -1,5 +1,12 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { X, Camera, Send, MessageSquare } from 'lucide-react';
+import { X, Camera, Send, MessageSquare, AlertTriangle } from 'lucide-react';
+
+// Шаблони для швидких скарг
+const quickReplies = [
+    "🚨 Поскаржитись на шахрайство",
+    "💳 Проблема з оплатою",
+    "❓ Задати питання"
+];
 
 const SupportChat = ({
     setShowSupport, supportMessages, supportInput, setSupportInput,
@@ -9,27 +16,17 @@ const SupportChat = ({
     const messagesEndRef = useRef(null);
     const scrollContainerRef = useRef(null);
     const [isClosing, setIsClosing] = useState(false);
-
-    // Змінні для кастомної фізики скролу
     const targetScroll = useRef(0);
     const isScrolling = useRef(false);
 
-    // 1. Кастомний плавний скрол (місцевий аналог Lenis)
     useEffect(() => {
         const container = scrollContainerRef.current;
         if (!container) return;
-
         const updateScroll = () => {
-            if (!container) {
-                isScrolling.current = false;
-                return;
-            }
+            if (!container) { isScrolling.current = false; return; }
             const currentScroll = container.scrollTop;
             const diff = targetScroll.current - currentScroll;
-            
-            // ПЛАВНІСТЬ ІНЕРЦІЇ (чим менше число, тим довше ковзає. 0.06 - дуже плавно)
             const easing = 0.06; 
-
             if (Math.abs(diff) > 0.5) {
                 container.scrollTop = currentScroll + diff * easing;
                 requestAnimationFrame(updateScroll);
@@ -38,54 +35,26 @@ const SupportChat = ({
                 isScrolling.current = false;
             }
         };
-
         const handleWheel = (e) => {
-            e.preventDefault(); // Вимикаємо різкий стандартний скрол
-            e.stopPropagation(); // Не пускаємо подію до глобального Lenis
-            
+            e.preventDefault(); e.stopPropagation(); 
             const maxScroll = container.scrollHeight - container.clientHeight;
-            
-            // ШВИДКІСТЬ СКРОЛУ КОЛІЩАТКОМ (0.3 сповільнює скрол. Зменшуй/збільшуй за смаком)
             const scrollStep = e.deltaY * 0.3; 
-
             targetScroll.current = Math.max(0, Math.min(maxScroll, targetScroll.current + scrollStep));
-
-            if (!isScrolling.current) {
-                isScrolling.current = true;
-                requestAnimationFrame(updateScroll);
-            }
+            if (!isScrolling.current) { isScrolling.current = true; requestAnimationFrame(updateScroll); }
         };
-
-        // Вішаємо непасивний обробник, щоб можна було робити preventDefault()
         container.addEventListener('wheel', handleWheel, { passive: false });
-
-        return () => {
-            container.removeEventListener('wheel', handleWheel);
-        };
+        return () => container.removeEventListener('wheel', handleWheel);
     }, []);
 
-    // 2. Синхронізація (якщо користувач тягне повзунок мишкою)
-    const handleNativeScroll = (e) => {
-        if (!isScrolling.current) {
-            targetScroll.current = e.target.scrollTop;
-        }
-    };
+    const handleNativeScroll = (e) => { if (!isScrolling.current) targetScroll.current = e.target.scrollTop; };
 
-    // 3. Автоскрол при нових повідомленнях
     useEffect(() => {
         if (messagesEndRef.current && scrollContainerRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-            
-            // Синхронізуємо ціль нашого кастомного скролу після автоскролу браузера
-            setTimeout(() => {
-                if (scrollContainerRef.current) {
-                    targetScroll.current = scrollContainerRef.current.scrollTop;
-                }
-            }, 400);
+            setTimeout(() => { if (scrollContainerRef.current) targetScroll.current = scrollContainerRef.current.scrollTop; }, 400);
         }
     }, [supportMessages]);
 
-    // Функція плавного закриття вікна
     const handleClose = () => {
         setIsClosing(true);
         setTimeout(() => setShowSupport(false), 300);
@@ -95,63 +64,37 @@ const SupportChat = ({
         <>
             <style>
                 {`
-                    @keyframes chatPopOut {
-                        from { opacity: 1; transform: scale(1) translateY(0); }
-                        to { opacity: 0; transform: scale(0.95) translateY(20px); }
-                    }
-                    .chat-closing {
-                        animation: chatPopOut 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
-                    }
+                    @keyframes chatPopOut { from { opacity: 1; transform: scale(1) translateY(0); } to { opacity: 0; transform: scale(0.95) translateY(20px); } }
+                    .chat-closing { animation: chatPopOut 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards !important; }
                 `}
             </style>
 
-            <div
-                className={`modal-pop ${isClosing ? 'chat-closing' : ''}`}
-                style={{
-                    position: 'fixed', bottom: '20px', right: '20px',
-                    width: '360px', height: '550px',
-                    background: 'linear-gradient(180deg, rgba(15,15,20,0.95) 0%, rgba(5,5,8,0.98) 100%)',
-                    backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-                    border: `1px solid rgba(255,255,255,0.08)`, zIndex: 9999,
-                    display: 'flex', flexDirection: 'column',
-                    boxShadow: `0 20px 50px rgba(0,0,0,0.8), 0 0 20px ${accent}22`,
-                    borderRadius: '24px', overflow: 'hidden'
-                }}
-            >
-                {/* Хедер */}
+            <div className={`modal-pop ${isClosing ? 'chat-closing' : ''}`} style={{ position: 'fixed', bottom: '20px', right: '20px', width: '360px', height: '600px', background: 'linear-gradient(180deg, rgba(15,15,20,0.95) 0%, rgba(5,5,8,0.98) 100%)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: `1px solid rgba(255,255,255,0.08)`, zIndex: 9999, display: 'flex', flexDirection: 'column', boxShadow: `0 20px 50px rgba(0,0,0,0.8), 0 0 20px ${accent}22`, borderRadius: '24px', overflow: 'hidden' }}>
+                
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.4)', flexShrink: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: `linear-gradient(135deg, ${accent}44, ${accent}11)`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${accent}66`, color: accent, boxShadow: `0 0 10px ${accent}44` }}>
-                            <MessageSquare size={18} fill={`${accent}44`} />
-                        </div>
+                        <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: `linear-gradient(135deg, ${accent}44, ${accent}11)`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${accent}66`, color: accent, boxShadow: `0 0 10px ${accent}44` }}><MessageSquare size={18} fill={`${accent}44`} /></div>
                         <div>
                             <div style={{ fontSize: '14px', fontWeight: '700', color: 'white', letterSpacing: '0.5px' }}>{t[currentLang]?.supportAgent || 'Support'}</div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#4caf50', fontWeight: '600' }}>
-                                <span style={{ width: '6px', height: '6px', background: '#4caf50', borderRadius: '50%', display: 'inline-block', boxShadow: '0 0 6px #4caf50' }}></span>
-                                {t[currentLang]?.supportOnline || 'Online'}
-                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#4caf50', fontWeight: '600' }}><span style={{ width: '6px', height: '6px', background: '#4caf50', borderRadius: '50%', display: 'inline-block', boxShadow: '0 0 6px #4caf50' }}></span>{t[currentLang]?.supportOnline || 'Online'}</div>
                         </div>
                     </div>
-                    <div onClick={handleClose} style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.2s' }} className="menu-hover">
-                        <X size={18} color="#aaa" />
+                    <div onClick={handleClose} style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.2s' }} className="menu-hover"><X size={18} color="#aaa" /></div>
+                </div>
+
+                {/* 🚀 ПОПЕРЕДЖЕННЯ ПРО АРБІТРАЖ */}
+                <div style={{ background: 'rgba(255, 152, 0, 0.1)', borderBottom: '1px solid rgba(255, 152, 0, 0.2)', padding: '10px 20px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <AlertTriangle size={16} color="#ff9800" style={{ flexShrink: 0, marginTop: '2px' }} />
+                    <div style={{ fontSize: '11px', color: '#ccc', lineHeight: '1.4' }}>
+                        Розгляд скарг через чат Турботи може зайняти час. Для <b>миттєвого блокування шахраїв</b> використовуйте розділ <b style={{color: '#ff9800'}}>Арбітраж</b> (Доступно з VIP статусом).
                     </div>
                 </div>
 
-                {/* ЗОНА ПОВІДОМЛЕНЬ */}
                 <div style={{ flex: 1, position: 'relative', background: 'transparent' }}>
-                    <div
-                        ref={scrollContainerRef}
-                        onScroll={handleNativeScroll}
-                        className="custom-scrollbar"
-                        data-lenis-prevent="true"
-                        style={{
-                            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                            overflowY: 'auto',
-                            padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px'
-                        }}
-                    >
+                    <div ref={scrollContainerRef} onScroll={handleNativeScroll} className="custom-scrollbar" data-lenis-prevent="true" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        
                         <div style={{ alignSelf: 'flex-start', background: '#15151a', border: '1px solid rgba(255,255,255,0.05)', padding: '12px 16px', borderRadius: '16px 16px 16px 4px', maxWidth: '85%', fontSize: '13px', lineHeight: '1.5', whiteSpace: 'pre-wrap', fontWeight: '500', color: '#e2e8f0', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
-                            {t[currentLang]?.agentGreeting}
+                            {t[currentLang]?.agentGreeting || 'Вітаю! Чим можу допомогти?'}
                             <div style={{ fontSize: '10px', color: '#666', marginTop: '6px', textAlign: 'right', fontWeight: '600' }}>{new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
                         </div>
 
@@ -169,7 +112,17 @@ const SupportChat = ({
                     </div>
                 </div>
 
-                {/* Прев'ю */}
+                {/* 🚀 ШВИДКІ ВІДПОВІДІ */}
+                {!supportInput && !supportAttachedImg && (
+                    <div style={{ padding: '0 15px', display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '10px' }} className="custom-scrollbar">
+                        {quickReplies.map((reply, i) => (
+                            <button key={i} onClick={() => setSupportInput(reply)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#ccc', padding: '6px 12px', borderRadius: '12px', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap', transition: '0.2s' }} className="menu-hover">
+                                {reply}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 {supportAttachedImg && (
                     <div style={{ padding: '12px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', background: '#0a0a0f', flexShrink: 0 }}>
                         <div style={{ width: '50px', height: '50px', border: `2px solid ${accent}`, position: 'relative', borderRadius: '8px', overflow: 'hidden' }}>
@@ -179,7 +132,6 @@ const SupportChat = ({
                     </div>
                 )}
 
-                {/* Інпут */}
                 <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.4)', display: 'flex', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
                     <div onClick={() => supportFileRef.current.click()} style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.2s' }} className="menu-hover"><Camera size={20} color="#aaa" /></div>
                     <input type="file" ref={supportFileRef} hidden accept="image/*" onChange={handleSupportAttach} />

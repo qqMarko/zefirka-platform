@@ -26,7 +26,6 @@ const useStore = create((set, get) => ({
     isBannedStatus: false,
     trustScore: 100, 
     
-    // 🟢 ДОДАЛИ СЮДИ vipPackage та vipExpiresAt ЩОБ ВОНИ НЕ ПРОПАДАЛИ
     user: { 
         freeBumps: 0, 
         twoFactorEnabled: saved2FA, 
@@ -52,7 +51,6 @@ const useStore = create((set, get) => ({
                 let parsedTrust = parseInt(data.trustScore);
                 if (isNaN(parsedTrust)) parsedTrust = 100;
 
-                // 🚀 ТЕПЕР МИ ЗБЕРІГАЄМО VIP ПІСЛЯ ОНОВЛЕННЯ СТОРІНКИ (F5)
                 set({ 
                     balance: data.balance || 0, 
                     isBannedStatus: !!data.isBanned,
@@ -173,30 +171,23 @@ const useStore = create((set, get) => ({
         socket.off(`instant_sync_${userId}`);
         socket.on(`instant_sync_${userId}`, (data) => {
             console.log("⚡ Миттєва синхронізація:", data);
-            
-            // Якщо прилетів бан - вибиваємо миттєво
             if (data.action === 'ban') {
                 set({ isBannedStatus: true });
                 localStorage.setItem('zefirka_banned_device', 'true');
-            } 
-            // Якщо розбан - пускаємо
-            else if (data.action === 'unban') {
+            } else if (data.action === 'unban') {
                 set({ isBannedStatus: false });
                 localStorage.removeItem('zefirka_banned_device');
             }
-            
-            // В будь-якому випадку приховано оновлюємо баланс, VIP і анкети юзера
+            // Оновлюємо баланс, VIP і анкети приховано
             get().loadBalance(userId);
-            if (get().userRole === 'model') {
-                get().loadMyModels(userId);
-            }
+            if (get().userRole === 'model') get().loadMyModels(userId);
         });
 
-        // 🚀 НОВЕ: ГЛОБАЛЬНА СИНХРОНІЗАЦІЯ (Для всіх юзерів одразу)
+        // 🚀 НОВЕ: ГЛОБАЛЬНА СИНХРОНІЗАЦІЯ
         socket.off('global_sync');
         socket.on('global_sync', (data) => {
             if (data.action === 'reload_catalog') {
-                get().loadCatalog(); // Миттєво оновлює стрічку анкет для всіх
+                get().loadCatalog(); 
             }
         });
     },
@@ -325,7 +316,6 @@ const useStore = create((set, get) => ({
     openCreate: () => set({ showCreateModal: true, editingModel: null }),
     openEdit: (model) => set({ showCreateModal: true, editingModel: model }),
 
-    // --- ЧАТИ ТА WEBSOCKETS ---
     myChats: [], 
     activeChatId: null, 
     onlineUsers: {}, 

@@ -1,11 +1,11 @@
 import express from 'express';
 import Chat from '../models/Chat.js';
+import User from '../models/User.js';
 import { uploadChat } from '../middlewares/upload.js';
 
 export default (bot, ADMIN_ID) => {
     const router = express.Router();
 
-    // 💬 ОТРИМАННЯ ЧАТІВ
     router.get('/chats/:userId', async (req, res) => {
         try {
             const chats = await Chat.find({ participants: req.params.userId }).sort({ updatedAt: -1 });
@@ -13,7 +13,6 @@ export default (bot, ADMIN_ID) => {
         } catch (error) { res.status(500).json({ success: false }); }
     });
 
-    // 🗑 ОЧИЩЕННЯ ТА ВИДАЛЕННЯ ЧАТУ
     router.delete('/chats/:roomId/clear', async (req, res) => {
         try {
             const chat = await Chat.findOne({ roomId: req.params.roomId });
@@ -29,7 +28,6 @@ export default (bot, ADMIN_ID) => {
         } catch (error) { res.status(500).json({ success: false }); }
     });
 
-    // 🔕 MUTE ЧАТУ
     router.post('/chats/:roomId/mute', async (req, res) => {
         try {
             const { userId, mute } = req.body;
@@ -43,26 +41,54 @@ export default (bot, ADMIN_ID) => {
         } catch (error) { res.status(500).json({ success: false }); }
     });
 
-    // 📁 ЗАВАНТАЖЕННЯ МЕДІА В ЧАТ
     router.post('/chat/upload', uploadChat.single('media'), (req, res) => {
         if (!req.file) return res.status(400).json({ success: false, message: 'Файл не знайдено' });
         res.json({ success: true, mediaUrl: `/uploads/chat/${req.file.filename}` });
     });
 
-    // 🆘 ПІДТРИМКА
+    // 🆘 ПІДТРИМКА: РОЗУМНА МАРШРУТИЗАЦІЯ
     router.post('/support/send', async (req, res) => {
         try {
             const { userId, text, userEmail, image } = req.body;
-            const messageToAdmin = `🚨 Нове звернення!\n\nID Юзера: [${userId}]\nEmail: ${userEmail || 'Гість'}\n\nПовідомлення:\n${text}`;
+            
+            let priorityTag = '⏳ [Звичайна черга]';
+            try {
+                const user = await User.findById(userId);
+                if (user && ['premium', 'diamond', 'priority', 'concierge'].includes(user.vipPackage)) {
+                    priorityTag = '⚡ [VIP Пріоритет]';
+                }
+            } catch(e) {}
+
+            let messageToAdmin = '';
+            let replyMarkup = undefined;
+
+            // 🚀 ПЕРЕВІРЯЄМО: Чи тікет ВЖЕ взятий кимось в роботу?
+            if (bot && bot.ticketLocks && bot.ticketLocks.has(userId)) {
+                const lock = bot.ticketLocks.get(userId);
+                // Формуємо повідомлення без кнопки "Взяти в роботу"
+                messageToAdmin = `💬 Доповнення до тікета\nID Юзера: [${userId}]\n(Веде діалог: ${lock.adminName})\n\nПовідомлення:\n${text}`;
+            } else {
+                // Це повністю нове звернення
+                messageToAdmin = `🚨 Нове звернення!\n\n${priorityTag}\nID Юзера: [${userId}]\nEmail: ${userEmail || 'Гість'}\n\nПовідомлення:\n${text}`;
+                replyMarkup = {
+                    inline_keyboard: [[{ text: "✋ Взяти в роботу", callback_data: `claim_${userId}` }]]
+                };
+            }
+
+            const sendOptions = replyMarkup ? { reply_markup: replyMarkup } : {};
+
             if (image && bot) {
                 const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
                 const buffer = Buffer.from(base64Data, 'base64');
-                await bot.sendPhoto(ADMIN_ID, buffer, { caption: messageToAdmin });
+                await bot.sendPhoto(ADMIN_ID, buffer, { caption: messageToAdmin, ...sendOptions });
             } else if (bot) { 
-                await bot.sendMessage(ADMIN_ID, messageToAdmin); 
+                await bot.sendMessage(ADMIN_ID, messageToAdmin, sendOptions); 
             }
             res.json({ success: true });
-        } catch (error) { res.status(500).json({ success: false }); }
+        } catch (error) { 
+            console.error("Помилка відправки в підтримку:", error);
+            res.status(500).json({ success: false }); 
+        }
     });
 
     return router;
