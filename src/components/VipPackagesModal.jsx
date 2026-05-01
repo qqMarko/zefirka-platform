@@ -2,11 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { X, Crown, Zap, Star, ShieldCheck, Check, Sparkles, Diamond, Clock, CheckCircle2, AlertTriangle, Info } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import useStore from '../store/useStore';
+import { useMegaphone } from '../context/MegaphoneContext'; // 🔥 ДОДАНО: імпорт нашого контексту
 
 const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) => {
     
-    // 🚀 ДОДАНО: activeDiscount та activePromoText з нашого глобального стейту
-    const { balance, userUniqueId, user, loadBalance, activeDiscount, activePromoText } = useStore();
+    // 🚀 Прибрали знижки з useStore, залишили тільки базові дані юзера
+    const { balance, userUniqueId, user, loadBalance } = useStore();
+    
+    // 🔥 ДОДАНО: Отримуємо дані рупора з нашого глобального контексту
+    const megaphone = useMegaphone();
+    const discount = megaphone.isActive ? megaphone.vipDiscountPercent : 0;
+    const promoText = megaphone.isActive ? megaphone.message : null;
+
     const [isProcessing, setIsProcessing] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
     
@@ -23,11 +30,11 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
         return () => clearInterval(timer);
     }, []);
 
-    // 🚀 ФУНКЦІЯ ДЛЯ РОЗРАХУНКУ ЗНИЖКИ
+    // 🚀 ОНОВЛЕНО: Функція для розрахунку знижки використовує новий state
     const calculatePrice = (basePriceStr) => {
         const basePriceNum = Number(basePriceStr);
-        if (!activeDiscount) return basePriceNum;
-        return Math.floor(basePriceNum - (basePriceNum * (activeDiscount / 100)));
+        if (!discount) return basePriceNum;
+        return Math.floor(basePriceNum - (basePriceNum * (discount / 100)));
     };
 
     // 🟢 ОПТИМІЗОВАНИЙ КОПІРАЙТИНГ ДЛЯ МОДЕЛЕЙ
@@ -246,11 +253,11 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
                     </p>
                 </div>
 
-                {/* 🚀 ГЛОБАЛЬНЕ ПРОМО: З'являється миттєво, якщо адмін написав знижку в Рупор */}
-                {activePromoText && (
+                {/* 🚀 ГЛОБАЛЬНЕ ПРОМО: Оновлено під MegaphoneContext */}
+                {promoText && (
                     <div style={{ background: 'rgba(255, 68, 68, 0.15)', border: '1px solid rgba(255, 68, 68, 0.5)', padding: '16px', borderRadius: '16px', marginBottom: '30px', color: '#ff4444', textAlign: 'center', fontWeight: '800', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 0 30px rgba(255, 68, 68, 0.2)' }}>
                         <Zap size={22} fill="#ff4444" />
-                        {activePromoText}
+                        {promoText}
                         <Zap size={22} fill="#ff4444" />
                     </div>
                 )}
@@ -284,12 +291,12 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
                                 
                                 {/* Ціна (з логікою знижок) */}
                                 <div style={{ marginBottom: '30px', display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                                    {activeDiscount > 0 ? (
+                                    {discount > 0 ? (
                                         <>
                                             <s style={{ color: '#666', fontSize: '20px', fontWeight: '700', marginRight: '5px' }}>{pkg.price}</s>
                                             <span style={{ fontSize: '38px', fontWeight: '900', color: isActive ? '#4caf50' : pkg.color, lineHeight: '1', letterSpacing: '-1px' }}>{currentPrice}</span>
                                             <span style={{ fontSize: '15px', color: '#666', fontWeight: 'bold' }}>UAH</span>
-                                            <span style={{ background: '#ff4444', color: 'white', padding: '2px 6px', borderRadius: '6px', fontSize: '12px', fontWeight: '900', marginLeft: '5px' }}>-{activeDiscount}%</span>
+                                            <span style={{ background: '#ff4444', color: 'white', padding: '2px 6px', borderRadius: '6px', fontSize: '12px', fontWeight: '900', marginLeft: '5px' }}>-{discount}%</span>
                                         </>
                                     ) : (
                                         <>

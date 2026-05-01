@@ -7,7 +7,7 @@ import Profile from '../models/Profile.js';
 import Dispute from '../models/Dispute.js';
 import TopUpRequest from '../models/TopUpRequest.js'; 
 import Chat from '../models/Chat.js'; 
-import { getIO } from '../sockets/socketManager.js'; 
+import Megaphone from '../models/Megaphone.js'; // 🔥 Підключили модель Рупора
 import { getIO, setActivePromo } from '../sockets/socketManager.js';
 
 const getTransporter = () => nodemailer.createTransport({ 
@@ -49,13 +49,12 @@ export default (sendNotification) => {
             user.isBanned = !user.isBanned; 
             await user.save();
             
-            // 🚀 СИГНАЛ МИТТЄВОГО БАНУ/РОЗБАНУ
             const io = getIO();
             if (io) io.emit(`instant_sync_${user._id}`, { action: user.isBanned ? 'ban' : 'unban' });
 
             if (user.isBanned) { 
                 await Profile.deleteMany({ userId: user._id });
-                if (io) io.emit('global_sync', { action: 'reload_catalog' }); // Оновлюємо каталог
+                if (io) io.emit('global_sync', { action: 'reload_catalog' });
                 if(sendNotification) sendNotification(user._id, `🛑 Ваш акаунт було заблоковано адміністратором.`); 
                 await sendSmartEmail(user, '🛑 Акаунт заблоковано', 'Ваш акаунт на платформі ZEFIRKA було заблоковано адміністратором за порушення правил. Усі ваші анкети видалено з каталогу.');
             }
@@ -85,7 +84,6 @@ export default (sendNotification) => {
             user.trustScore = tScore;
             await user.save();
 
-            // 🚀 СИГНАЛ ОНОВЛЕННЯ БАЛАНСУ
             const io = getIO();
             if (io) io.emit(`instant_sync_${user._id}`, { action: 'update_data' });
 
@@ -102,7 +100,6 @@ export default (sendNotification) => {
             user.trustScore = (user.trustScore || 100) + Number(score);
             await user.save();
 
-            // 🚀 СИГНАЛ ОНОВЛЕННЯ РЕЙТИНГУ
             const io = getIO();
             if (io) io.emit(`instant_sync_${user._id}`, { action: 'update_data' });
 
@@ -128,11 +125,8 @@ export default (sendNotification) => {
     router.post('/profiles/:id/verify', async (req, res) => { 
         try { 
             const profile = await Profile.findByIdAndUpdate(req.params.id, { vLevel: req.body.vLevel }, { new: true });
-            
-            // 🚀 ГЛОБАЛЬНЕ ОНОВЛЕННЯ (Бо змінився значок VIP/Вериф на анкеті)
             const io = getIO();
             if (io) io.emit('global_sync', { action: 'reload_catalog' });
-
             res.json({ success: true, profile: profile }); 
         } catch (error) { res.status(500).json({ success: false }); } 
     });
@@ -145,8 +139,6 @@ export default (sendNotification) => {
             );
 
             const profile = await Profile.findById(req.params.id);
-
-            // 🚀 ГЛОБАЛЬНЕ ОНОВЛЕННЯ (Анкета з'явилась в каталозі)
             const io = getIO();
             if (io) io.emit('global_sync', { action: 'reload_catalog' });
 
@@ -188,7 +180,6 @@ export default (sendNotification) => {
                 if(sendNotification) sendNotification(user._id, `💳 Ваш баланс поповнено на ${topup.amount} ₴! Заявка схвалена.`);
                 await sendSmartEmail(user, '💳 Поповнення успішне', `Ваш баланс успішно поповнено на <b>${topup.amount} UAH</b>. Кошти вже на вашому рахунку!`);
                 
-                // 🚀 СИГНАЛ ОНОВЛЕННЯ БАЛАНСУ ЮЗЕРУ
                 const io = getIO();
                 if (io) io.emit(`instant_sync_${user._id}`, { action: 'update_data' });
             }
@@ -230,18 +221,48 @@ export default (sendNotification) => {
         } catch (error) { res.status(500).json({ success: false }); } 
     });
 
-    // 🔥 РУПОР (МАСОВА РОЗСИЛКА ТА АВТОМАТИЧНІ ЗНИЖКИ)
+    // ================= 🔥 РУПОР ЗІ ЗНИЖКАМИ (ВСТАНОВЛЕНО ТУТ) =================
+    
+    // Отримання стану рупора для фронтенду
+    router.get('/megaphone/status', async (req, res) => {
+        try {
+            let settings = await Megaphone.findOne({});
+            if (!settings) {
+                settings = { message: '', vipDiscountPercent: 0, bumpDiscountPercent: 0, isActive: false };
+            }
+            res.status(200).json({ success: true, settings });
+        } catch (error) {
+            res.status(500).json({ success: false, message: 'Помилка сервера' });
+        }
+    });
+
+    // Оновлення рупора (стара логіка + нова логіка зі знижками)
     router.post('/broadcast', async (req, res) => {
         try {
-            const { text, target } = req.body;
+            // Отримуємо нові змінні (текст, знижки)
+            const { text, target, vipDiscountPercent = 0, bumpDiscountPercent = 0, isActive = true } = req.body;
             if (!text) return res.status(400).json({ success: false, message: 'Порожній текст' });
 
-            // 🚀 РОЗУМНИЙ ПАРСЕР ЗНИЖКИ: Шукає "20%" або "-20%" у тексті
-            const discountMatch = text.match(/(\d+)\s*%/);
-            const discount = discountMatch ? parseInt(discountMatch[1]) : 0;
+            // 1. Оновлюємо базу даних рупора
+            const settings = await Megaphone.findOneAndUpdate(
+                {}, 
+                { 
+                  message: text, 
+                  vipDiscountPercent: vipDiscountPercent, 
+                  bumpDiscountPercent: bumpDiscountPercent, 
+                  isActive: isActive 
+                },
+                { new: true, upsert: true }
+            );
 
-            // 🚀 ВСТАНОВЛЮЄМО І МИТТЄВО РОЗСИЛАЄМО ВСІМ ОНЛАЙН КЛІЄНТАМ
-            setActivePromo({ text, discount });
+            // 2. Розсилаємо сигнал всім клієнтам на сайті миттєво
+            const io = getIO();
+            if (io) {
+                io.emit('megaphone_update', settings);
+            }
+
+            // 3. Стара логіка: розсилка особистих сповіщень конкретній групі юзерів
+            setActivePromo({ text, discount: vipDiscountPercent }); // якщо ця функція десь потрібна ще
 
             let query = {};
             if (target === 'model' || target === 'client') {
@@ -258,17 +279,31 @@ export default (sendNotification) => {
                 }
             }
 
-            res.json({ success: true, count: sentCount, discount });
+            res.json({ success: true, count: sentCount, settings });
         } catch (error) { 
             console.error('Broadcast error:', error);
             res.status(500).json({ success: false }); 
         }
     });
 
-    // 🧹 ОЧИСТИТИ РУПОР (Скинути знижки)
+    // Очищення рупора
     router.post('/clear-broadcast', async (req, res) => {
-        setActivePromo({ text: '', discount: 0 });
-        res.json({ success: true });
+        try {
+            setActivePromo({ text: '', discount: 0 });
+            
+            const settings = await Megaphone.findOneAndUpdate(
+                {}, 
+                { message: '', vipDiscountPercent: 0, bumpDiscountPercent: 0, isActive: false },
+                { new: true, upsert: true }
+            );
+
+            const io = getIO();
+            if (io) io.emit('megaphone_update', settings);
+
+            res.json({ success: true });
+        } catch (error) {
+            res.status(500).json({ success: false });
+        }
     });
 
     // 🗑 ЗНЯТТЯ VIP СТАТУСУ
@@ -281,7 +316,6 @@ export default (sendNotification) => {
             user.vipExpiresAt = null;
             await user.save();
 
-            // 🚀 СИГНАЛ ОНОВЛЕННЯ ПРОФІЛЮ ТА КАТАЛОГУ
             const io = getIO();
             if (io) {
                 io.emit(`instant_sync_${user._id}`, { action: 'update_data' });

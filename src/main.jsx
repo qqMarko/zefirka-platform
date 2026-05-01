@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 import Lenis from '@studio-freight/lenis';
+import { MegaphoneProvider } from './context/MegaphoneContext'; // Імпорт є
 
 const RootComponent = () => {
   useEffect(() => {
@@ -31,6 +32,9 @@ const RootComponent = () => {
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <RootComponent />
+    {/* 🔥 ОСЬ ТУТ ОБГОРТАЄМО ВЕСЬ НАШ ДОДАТОК 🔥 */}
+    <MegaphoneProvider>
+      <RootComponent />
+    </MegaphoneProvider>
   </React.StrictMode>
 );
