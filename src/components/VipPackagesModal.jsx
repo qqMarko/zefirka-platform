@@ -5,7 +5,8 @@ import useStore from '../store/useStore';
 
 const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) => {
     
-    const { balance, userUniqueId, user, loadBalance } = useStore();
+    // 🚀 ДОДАНО: activeDiscount та activePromoText з нашого глобального стейту
+    const { balance, userUniqueId, user, loadBalance, activeDiscount, activePromoText } = useStore();
     const [isProcessing, setIsProcessing] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
     
@@ -21,6 +22,13 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
         const timer = setInterval(() => setCurrentTime(new Date()), 60000);
         return () => clearInterval(timer);
     }, []);
+
+    // 🚀 ФУНКЦІЯ ДЛЯ РОЗРАХУНКУ ЗНИЖКИ
+    const calculatePrice = (basePriceStr) => {
+        const basePriceNum = Number(basePriceStr);
+        if (!activeDiscount) return basePriceNum;
+        return Math.floor(basePriceNum - (basePriceNum * (activeDiscount / 100)));
+    };
 
     // 🟢 ОПТИМІЗОВАНИЙ КОПІРАЙТИНГ ДЛЯ МОДЕЛЕЙ
     const modelPackages = [
@@ -179,7 +187,7 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
                         expiresAt: data.vipExpiresAt || new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000)
                     });
 
-                    if (loadBalance) loadBalance(); 
+                    if (loadBalance) loadBalance(userUniqueId); 
                 } else {
                     toast.error(data.message || '❌ Помилка покупки', { id: loadingToast });
                 }
@@ -196,7 +204,6 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
         }
     };
 
-    // Знаходимо пакет, для якого відкрита модалка деталей
     const detailsPkg = packages.find(p => p.id === selectedDetailsId);
 
     return (
@@ -213,11 +220,9 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
                     }
                     @keyframes rgbBorder { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
                     
-                    /* Анімація для мікро-карток */
                     .micro-card { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
                     .micro-card:hover { transform: translateY(-8px); box-shadow: 0 30px 60px rgba(0,0,0,0.8); }
                     
-                    /* Анімація появи внутрішньої модалки */
                     .glass-popup {
                         animation: popupIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
                     }
@@ -229,10 +234,10 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
             </style>
 
             {/* 🟢 ГОЛОВНЕ ВІКНО */}
-            <div className="fade-in-up premium-typography" style={{ position: 'relative', width: '100%', maxWidth: '1000px', background: 'rgba(15, 15, 20, 0.6)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '32px', padding: '40px', boxShadow: '0 40px 100px rgba(0,0,0,0.8)', zIndex: 1 }}>
+            <div className="fade-in-up premium-typography custom-scrollbar" style={{ position: 'relative', width: '100%', maxWidth: '1000px', maxHeight: '90vh', overflowY: 'auto', background: 'rgba(15, 15, 20, 0.6)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '32px', padding: '40px', boxShadow: '0 40px 100px rgba(0,0,0,0.8)', zIndex: 1 }}>
                 <X onClick={() => setShowVipModal(false)} style={{ position: 'absolute', top: '25px', right: '25px', cursor: 'pointer', color: '#888', transition: '0.3s', zIndex: 100 }} className="menu-hover" size={32} />
 
-                <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                <div style={{ textAlign: 'center', marginBottom: '30px' }}>
                     <h2 style={{ fontSize: 'clamp(28px, 5vw, 42px)', fontWeight: '900', color: 'white', margin: '0 0 10px 0', letterSpacing: '-0.5px' }}>
                         {isClient ? "Преміум Доступ" : "Елітні Статуси"}
                     </h2>
@@ -240,6 +245,15 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
                         Оберіть свій рівень домінування на платформі.
                     </p>
                 </div>
+
+                {/* 🚀 ГЛОБАЛЬНЕ ПРОМО: З'являється миттєво, якщо адмін написав знижку в Рупор */}
+                {activePromoText && (
+                    <div style={{ background: 'rgba(255, 68, 68, 0.15)', border: '1px solid rgba(255, 68, 68, 0.5)', padding: '16px', borderRadius: '16px', marginBottom: '30px', color: '#ff4444', textAlign: 'center', fontWeight: '800', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 0 30px rgba(255, 68, 68, 0.2)' }}>
+                        <Zap size={22} fill="#ff4444" />
+                        {activePromoText}
+                        <Zap size={22} fill="#ff4444" />
+                    </div>
+                )}
 
                 {/* 🟢 МІКРО-КАРТКИ */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
@@ -249,6 +263,9 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
 
                         const timeLeft = getRemainingTime(activeExpire);
                         const isActive = activePkgId === pkg.id && timeLeft !== null;
+                        
+                        // 🚀 Враховуємо знижку для поточної ціни
+                        const currentPrice = calculatePrice(pkg.price);
 
                         return (
                             <div key={pkg.id} className={!isActive ? "micro-card" : ""} style={{ position: 'relative', background: isActive ? 'linear-gradient(145deg, rgba(20, 40, 20, 0.9), rgba(10, 20, 10, 0.9))' : 'rgba(10, 10, 15, 0.8)', borderRadius: '24px', border: `1px solid ${isActive ? '#4caf50' : (pkg.isPopular ? pkg.color : 'rgba(255,255,255,0.05)')}`, padding: '35px 25px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', boxShadow: isActive ? `0 0 50px rgba(76, 175, 80, 0.15)` : (pkg.isPopular ? `0 20px 60px ${pkg.color}22` : '0 10px 40px rgba(0,0,0,0.5)'), overflow: 'hidden' }}>
@@ -265,10 +282,21 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
                                 {/* Назва */}
                                 <h3 style={{ fontSize: '24px', fontWeight: '900', color: 'white', letterSpacing: '-0.5px', margin: '0 0 10px 0' }}>{pkg.title}</h3>
                                 
-                                {/* Ціна */}
-                                <div style={{ marginBottom: '30px', display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '6px' }}>
-                                    <span style={{ fontSize: '38px', fontWeight: '900', color: isActive ? '#4caf50' : pkg.color, lineHeight: '1', letterSpacing: '-1px' }}>{pkg.price}</span>
-                                    <span style={{ fontSize: '15px', color: '#666', fontWeight: 'bold' }}>UAH</span>
+                                {/* Ціна (з логікою знижок) */}
+                                <div style={{ marginBottom: '30px', display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                    {activeDiscount > 0 ? (
+                                        <>
+                                            <s style={{ color: '#666', fontSize: '20px', fontWeight: '700', marginRight: '5px' }}>{pkg.price}</s>
+                                            <span style={{ fontSize: '38px', fontWeight: '900', color: isActive ? '#4caf50' : pkg.color, lineHeight: '1', letterSpacing: '-1px' }}>{currentPrice}</span>
+                                            <span style={{ fontSize: '15px', color: '#666', fontWeight: 'bold' }}>UAH</span>
+                                            <span style={{ background: '#ff4444', color: 'white', padding: '2px 6px', borderRadius: '6px', fontSize: '12px', fontWeight: '900', marginLeft: '5px' }}>-{activeDiscount}%</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span style={{ fontSize: '38px', fontWeight: '900', color: isActive ? '#4caf50' : pkg.color, lineHeight: '1', letterSpacing: '-1px' }}>{pkg.price}</span>
+                                            <span style={{ fontSize: '15px', color: '#666', fontWeight: 'bold' }}>UAH</span>
+                                        </>
+                                    )}
                                 </div>
 
                                 {/* Кнопки */}
@@ -290,7 +318,7 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
                                             </div>
                                         </div>
                                     ) : (
-                                        <button onClick={() => handleInitiateBuy(pkg.price, pkg.id)} disabled={isProcessing} style={{ width: '100%', padding: '14px', background: pkg.isPopular ? pkg.color : 'rgba(255,255,255,0.05)', border: pkg.isPopular ? 'none' : `1px solid ${pkg.color}55`, borderRadius: '14px', color: pkg.isPopular ? '#000' : pkg.color, fontSize: '15px', fontWeight: '900', letterSpacing: '1px', cursor: isProcessing ? 'not-allowed' : 'pointer', transition: '0.3s', boxShadow: pkg.isPopular ? `0 10px 30px ${pkg.color}44` : 'none' }}>
+                                        <button onClick={() => handleInitiateBuy(currentPrice.toString(), pkg.id)} disabled={isProcessing} style={{ width: '100%', padding: '14px', background: pkg.isPopular ? pkg.color : 'rgba(255,255,255,0.05)', border: pkg.isPopular ? 'none' : `1px solid ${pkg.color}55`, borderRadius: '14px', color: pkg.isPopular ? '#000' : pkg.color, fontSize: '15px', fontWeight: '900', letterSpacing: '1px', cursor: isProcessing ? 'not-allowed' : 'pointer', transition: '0.3s', boxShadow: pkg.isPopular ? `0 10px 30px ${pkg.color}44` : 'none' }}>
                                             АКТИВУВАТИ
                                         </button>
                                     )}
@@ -322,7 +350,6 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
                         <p style={{ color: '#bbb', fontSize: '15px', lineHeight: '1.5', marginBottom: '30px', fontWeight: '500' }}>{detailsPkg.desc}</p>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '35px', background: 'rgba(0,0,0,0.3)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                            {/* 🚀 ТУТ ВІДОБРАЖАЮТЬСЯ ГОЛОВНІ ПЕРЕВАГИ (Усі переваги START тощо) */}
                             {detailsPkg.topFeatures.map((f, i) => (
                                 <div key={'top-'+i} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                                     <Check size={20} color={detailsPkg.color} style={{ marginTop: '2px', flexShrink: 0 }} />
@@ -332,7 +359,6 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
                             
                             <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
                             
-                            {/* Звичайні переваги */}
                             {detailsPkg.features.map((f, i) => (
                                 <div key={'f-'+i} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                                     <Check size={18} color={detailsPkg.color} style={{ marginTop: '2px', flexShrink: 0, opacity: 0.6 }} />

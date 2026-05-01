@@ -9,11 +9,23 @@ const pendingEmails = new Map();
 // 🚀 Створюємо змінну для зберігання інстансу сокетів
 let ioInstance; 
 
+// 🚀 ГЛОБАЛЬНА ПАМ'ЯТЬ: Зберігає текст рупора та розмір знижки
+let activePromo = { text: '', discount: 0 }; 
+
+// Функція для оновлення промо з адмінки
+export const setActivePromo = (promo) => {
+    activePromo = promo;
+    if (ioInstance) ioInstance.emit('global_promo', activePromo);
+};
+
 export const initSockets = (io) => {
     ioInstance = io; // 🚀 Зберігаємо io при старті сервера
 
     io.on('connection', (socket) => {
         
+        // Як тільки хтось заходить на сайт - відправляємо йому поточну знижку
+        socket.emit('global_promo', activePromo);
+
         socket.on('user_connected', (userId) => {
             const idStr = String(userId);
             onlineUsers.set(idStr, socket.id);
@@ -23,7 +35,6 @@ export const initSockets = (io) => {
             if (pendingEmails.has(idStr)) {
                 clearTimeout(pendingEmails.get(idStr));
                 pendingEmails.delete(idStr);
-                console.log(`🛑 [EMAIL] Юзер ${idStr} зайшов на сайт. Відправку листа скасовано.`);
             }
         });
 
@@ -65,7 +76,6 @@ export const initSockets = (io) => {
                     const isOnline = onlineUsers.has(partnerIdStr);
                     if (!isOnline) {
                         if (!pendingEmails.has(partnerIdStr)) {
-                            console.log(`⏱️ [EMAIL] Юзер ${partnerIdStr} офлайн. Запускаємо таймер...`);
                             const timer = setTimeout(async () => {
                                 if (!onlineUsers.has(partnerIdStr)) {
                                     try {
@@ -120,7 +130,7 @@ export const initSockets = (io) => {
     });
 };
 
-// 🚀 ФУНКЦІЯ ДЛЯ ВІДПРАВКИ СИГНАЛІВ З БЕКЕНДУ
+// 🚀 ЄДИНА ФУНКЦІЯ НА ВЕСЬ ФАЙЛ
 export const getIO = () => {
     if (!ioInstance) console.warn("Socket.io ще не ініціалізовано!");
     return ioInstance;

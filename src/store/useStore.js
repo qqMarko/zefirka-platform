@@ -39,6 +39,10 @@ const useStore = create((set, get) => ({
     unreadNotifs: 0,
     pushEnabled: true,
 
+    // 🚀 ГЛОБАЛЬНІ ПРОМО-ДАНІ (РУПОР ТА ЗНИЖКИ)
+    activePromoText: '',
+    activeDiscount: 0,
+
     setBalance: (amount) => set({ balance: amount }),
     setUser: (userData) => set({ user: { ...get().user, ...userData } }), 
 
@@ -125,7 +129,23 @@ const useStore = create((set, get) => ({
 
     setupGlobalSocket: () => {
         const userId = get().userUniqueId;
-        if (!userId) return;
+
+        // 🚀 СЛУХАЧ РУПОРА ТА ЗНИЖОК (Працює для всіх, навіть для гостей)
+        socket.off('global_promo');
+        socket.on('global_promo', (data) => {
+            console.log("🔥 Глобальне промо оновлено:", data);
+            set({ activePromoText: data.text, activeDiscount: data.discount });
+        });
+
+        // Глобальне оновлення каталогу (знижки, нові анкети)
+        socket.off('global_sync');
+        socket.on('global_sync', (data) => {
+            if (data.action === 'reload_catalog') {
+                get().loadCatalog(); 
+            }
+        });
+
+        if (!userId) return; // ⚠️ Далі код тільки для авторизованих
 
         socket.emit('user_connected', userId);
 
@@ -163,11 +183,11 @@ const useStore = create((set, get) => ({
         });
 
         socket.off('user_status_change');
-        socket.on('user_status_change', ({ userId, status, lastSeen }) => {
-            get().setOnlineUser(userId, { status, lastSeen });
+        socket.on('user_status_change', ({ userId: id, status, lastSeen }) => {
+            get().setOnlineUser(id, { status, lastSeen });
         });
 
-        // 🚀 НОВЕ: МИТТЄВА ПЕРСОНАЛЬНА СИНХРОНІЗАЦІЯ (Бани, VIP, Баланс)
+        // 🚀 МИТТЄВА ПЕРСОНАЛЬНА СИНХРОНІЗАЦІЯ (Бани, VIP, Баланс)
         socket.off(`instant_sync_${userId}`);
         socket.on(`instant_sync_${userId}`, (data) => {
             console.log("⚡ Миттєва синхронізація:", data);
@@ -181,14 +201,6 @@ const useStore = create((set, get) => ({
             // Оновлюємо баланс, VIP і анкети приховано
             get().loadBalance(userId);
             if (get().userRole === 'model') get().loadMyModels(userId);
-        });
-
-        // 🚀 НОВЕ: ГЛОБАЛЬНА СИНХРОНІЗАЦІЯ
-        socket.off('global_sync');
-        socket.on('global_sync', (data) => {
-            if (data.action === 'reload_catalog') {
-                get().loadCatalog(); 
-            }
         });
     },
 
@@ -210,6 +222,7 @@ const useStore = create((set, get) => ({
             user: { ...state.user, twoFactorEnabled, emailNotifications } 
         }));
 
+        get().setupGlobalSocket(); // Підключаємо персональні сокети при логіні
         get().loadChats(id);
     },
 
@@ -388,8 +401,10 @@ const useStore = create((set, get) => ({
     }),
 }));
 
+// Запускаємо сокети відразу, щоб гості теж отримували глобальне промо
+useStore.getState().setupGlobalSocket();
+
 if (savedUserId) {
-    useStore.getState().setupGlobalSocket();
     useStore.getState().loadChats(savedUserId);
 }
 

@@ -7,7 +7,8 @@ import Profile from '../models/Profile.js';
 import Dispute from '../models/Dispute.js';
 import TopUpRequest from '../models/TopUpRequest.js'; 
 import Chat from '../models/Chat.js'; 
-import { getIO } from '../sockets/socketManager.js'; // 🚀 Імпорт сокетів
+import { getIO } from '../sockets/socketManager.js'; 
+import { getIO, setActivePromo } from '../sockets/socketManager.js';
 
 const getTransporter = () => nodemailer.createTransport({ 
     service: 'gmail', auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS } 
@@ -229,11 +230,18 @@ export default (sendNotification) => {
         } catch (error) { res.status(500).json({ success: false }); } 
     });
 
-    // 🔥 РУПОР (МАСОВА РОЗСИЛКА)
+    // 🔥 РУПОР (МАСОВА РОЗСИЛКА ТА АВТОМАТИЧНІ ЗНИЖКИ)
     router.post('/broadcast', async (req, res) => {
         try {
             const { text, target } = req.body;
             if (!text) return res.status(400).json({ success: false, message: 'Порожній текст' });
+
+            // 🚀 РОЗУМНИЙ ПАРСЕР ЗНИЖКИ: Шукає "20%" або "-20%" у тексті
+            const discountMatch = text.match(/(\d+)\s*%/);
+            const discount = discountMatch ? parseInt(discountMatch[1]) : 0;
+
+            // 🚀 ВСТАНОВЛЮЄМО І МИТТЄВО РОЗСИЛАЄМО ВСІМ ОНЛАЙН КЛІЄНТАМ
+            setActivePromo({ text, discount });
 
             let query = {};
             if (target === 'model' || target === 'client') {
@@ -250,11 +258,17 @@ export default (sendNotification) => {
                 }
             }
 
-            res.json({ success: true, count: sentCount });
+            res.json({ success: true, count: sentCount, discount });
         } catch (error) { 
             console.error('Broadcast error:', error);
             res.status(500).json({ success: false }); 
         }
+    });
+
+    // 🧹 ОЧИСТИТИ РУПОР (Скинути знижки)
+    router.post('/clear-broadcast', async (req, res) => {
+        setActivePromo({ text: '', discount: 0 });
+        res.json({ success: true });
     });
 
     // 🗑 ЗНЯТТЯ VIP СТАТУСУ
