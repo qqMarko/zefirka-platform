@@ -1,0 +1,14 @@
+/* ============================================== */
+/* 🤖 ЕКСКЛЮЗИВНО ДЛЯ ANDROID (Chrome / Firefox) */
+/* ============================================== */
+@supports not (-webkit-touch-callout: none) {
+    @media (max-width: 768px) {
+        body {
+            overscroll-behavior-y: contain !important; /* Блокуємо pull-to-refresh (оновлення сторінки свайпом вниз) */
+        }
+        .background-container, canvas, #tsparticles {
+            /* Робимо фон "прозорим" для пальців, щоб Chrome не крав дотики */
+            pointer-events: none !important; 
+        }
+    }
+}

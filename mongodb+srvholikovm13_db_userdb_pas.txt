@@ -1,0 +1,1 @@
+MONGO_URI=mongodb+srv://holikovm13_db_user:tw5qnyBTeY2xSt8z@cluster0.9sxs7ik.mongodb.net/zefirka_db?appName=Cluster0     
