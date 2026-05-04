@@ -17,9 +17,15 @@ import profileRoutes from './routes/profiles.js';
 import adminRoutes from './routes/admin.js';
 import walletRoutes from './routes/wallet.js';
 import notificationRoutes from './routes/notifications.js';
+<<<<<<< HEAD
 import chatRoutes from './routes/chat.js';               
 import disputeRoutes from './routes/disputeRoutes.js';   
 import profileExtraRoutes from './routes/profileExtras.js'; 
+=======
+import chatRoutes from './routes/chat.js';               // НОВЕ
+import disputeRoutes from './routes/disputeRoutes.js';   // НОВЕ
+import profileExtraRoutes from './routes/profileExtras.js'; // НОВЕ
+>>>>>>> e1fc43f147c54f30a853e93de737fe042b63224c
 
 // 🚀 МІДЛВАРИ ТА СЕРВІСИ
 import { uploadProfile } from './middlewares/upload.js';
@@ -89,6 +95,7 @@ const { bot, ADMIN_ID } = initTelegramBot(io, sendNotification);
 initSockets(io);
 initCronJobs(sendNotification);
 
+<<<<<<< HEAD
 
 // ==========================================
 // 🔥 ДОДАНО: ЛОГІКА РУПОРА ТА ЗНИЖОК
@@ -149,6 +156,8 @@ app.post('/api/admin/megaphone/broadcast', (req, res) => {
 // 🔥 КІНЕЦЬ БЛОКУ РУПОРА
 
 
+=======
+>>>>>>> e1fc43f147c54f30a853e93de737fe042b63224c
 // ==========================================
 // 🔗 ОСНОВНІ РОУТИ
 // ==========================================
