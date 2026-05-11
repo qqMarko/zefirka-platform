@@ -33,6 +33,14 @@ const userSchema = new mongoose.Schema({
     // 💎 ВІДСТЕЖЕННЯ VIP СТАТУСУ (ДОДАНО ДЛЯ ФРОНТЕНДУ ТА ТАЙМЕРА)
     vipPackage: { type: String, default: 'none' }, // 'start', 'premium', 'diamond' тощо
     vipExpiresAt: { type: Date, default: null },
+
+    // 📱 ВІДСТЕЖЕННЯ СЕАНСІВ ТА ПРИСТРОЇВ
+    sessions: [{
+        token: { type: String, required: true },
+        device: { type: String, required: true }, // Назва браузера/ОС (напр. "Chrome on Windows")
+        ip: { type: String },                     // IP адреса
+        lastActive: { type: Date, default: Date.now }
+    }]
     
 }, { 
     timestamps: true 

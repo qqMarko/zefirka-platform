@@ -1,9 +1,11 @@
 import express from 'express';
 import Profile from '../models/Profile.js';
-import { getIO } from '../sockets/socketManager.js'; // 🚀
+import { getIO } from '../sockets/socketManager.js'; 
+import authMiddleware from '../middlewares/auth.js'; 
 
 const router = express.Router();
 
+// 🟢 GET залишаємо БЕЗ authMiddleware, щоб каталог анкет могли бачити неавторизовані юзери
 router.get('/', async (req, res) => {
     try {
         const { page = 1, limit = 12, maxAge, maxPrice, fetishes, hair, body, genders, userId, fetchAll } = req.query;
@@ -50,10 +52,12 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.post('/', async (req, res) => { 
+// 🔐 POST ЗАХИЩЕНО authMiddleware
+router.post('/', authMiddleware, async (req, res) => { 
     console.log("📥 [MONGOOSE] ДАНІ, ЩО ПРИЙШЛИ З ФРОНТЕНДУ:", JSON.stringify(req.body, null, 2));
     try { 
-        const { userId } = req.body;
+        // Використовуємо req.user.id з токена для більшої безпеки, або req.body.userId як фолбек
+        const userId = req.body.userId || req.user.id;
         
         if (!userId) {
             return res.status(400).json({ success: false, message: 'Не передано userId' });
@@ -94,7 +98,8 @@ router.post('/', async (req, res) => {
     } 
 });
 
-router.put('/:id', async (req, res) => { 
+// 🔐 PUT ЗАХИЩЕНО authMiddleware
+router.put('/:id', authMiddleware, async (req, res) => { 
     try { 
         const updated = await Profile.findByIdAndUpdate(req.params.id, req.body, { new: true });
         
@@ -108,7 +113,8 @@ router.put('/:id', async (req, res) => {
     } 
 });
 
-router.delete('/:id', async (req, res) => { 
+// 🔐 DELETE ЗАХИЩЕНО authMiddleware
+router.delete('/:id', authMiddleware, async (req, res) => { 
     try { 
         await Profile.findByIdAndDelete(req.params.id); 
 

@@ -4,7 +4,10 @@ import { toast } from 'react-hot-toast';
 import useStore from '../store/useStore';
 
 const AuthModal = ({ accent = '#00ffff' }) => {
-    const { setShowAuth, login } = useStore();
+    // 🚀 Використовуємо селектори Zustand (щоб уникнути зайвих рендерів)
+    const setShowAuth = useStore(state => state.setShowAuth);
+    const login = useStore(state => state.login);
+    
     const [mode, setMode] = useState('login'); 
     const [loading, setLoading] = useState(false);
 
@@ -21,7 +24,6 @@ const AuthModal = ({ accent = '#00ffff' }) => {
         e.preventDefault();
         setLoading(true);
         
-        // 🚀 ЗАЛІЗОБЕТОННИЙ ДИНАМІЧНИЙ IP (Забудь про 192.168...)
         const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
 
         try {
@@ -37,15 +39,14 @@ const AuthModal = ({ accent = '#00ffff' }) => {
                     setMode('verify-2fa');
                 } else if (data.success) {
                     toast.success('Вхід успішний!');
-                    try {
-                        const safeUser = data.user || {};
-                        const userId = safeUser.id || safeUser._id;
-                        // Спроба логіну
+                    const safeUser = data.user || {};
+                    const userId = safeUser.id || safeUser._id;
+                    
+                    // 🚀 ВІДКЛАДЕНИЙ ЛОГІН (Обходить проковтування помилок React)
+                    setTimeout(() => {
                         login(userId, safeUser.role, safeUser.email, data.token, safeUser.twoFactorEnabled || false);
-                    } catch (err) {
-                        console.error("🔥 КРАШ ПІД ЧАС ЗБЕРЕЖЕННЯ ЛОГІНУ:", err);
-                        toast.error("Помилка збереження сесії. Натисни F12!");
-                    }
+                    }, 50);
+                    
                 } else {
                     toast.error(data.message || 'Невірна пошта або пароль');
                 }
@@ -59,17 +60,12 @@ const AuthModal = ({ accent = '#00ffff' }) => {
                 
                 if (data.success) {
                     toast.success('Автентифікація успішна!');
-                    try {
-                        // 🚀 ІЗОЛЬОВАНИЙ БЛОК ЛОГІНУ (Щоб знайти точну причину падіння)
-                        const safeUser = data.user || {};
-                        const userId = safeUser.id || safeUser._id;
-                        console.log("🔥 ДАНІ ВІД СЕРВЕРА ДЛЯ ЛОГІНУ:", { userId, role: safeUser.role, email: safeUser.email, token: data.token, is2fa: safeUser.twoFactorEnabled });
-                        
+                    const safeUser = data.user || {};
+                    const userId = safeUser.id || safeUser._id;
+                    
+                    setTimeout(() => {
                         login(userId, safeUser.role, safeUser.email, data.token, safeUser.twoFactorEnabled || true);
-                    } catch (err) {
-                        console.error("🔥 КРАШ ПІД ЧАС ЗБЕРЕЖЕННЯ 2FA ЛОГІНУ:", err);
-                        toast.error("Помилка збереження сесії. Натисни F12!");
-                    }
+                    }, 50);
                 } else {
                     toast.error(data.message || 'Невірний або прострочений код');
                 }
@@ -93,15 +89,16 @@ const AuthModal = ({ accent = '#00ffff' }) => {
                 const data = await res.json();
                 if (data.success) {
                     toast.success('Реєстрація успішна!');
-                    try {
-                        const safeUser = data.user || {};
-                        login(safeUser.id || safeUser._id, safeUser.role, safeUser.email, data.token, safeUser.twoFactorEnabled || false);
-                    } catch (err) {
-                        console.error("КРАШ ПРИ РЕЄСТРАЦІЇ:", err);
-                    }
+                    const safeUser = data.user || {};
+                    const userId = safeUser.id || safeUser._id;
+                    
+                    setTimeout(() => {
+                        login(userId, safeUser.role, safeUser.email, data.token, safeUser.twoFactorEnabled || false);
+                    }, 50);
                 } else toast.error(data.message || 'Невірний код');
 
             } else if (mode === 'forgot') {
+                // ... логіка відновлення без змін
                 const res = await fetch(`${BASE_URL}/auth/forgot-password`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })

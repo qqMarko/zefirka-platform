@@ -2,18 +2,38 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
+import { UAParser } from 'ua-parser-js'; 
 import User from '../models/User.js';
+import authMiddleware from '../middlewares/auth.js';
+import { getIO } from '../sockets/socketManager.js'; // 🚀 ОБОВ'ЯЗКОВО ДЛЯ СОКЕТІВ
 
 const router = express.Router();
 const otpStore = new Map();
 
-// 🟢 ЛІНИВЕ ЗАВАНТАЖЕННЯ ТРАНСПОРТЕРА
 const getTransporter = () => nodemailer.createTransport({ 
     service: 'gmail', 
     auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS } 
 });
 
 const getJwtSecret = () => process.env.JWT_SECRET || 'super_secret_key';
+
+const getDeviceInfo = (req) => {
+    try {
+        const uaString = req.headers['user-agent'] || '';
+        const parser = new UAParser(uaString);
+        const result = parser.getResult();
+        
+        const browser = result.browser?.name || 'Невідомий браузер';
+        const os = result.os?.name || 'Невідома ОС';
+        
+        const rawIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
+        const ip = rawIp.split(',')[0].trim() || 'Невідомий IP';
+        
+        return { device: `${browser} • ${os}`, ip };
+    } catch (error) {
+        return { device: 'Невідомий пристрій', ip: 'Невідомий IP' };
+    }
+};
 
 router.post('/register-init', async (req, res) => {
     try {
@@ -60,6 +80,11 @@ router.post('/register-verify', async (req, res) => {
         otpStore.delete(email); 
         
         const token = jwt.sign({ id: savedUser._id, role: savedUser.role }, getJwtSecret(), { expiresIn: '7d' });
+        
+        const { device, ip } = getDeviceInfo(req);
+        savedUser.sessions.push({ token, device, ip, lastActive: new Date() });
+        await savedUser.save();
+
         res.status(201).json({ success: true, token, user: { id: savedUser._id, email: savedUser.email, role: savedUser.role, twoFactorEnabled: savedUser.twoFactorEnabled } });
     } catch (error) { 
         res.status(500).json({ success: false }); 
@@ -76,7 +101,6 @@ router.post('/login', async (req, res) => {
         }
         if (user.isBanned) return res.status(403).json({ success: false, message: 'Заблоковано' });
         
-        // 🔐 ЯКЩО УВІМКНЕНО 2FA - ВІДПРАВЛЯЄМО КОД
         if (user.twoFactorEnabled) {
             const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
             otpStore.set(email + '_2fa', { otpCode, id: user._id, role: user.role, expires: Date.now() + 5 * 60 * 1000 });
@@ -93,15 +117,18 @@ router.post('/login', async (req, res) => {
         }
 
         const token = jwt.sign({ id: user._id, role: user.role }, getJwtSecret(), { expiresIn: '7d' });
+        
+        const { device, ip } = getDeviceInfo(req);
+        user.sessions.push({ token, device, ip, lastActive: new Date() });
+        if (user.sessions.length > 10) user.sessions.shift(); 
+        await user.save();
+
         res.status(200).json({ success: true, token, user: { id: user._id, email: user.email, role: user.role, twoFactorEnabled: user.twoFactorEnabled } });
     } catch (error) { 
         res.status(500).json({ success: false }); 
     }
 });
 
-// ==========================================
-// 🔐 ПІДТВЕРДЖЕННЯ 2FA ПРИ ЛОГІНІ
-// ==========================================
 router.post('/verify-2fa-login', async (req, res) => {
     try {
         const { email, code } = req.body;
@@ -115,7 +142,12 @@ router.post('/verify-2fa-login', async (req, res) => {
         otpStore.delete(email + '_2fa'); 
 
         const token = jwt.sign({ id: user._id, role: user.role }, getJwtSecret(), { expiresIn: '7d' });
-        // 🔥 ОСЬ ЦЕЙ РЯДОК БУВ ПРОБЛЕМНИМ - ТЕПЕР ВІН 100% ВІДДАЄ ОБ'ЄКТ USER
+        
+        const { device, ip } = getDeviceInfo(req);
+        user.sessions.push({ token, device, ip, lastActive: new Date() });
+        if (user.sessions.length > 10) user.sessions.shift();
+        await user.save();
+
         res.status(200).json({ success: true, token, user: { id: user._id, email: user.email, role: user.role, twoFactorEnabled: user.twoFactorEnabled } });
     } catch (error) {
         res.status(500).json({ success: false });
@@ -123,8 +155,87 @@ router.post('/verify-2fa-login', async (req, res) => {
 });
 
 // ==========================================
-// 🔐 УВІМКНЕННЯ / ВИМКНЕННЯ 2FA
+// 🚫 ЗАВЕРШИТИ ВСІ ІНШІ СЕАНСИ
 // ==========================================
+router.post('/logout-all', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ success: false, message: 'Немає заголовка авторизації' });
+        }
+
+        const token = authHeader.split(' ')[1];
+        if (!token || token === 'null' || token === 'undefined') {
+            return res.status(401).json({ success: false, message: 'Токен порожній або не знайдений' });
+        }
+
+        const decoded = jwt.verify(token, getJwtSecret());
+
+        const result = await User.updateOne(
+            { _id: decoded.id },
+            { $pull: { sessions: { token: { $ne: token } } } } 
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ success: false, message: 'Користувача не знайдено' });
+        }
+
+        const io = getIO();
+        if (io) {
+            io.emit(`force_logout_${decoded.id}`, { keepToken: token });
+        }
+
+        res.json({ success: true, message: 'Всі інші сеанси успішно завершено' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Помилка сервера' });
+    }
+});
+
+// ==========================================
+// 🔴 ЗАВЕРШИТИ КОНКРЕТНИЙ СЕАНС (ОДИН)
+// ==========================================
+router.post('/logout-session', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ success: false, message: 'Немає заголовка авторизації' });
+        }
+
+        const currentToken = authHeader.split(' ')[1];
+        const { sessionToken } = req.body;
+
+        if (!sessionToken) return res.status(400).json({ success: false, message: 'Не вказано сеанс для видалення' });
+
+        const decoded = jwt.verify(currentToken, getJwtSecret());
+
+        // Видаляємо з бази конкретний токен
+        await User.updateOne(
+            { _id: decoded.id },
+            { $pull: { sessions: { token: sessionToken } } }
+        );
+
+        // Відправляємо сигнал САМЕ ТОМУ пристрою, щоб він вийшов
+        const io = getIO();
+        if (io) {
+            io.emit(`kill_session_${decoded.id}`, { removedToken: sessionToken });
+        }
+
+        res.json({ success: true, message: 'Сеанс успішно завершено' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Помилка сервера' });
+    }
+});
+
+router.get('/sessions', authMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ success: false, message: 'Користувача не знайдено' });
+        res.json({ success: true, sessions: user.sessions });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Помилка отримання сесій' });
+    }
+});
+
 router.post('/toggle-2fa', async (req, res) => {
     try {
         const { userId, enabled } = req.body;
@@ -202,6 +313,7 @@ router.post('/reset-password', async (req, res) => {
         user.password = await bcrypt.hash(newPassword, salt);
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
+        user.sessions = []; 
         await user.save();
 
         res.json({ success: true, message: 'Пароль успішно змінено!' });
@@ -210,9 +322,6 @@ router.post('/reset-password', async (req, res) => {
     }
 });
 
-// ==========================================
-// 📧 УВІМКНЕННЯ / ВИМКНЕННЯ EMAIL-СПОВІЩЕНЬ
-// ==========================================
 router.post('/toggle-email-notif', async (req, res) => {
     try {
         const { userId, enabled } = req.body;

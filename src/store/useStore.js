@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import io from 'socket.io-client';
 
-// 🟢 ГЛОБАЛЬНИЙ СОКЕТ
 export const socket = io("/", { path: "/socket.io" });
 
 const savedToken = localStorage.getItem('zefirka_token');
@@ -14,14 +13,12 @@ const savedEmailNotif = localStorage.getItem('zefirka_emailNotif') !== 'false';
 const BASE_URL = '/api';
 
 const useStore = create((set, get) => ({
-    // --- АВТОРИЗАЦІЯ ТА БЕЗПЕКА ---
     isLoggedIn: !!savedToken, 
     token: savedToken || null,
     userUniqueId: savedUserId || '', 
     userRole: savedRole || 'model',
     email: savedEmail || '',
 
-    // --- ФІНАНСИ ТА СТАТУС БАНУ І ДОВІРИ ---
     balance: 0,
     isBannedStatus: false,
     trustScore: 100, 
@@ -34,12 +31,10 @@ const useStore = create((set, get) => ({
         vipExpiresAt: null 
     }, 
     
-    // --- 🔔 СПОВІЩЕННЯ ---
     notifications: [],
     unreadNotifs: 0,
     pushEnabled: true,
 
-    // 🚀 ГЛОБАЛЬНІ ПРОМО-ДАНІ (РУПОР ТА ЗНИЖКИ)
     activePromoText: '',
     activeDiscount: 0,
 
@@ -130,14 +125,11 @@ const useStore = create((set, get) => ({
     setupGlobalSocket: () => {
         const userId = get().userUniqueId;
 
-        // 🚀 СЛУХАЧ РУПОРА ТА ЗНИЖОК (Працює для всіх, навіть для гостей)
         socket.off('global_promo');
         socket.on('global_promo', (data) => {
-            console.log("🔥 Глобальне промо оновлено:", data);
             set({ activePromoText: data.text, activeDiscount: data.discount });
         });
 
-        // Глобальне оновлення каталогу (знижки, нові анкети)
         socket.off('global_sync');
         socket.on('global_sync', (data) => {
             if (data.action === 'reload_catalog') {
@@ -145,7 +137,30 @@ const useStore = create((set, get) => ({
             }
         });
 
-        if (!userId) return; // ⚠️ Далі код тільки для авторизованих
+        if (!userId) return; 
+
+        // 🚀 СЛУХАЧ МИТТЄВОГО ЗАВЕРШЕННЯ ВСІХ ІНШИХ СЕАНСІВ
+        socket.off(`force_logout_${userId}`);
+        socket.on(`force_logout_${userId}`, (data) => {
+            const currentMyToken = get().token || localStorage.getItem('zefirka_token');
+            if (currentMyToken !== data.keepToken) {
+                console.log("🚨 Усі інші сеанси завершено!");
+                get().logout(); 
+                window.location.href = '/'; 
+            }
+        });
+
+        // 🔴 СЛУХАЧ МИТТЄВОГО ЗАВЕРШЕННЯ ОДНОГО КОНКРЕТНОГО СЕАНСУ
+        socket.off(`kill_session_${userId}`);
+        socket.on(`kill_session_${userId}`, (data) => {
+            const currentMyToken = get().token || localStorage.getItem('zefirka_token');
+            // Якщо мій поточний токен — це саме той, який щойно вбили кнопкою "Вийти"
+            if (currentMyToken === data.removedToken) {
+                console.log("🚨 Цей сеанс було примусово завершено з іншого пристрою!");
+                get().logout(); 
+                window.location.href = '/'; 
+            }
+        });
 
         socket.emit('user_connected', userId);
 
@@ -187,10 +202,8 @@ const useStore = create((set, get) => ({
             get().setOnlineUser(id, { status, lastSeen });
         });
 
-        // 🚀 МИТТЄВА ПЕРСОНАЛЬНА СИНХРОНІЗАЦІЯ (Бани, VIP, Баланс)
         socket.off(`instant_sync_${userId}`);
         socket.on(`instant_sync_${userId}`, (data) => {
-            console.log("⚡ Миттєва синхронізація:", data);
             if (data.action === 'ban') {
                 set({ isBannedStatus: true });
                 localStorage.setItem('zefirka_banned_device', 'true');
@@ -198,7 +211,6 @@ const useStore = create((set, get) => ({
                 set({ isBannedStatus: false });
                 localStorage.removeItem('zefirka_banned_device');
             }
-            // Оновлюємо баланс, VIP і анкети приховано
             get().loadBalance(userId);
             if (get().userRole === 'model') get().loadMyModels(userId);
         });
@@ -222,7 +234,7 @@ const useStore = create((set, get) => ({
             user: { ...state.user, twoFactorEnabled, emailNotifications } 
         }));
 
-        get().setupGlobalSocket(); // Підключаємо персональні сокети при логіні
+        get().setupGlobalSocket(); 
         get().loadChats(id);
     },
 
@@ -401,7 +413,6 @@ const useStore = create((set, get) => ({
     }),
 }));
 
-// Запускаємо сокети відразу, щоб гості теж отримували глобальне промо
 useStore.getState().setupGlobalSocket();
 
 if (savedUserId) {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Shield, Bell, Monitor, LogOut, ChevronRight, ChevronLeft, Lock, Smartphone, Mail, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import useStore from '../store/useStore';
 import { toast } from 'react-hot-toast';
@@ -8,11 +8,38 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
     
     const { pushEnabled, togglePushEnabled, userUniqueId, user } = useStore();
 
-    // 🚀 СТАТУС EMAIL СПОВІЩЕНЬ ЗІ STORE
-    const [emailNotif, setEmailNotif] = useState(user?.emailNotifications !== false); // За замовчуванням true, якщо не вказано false
-
-    // 🚀 СТАТУС 2FA
+    const [emailNotif, setEmailNotif] = useState(user?.emailNotifications !== false);
     const [twoFactor, setTwoFactor] = useState(user?.twoFactorEnabled || false);
+
+    const [sessions, setSessions] = useState([]);
+    const [loadingSessions, setLoadingSessions] = useState(false);
+
+    useEffect(() => {
+        if (activeTab === 'sessions') {
+            fetchSessions();
+        }
+    }, [activeTab]);
+
+    const fetchSessions = async () => {
+        setLoadingSessions(true);
+        try {
+            const token = useStore.getState().token || localStorage.getItem('token') || localStorage.getItem('zefirka_token') || localStorage.getItem('auth_token'); 
+            const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
+            
+            const res = await fetch(`${BASE_URL}/auth/sessions`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                setSessions(data.sessions);
+            }
+        } catch (error) {
+            console.error("Помилка завантаження сесій:", error);
+        } finally {
+            setLoadingSessions(false);
+        }
+    };
 
     const handleToggle2FA = async () => {
         const newStatus = !twoFactor;
@@ -20,7 +47,6 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
         const loadingToast = toast.loading('Оновлення налаштувань...');
 
         try {
-            // 🚀 ДИНАМІЧНИЙ IP
             const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
             const res = await fetch(`${BASE_URL}/auth/toggle-2fa`, {
                 method: 'POST',
@@ -43,7 +69,6 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
         }
     };
 
-    // 🚀 НОВА ФУНКЦІЯ: ЗБЕРЕЖЕННЯ EMAIL СПОВІЩЕНЬ
     const handleToggleEmail = async () => {
         const newStatus = !emailNotif;
         setEmailNotif(newStatus);
@@ -99,7 +124,6 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
         const loadingToast = toast.loading('Перевірка та збереження...');
 
         try {
-            // 🚀 ДИНАМІЧНИЙ IP ТУТ ТЕЖ!
             const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
             const res = await fetch(`${BASE_URL}/auth/change-password`, {
                 method: 'POST',
@@ -130,6 +154,68 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
             toast.error(`❌ Помилка: ${error.message}`, { id: loadingToast, duration: 5000 });
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleLogoutAllSessions = async () => {
+        const token = useStore.getState().token || localStorage.getItem('token') || localStorage.getItem('zefirka_token') || localStorage.getItem('auth_token');
+
+        if (!token) {
+            toast.error('Помилка: Токен не знайдено на клієнті!');
+            return;
+        }
+
+        const loadingToast = toast.loading('Завершення сеансів...');
+        
+        try {
+            const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
+            const res = await fetch(`${BASE_URL}/auth/logout-all`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                }
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                toast.success('Всі інші сеанси успішно завершено!', { id: loadingToast });
+                fetchSessions();
+            } else {
+                toast.error(data.message || 'Не вдалося завершити сеанси', { id: loadingToast });
+            }
+        } catch (error) {
+            toast.error('Помилка сервера', { id: loadingToast });
+        }
+    };
+
+    // 🔴 ФУНКЦІЯ ДЛЯ ЗАВЕРШЕННЯ ТІЛЬКИ ОДНОГО СЕАНСУ
+    const handleLogoutSingleSession = async (sessionToken) => {
+        const currentToken = useStore.getState().token || localStorage.getItem('zefirka_token');
+        const loadingToast = toast.loading('Завершення сеансу...');
+
+        try {
+            const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
+            const res = await fetch(`${BASE_URL}/auth/logout-session`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentToken}`
+                },
+                body: JSON.stringify({ sessionToken }) // Передаємо токен того пристрою, який хочемо "вбити"
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                toast.success('Сеанс завершено!', { id: loadingToast });
+                fetchSessions(); // Оновлюємо список
+            } else {
+                toast.error(data.message || 'Помилка', { id: loadingToast });
+            }
+        } catch (error) {
+            toast.error('Помилка сервера', { id: loadingToast });
         }
     };
 
@@ -223,7 +309,6 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
                     <div style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '8px' }}><Mail size={16} color="#ffc107"/> Email сповіщення</div>
                     <div style={{ color: '#888', fontSize: '12px' }}>Отримувати листи про нові повідомлення</div>
                 </div>
-                {/* 🚀 ОЖИВЛЕНИЙ ТУМБЛЕР EMAIL СПОВІЩЕНЬ */}
                 <div onClick={handleToggleEmail} style={{ width: '44px', height: '24px', background: emailNotif ? '#ffc107' : '#333', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: '0.3s' }}>
                     <div style={{ position: 'absolute', top: '4px', left: emailNotif ? '24px' : '4px', width: '16px', height: '16px', background: 'white', borderRadius: '50%', transition: '0.3s' }}></div>
                 </div>
@@ -241,40 +326,68 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
         </div>
     );
 
-    const renderSessions = () => (
-        <div className="fade-in-up">
-            <div style={{ background: 'rgba(0, 255, 255, 0.05)', border: '1px solid rgba(0, 255, 255, 0.2)', padding: '20px', borderRadius: '12px', marginBottom: '15px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <Monitor size={28} color="#00ffff" />
-                        <div>
-                            <div style={{ color: 'white', fontWeight: 'bold', fontSize: '14px' }}>Windows • Chrome</div>
-                            <div style={{ color: '#888', fontSize: '12px', marginTop: '4px' }}>Івано-Франківськ, Україна</div>
-                        </div>
-                    </div>
-                    <div style={{ color: '#00ffff', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold', background: 'rgba(0, 255, 255, 0.1)', padding: '4px 8px', borderRadius: '4px' }}>Поточна</div>
-                </div>
-                <div style={{ color: '#666', fontSize: '11px', marginTop: '15px' }}>IP: 176.104.55.12 • Активно зараз</div>
-            </div>
+    const renderSessions = () => {
+        const currentToken = useStore.getState().token || localStorage.getItem('token') || localStorage.getItem('zefirka_token') || localStorage.getItem('auth_token');
 
-            <div style={{ background: '#111', border: '1px solid rgba(255,255,255,0.05)', padding: '20px', borderRadius: '12px', marginBottom: '25px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <Smartphone size={28} color="#888" />
-                        <div>
-                            <div style={{ color: '#ccc', fontWeight: 'bold', fontSize: '14px' }}>iPhone 13 • Safari</div>
-                            <div style={{ color: '#888', fontSize: '12px', marginTop: '4px' }}>Львів, Україна</div>
-                        </div>
-                    </div>
-                </div>
-                <div style={{ color: '#666', fontSize: '11px', marginTop: '15px' }}>IP: 46.211.34.8 • Був у мережі: Вчора, 14:30</div>
-            </div>
+        return (
+            <div className="fade-in-up">
+                {loadingSessions ? (
+                    <div style={{ color: '#888', textAlign: 'center', padding: '20px' }}>Завантаження пристроїв...</div>
+                ) : sessions.length > 0 ? (
+                    sessions.map((session) => {
+                        const isCurrent = session.token === currentToken;
+                        const isMobile = session.device.toLowerCase().includes('android') || session.device.toLowerCase().includes('iphone') || session.device.toLowerCase().includes('mobile');
+                        
+                        return (
+                            <div key={session._id} style={{ background: isCurrent ? 'rgba(0, 255, 255, 0.05)' : '#111', border: `1px solid ${isCurrent ? 'rgba(0, 255, 255, 0.2)' : 'rgba(255,255,255,0.05)'}`, padding: '20px', borderRadius: '12px', marginBottom: '15px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                                    
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                        {isMobile ? <Smartphone size={28} color={isCurrent ? "#00ffff" : "#888"} /> : <Monitor size={28} color={isCurrent ? "#00ffff" : "#888"} />}
+                                        <div>
+                                            <div style={{ color: isCurrent ? 'white' : '#ccc', fontWeight: 'bold', fontSize: '14px' }}>{session.device}</div>
+                                            <div style={{ color: '#888', fontSize: '12px', marginTop: '4px' }}>IP: {session.ip || 'Невідомо'}</div>
+                                        </div>
+                                    </div>
 
-            <button style={{ width: '100%', padding: '15px', background: 'rgba(255,68,68,0.1)', border: '1px solid rgba(255,68,68,0.3)', color: '#ff4444', fontWeight: 'bold', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer', transition: '0.3s' }} className="menu-hover">
-                <AlertTriangle size={18} /> Завершити всі інші сеанси
-            </button>
-        </div>
-    );
+                                    {/* 🔴 ТУТ ЗМІНА: КНОПКА ВИЙТИ ДЛЯ ІНШИХ СЕАНСІВ */}
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        {isCurrent ? (
+                                            <div style={{ color: '#00ffff', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold', background: 'rgba(0, 255, 255, 0.1)', padding: '4px 8px', borderRadius: '4px' }}>Поточна</div>
+                                        ) : (
+                                            <button 
+                                                onClick={() => handleLogoutSingleSession(session.token)}
+                                                style={{ background: 'rgba(255,68,68,0.1)', border: '1px solid rgba(255,68,68,0.3)', color: '#ff4444', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: '0.3s' }}
+                                                className="menu-hover"
+                                            >
+                                                <LogOut size={14} /> Вийти
+                                            </button>
+                                        )}
+                                    </div>
+                                    
+                                </div>
+                                <div style={{ color: '#666', fontSize: '11px', marginTop: '15px' }}>
+                                    {isCurrent ? 'Активно зараз' : `Остання активність: ${new Date(session.lastActive || session.createdAt).toLocaleString('uk-UA')}`}
+                                </div>
+                            </div>
+                        );
+                    })
+                ) : (
+                    <div style={{ color: '#888', textAlign: 'center', padding: '20px' }}>Немає даних про сесії</div>
+                )}
+
+                {sessions.length > 1 && (
+                    <button 
+                        onClick={handleLogoutAllSessions} 
+                        style={{ width: '100%', padding: '15px', background: 'rgba(255,68,68,0.1)', border: '1px solid rgba(255,68,68,0.3)', color: '#ff4444', fontWeight: 'bold', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer', transition: '0.3s' }} 
+                        className="menu-hover"
+                    >
+                        <AlertTriangle size={18} /> Завершити всі інші сеанси
+                    </button>
+                )}
+            </div>
+        );
+    };
 
     return (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(15px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
