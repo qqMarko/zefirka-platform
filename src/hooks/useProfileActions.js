@@ -58,15 +58,29 @@ export const useProfileActions = ({
         } catch (error) { toast.error('Помилка з\'єднання з сервером.', { id: loadingToast }); }
     };
 
+    // 🟢 ВИПРАВЛЕНО: Додано BASE_URL та Токен авторизації
     const executeDelete = async (id) => {
         setConfirmModal({ isOpen: false });
         try {
-            const response = await fetch(`/api/profiles/${id}`, { method: 'DELETE' });
+            const BASE_URL = import.meta.env.VITE_API_URL || 'http://192.168.0.102:5000/api'; 
+            const currentToken = localStorage.getItem('zefirka_token') || localStorage.getItem('token'); // Беремо токен
+
+            const response = await fetch(`${BASE_URL}/profiles/${id}`, { 
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${currentToken}` // Передаємо токен, щоб не було 401 помилки
+                }
+            });
+            
             if (!response.ok) throw new Error('Помилка сервера');
+            
             setModels(models.filter(m => m.id !== id));
             setMyModels(myModels.filter(m => m.id !== id));
             toast('Анкету видалено', { icon: '🗑️', style: { background: '#111', color: '#fff', border: '1px solid #ff4444' } });
-        } catch (error) { toast.error('❌ Не вдалося видалити анкету'); }
+        } catch (error) { 
+            console.error(error);
+            toast.error('❌ Не вдалося видалити анкету'); 
+        }
     };
 
     return {

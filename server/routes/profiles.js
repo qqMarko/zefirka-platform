@@ -5,7 +5,6 @@ import authMiddleware from '../middlewares/auth.js';
 
 const router = express.Router();
 
-// 🟢 GET залишаємо БЕЗ authMiddleware, щоб каталог анкет могли бачити неавторизовані юзери
 router.get('/', async (req, res) => {
     try {
         const { page = 1, limit = 12, maxAge, maxPrice, fetishes, hair, body, genders, userId, fetchAll } = req.query;
@@ -29,12 +28,14 @@ router.get('/', async (req, res) => {
             query.isApproved = true; 
         }
 
-        console.log("🔍 Бекенд шукає анкети за запитом:", query); 
-
         const sortLogic = { vLevel: -1, bumpedAt: -1, createdAt: -1 };
 
         if (fetchAll === 'true') {
-            const profiles = await Profile.find(query).sort(sortLogic);
+            const profiles = await Profile.find(query)
+                .sort(sortLogic)
+                // 🚀 ПІДТЯГУЄМО lastActive ДЛЯ ПЕРЕВІРКИ ОНЛАЙНУ
+                .populate('userId', 'trustScore lastActive');
+                
             return res.json({ success: true, data: profiles, totalItems: profiles.length, totalPages: 1 });
         }
         
@@ -43,20 +44,22 @@ router.get('/', async (req, res) => {
         const skip = (pageNumber - 1) * limitNumber;
         
         const totalItems = await Profile.countDocuments(query); 
-        const profiles = await Profile.find(query).sort(sortLogic).skip(skip).limit(limitNumber);
+        
+        const profiles = await Profile.find(query)
+            .sort(sortLogic)
+            .skip(skip)
+            .limit(limitNumber)
+            // 🚀 ПІДТЯГУЄМО lastActive ДЛЯ ПЕРЕВІРКИ ОНЛАЙНУ
+            .populate('userId', 'trustScore lastActive');
         
         res.json({ success: true, data: profiles, totalItems, totalPages: Math.ceil(totalItems / limitNumber) || 1, currentPage: pageNumber });
     } catch (error) { 
-        console.error("❌ Помилка каталогу:", error);
         res.status(500).json({ success: false, message: error.message }); 
     }
 });
 
-// 🔐 POST ЗАХИЩЕНО authMiddleware
 router.post('/', authMiddleware, async (req, res) => { 
-    console.log("📥 [MONGOOSE] ДАНІ, ЩО ПРИЙШЛИ З ФРОНТЕНДУ:", JSON.stringify(req.body, null, 2));
     try { 
-        // Використовуємо req.user.id з токена для більшої безпеки, або req.body.userId як фолбек
         const userId = req.body.userId || req.user.id;
         
         if (!userId) {
@@ -76,7 +79,6 @@ router.post('/', authMiddleware, async (req, res) => {
         const currentProfilesCount = await Profile.countDocuments({ userId: user._id });
 
         if (currentProfilesCount >= maxProfiles) {
-            console.log(`⛔ [БЕКЕНД] Блокування створення! Ліміт: ${maxProfiles}, Вже є: ${currentProfilesCount}`);
             return res.status(400).json({ 
                 success: false, 
                 message: `Ліміт вичерпано! Максимум анкет для вашого статусу: ${maxProfiles}` 
@@ -86,24 +88,19 @@ router.post('/', authMiddleware, async (req, res) => {
         const newProfile = new Profile(req.body);
         const savedProfile = await newProfile.save();
         
-        // 🚀 СИГНАЛ: НОВА АНКЕТА (Для адмінки)
         const io = getIO();
         if (io) io.emit('global_sync', { action: 'reload_catalog' });
 
-        console.log("✅ [MONGOOSE] АНКЕТА ЗБЕРЕЖЕНА! Фотки в базі:", savedProfile.photos);
         res.status(201).json({ success: true, data: savedProfile }); 
     } catch (error) { 
-        console.error("❌ [MONGOOSE] ПОМИЛКА ЗБЕРЕЖЕННЯ В БД:", error);
         res.status(400).json({ success: false, message: error.message }); 
     } 
 });
 
-// 🔐 PUT ЗАХИЩЕНО authMiddleware
 router.put('/:id', authMiddleware, async (req, res) => { 
     try { 
         const updated = await Profile.findByIdAndUpdate(req.params.id, req.body, { new: true });
         
-        // 🚀 СИГНАЛ: АНКЕТА ОНОВЛЕНА
         const io = getIO();
         if (io) io.emit('global_sync', { action: 'reload_catalog' });
 
@@ -113,12 +110,10 @@ router.put('/:id', authMiddleware, async (req, res) => {
     } 
 });
 
-// 🔐 DELETE ЗАХИЩЕНО authMiddleware
 router.delete('/:id', authMiddleware, async (req, res) => { 
     try { 
         await Profile.findByIdAndDelete(req.params.id); 
 
-        // 🚀 СИГНАЛ: АНКЕТА ВИДАЛЕНА
         const io = getIO();
         if (io) io.emit('global_sync', { action: 'reload_catalog' });
 
