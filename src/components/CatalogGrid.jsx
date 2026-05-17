@@ -1,10 +1,19 @@
 import React from 'react';
 import { ShieldCheck, CheckCircle2, Heart, MessageCircle, Rocket, Crown, Gem } from 'lucide-react'; 
+<<<<<<< HEAD
+=======
+// 🚀 ДОДАНО ІМПОРТ STORE ДЛЯ ПЕРЕВІРКИ ВЛАСНИКА ТА ОНЛАЙНУ
+>>>>>>> 9dc3468 (fix: виправлено падіння каталогу (onlineUsers) та помилку 401 при видаленні анкети)
 import useStore from '../store/useStore';
 
 const CatalogGrid = ({ currentModels, setSelectedModel, setContactSelectionModel, t, currentLang, accent, favorites = [], handleToggleFavorite }) => {
     
+<<<<<<< HEAD
     const { userUniqueId, user } = useStore();
+=======
+    // 🚀 ВИТЯГУЄМО ДАНІ КОРИСТУВАЧА ЗІ STORE
+    const { userUniqueId, user, onlineUsers } = useStore(); // Без дефолтного [], перевіримо безпечно нижче
+>>>>>>> 9dc3468 (fix: виправлено падіння каталогу (onlineUsers) та помилку 401 при видаленні анкети)
     const myId = user?._id || user?.id || userUniqueId;
 
     const getFetishTranslation = (fKey) => {
@@ -35,6 +44,7 @@ const CatalogGrid = ({ currentModels, setSelectedModel, setContactSelectionModel
                 const ownerId = m.userId?._id || m.userId;
                 const isOwner = Boolean(myId && ownerId && String(myId) === String(ownerId));
                 
+<<<<<<< HEAD
                 // 🟢 ЛОГІКА СТАТУСУ ТА ДОВІРИ
                 let displayOnline = false;
                 let displayTrust = 100;
@@ -56,6 +66,28 @@ const CatalogGrid = ({ currentModels, setSelectedModel, setContactSelectionModel
                 if (displayTrust < 70) trustColor = '#ffb300';
                 if (displayTrust < 40) trustColor = '#ff4444';
 
+=======
+                // 🟢 1. УЛЬТРА-БЕЗПЕЧНА ПЕРЕВІРКА ОНЛАЙНУ (Захист від крашу)
+                let isOnline = Boolean(m.isOnline);
+                if (Array.isArray(onlineUsers)) {
+                    // Якщо це масив (рядків або об'єктів)
+                    isOnline = isOnline || onlineUsers.some(ou => 
+                        ou === ownerId || 
+                        String(ou) === String(ownerId) || 
+                        (ou && ou.userId && String(ou.userId) === String(ownerId))
+                    );
+                } else if (onlineUsers && typeof onlineUsers === 'object') {
+                    // Якщо це об'єкт-словник
+                    isOnline = isOnline || Boolean(onlineUsers[ownerId]);
+                }
+
+                // 🟢 2. БЕЗПЕЧНА ПЕРЕВІРКА ДОВІРИ (захист від null)
+                const trustScore = (m.trustScore !== undefined && m.trustScore !== null) 
+                    ? m.trustScore 
+                    : (m.trustPercentage || 100);
+
+                // ЛОГІКА СВІТІННЯ КАРТКИ ЗАЛЕЖНО ВІД СТАТУСУ
+>>>>>>> 9dc3468 (fix: виправлено падіння каталогу (onlineUsers) та помилку 401 при видаленні анкети)
                 let cardStyle = { border: '1px solid rgba(255,255,255,0.05)', shadow: '0 10px 30px rgba(0,0,0,0.5)' };
                 if (m.vLevel === 3) cardStyle = { border: '2px solid #00ffff', shadow: '0 0 20px rgba(0, 255, 255, 0.2)' };
                 else if (m.vLevel === 2) cardStyle = { border: '2px solid #ffd700', shadow: '0 0 20px rgba(255, 215, 0, 0.15)' };
@@ -100,12 +132,18 @@ const CatalogGrid = ({ currentModels, setSelectedModel, setContactSelectionModel
                                             <span style={{ color: 'white', fontSize: '24px', fontWeight: '900', textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>{m.name}</span>
                                             {m.vLevel > 0 && <CheckCircle2 size={18} color={m.vLevel === 3 ? '#00ffff' : (m.vLevel === 2 ? '#ffd700' : '#4CAF50')} style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}/>}
                                         </div>
+                                        
+                                        {/* 🟢 ВІДОБРАЖЕННЯ ОНЛАЙН СТАТУСУ */}
                                         <div style={{ color: '#ddd', fontSize: '13px', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '6px' }}>
+<<<<<<< HEAD
                                             {/* 🟢 ІНДИКАТОР ОНЛАЙНУ */}
+=======
+>>>>>>> 9dc3468 (fix: виправлено падіння каталогу (onlineUsers) та помилку 401 при видаленні анкети)
                                             <span style={{ 
                                                 display: 'inline-block', 
                                                 width: '8px', 
                                                 height: '8px', 
+<<<<<<< HEAD
                                                 background: displayOnline ? '#4CAF50' : '#666', 
                                                 borderRadius: '50%', 
                                                 boxShadow: displayOnline ? '0 0 8px #4CAF50' : 'none',
@@ -113,6 +151,13 @@ const CatalogGrid = ({ currentModels, setSelectedModel, setContactSelectionModel
                                             }}></span>
                                             {displayOnline ? (t[currentLang]?.onlineOnly || "Онлайн") : (currentLang === 'ua' ? 'Офлайн' : 'Offline')} 
                                             <span style={{color: '#888'}}>•</span> {m.age} {t[currentLang]?.age}
+=======
+                                                background: isOnline ? '#4CAF50' : '#6b7280', 
+                                                borderRadius: '50%', 
+                                                boxShadow: isOnline ? '0 0 8px #4CAF50' : 'none' 
+                                            }}></span>
+                                            {isOnline ? 'Online' : 'Offline'} <span style={{color: '#888'}}>•</span> {m.age} {t[currentLang]?.age || "років"}
+>>>>>>> 9dc3468 (fix: виправлено падіння каталогу (onlineUsers) та помилку 401 при видаленні анкети)
                                         </div>
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
@@ -147,6 +192,7 @@ const CatalogGrid = ({ currentModels, setSelectedModel, setContactSelectionModel
                                     </button>
                                 )}
 
+<<<<<<< HEAD
                                 {/* 🟢 ВІДОБРАЖЕННЯ ДОВІРИ */}
                                 <div style={{ 
                                     display: 'flex', 
@@ -160,6 +206,12 @@ const CatalogGrid = ({ currentModels, setSelectedModel, setContactSelectionModel
                                 }} title={t[currentLang]?.trustScore}>
                                     <ShieldCheck size={18} color={trustColor} style={{ marginRight: '5px' }} />
                                     <span style={{ fontSize: '13px', color: trustColor, fontWeight: 'bold' }}>{displayTrust}%</span>
+=======
+                                {/* 🟢 ВІДОБРАЖЕННЯ ВІДСОТКУ ДОВІРИ */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(76, 175, 80, 0.1)', padding: '0 15px', borderRadius: '12px', border: '1px solid rgba(76, 175, 80, 0.2)', cursor: 'help' }} title={t[currentLang]?.trustScore}>
+                                    <ShieldCheck size={18} color="#4caf50" style={{ marginRight: '5px' }} />
+                                    <span style={{ fontSize: '13px', color: '#4caf50', fontWeight: 'bold' }}>{trustScore}%</span>
+>>>>>>> 9dc3468 (fix: виправлено падіння каталогу (onlineUsers) та помилку 401 при видаленні анкети)
                                 </div>
                             </div>
                         </div>

@@ -85,7 +85,7 @@ router.post('/', authMiddleware, async (req, res) => {
             });
         }
 
-        const newProfile = new Profile(req.body);
+        const newProfile = new Profile({ ...req.body, userId: userId }); // Примусово ставимо userId з токена
         const savedProfile = await newProfile.save();
         
         const io = getIO();
@@ -99,6 +99,16 @@ router.post('/', authMiddleware, async (req, res) => {
 
 router.put('/:id', authMiddleware, async (req, res) => { 
     try { 
+        // 🟢 Перевірка на власника
+        const profile = await Profile.findById(req.params.id);
+        if (!profile) {
+            return res.status(404).json({ success: false, message: "Анкету не знайдено" });
+        }
+
+        if (String(profile.userId) !== String(req.user.id) && req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: "Ви не можете редагувати чужу анкету" });
+        }
+
         const updated = await Profile.findByIdAndUpdate(req.params.id, req.body, { new: true });
         
         const io = getIO();
@@ -106,20 +116,54 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
         res.json({ success: true, data: updated }); 
     } catch (error) { 
-        res.status(500).json({ success: false }); 
+        console.error("Помилка оновлення анкети:", error);
+        res.status(500).json({ success: false, message: "Помилка сервера" }); 
     } 
 });
 
 router.delete('/:id', authMiddleware, async (req, res) => { 
     try { 
+        console.log(`[DELETE] Запит на видалення анкети з ID: "${req.params.id}"`);
+        
+        // 1. Захист від битих запитів з фронтенду
+        if (!req.params.id || req.params.id === 'undefined' || req.params.id === '[object Object]') {
+            return res.status(400).json({ success: false, message: "Помилка фронтенду: передано неправильний ID анкети" });
+        }
+
+        // 2. Знаходимо анкету
+        const profile = await Profile.findById(req.params.id);
+        
+        if (!profile) {
+            console.log(`[DELETE] Анкету ${req.params.id} не знайдено в базі.`);
+            // ВАЖЛИВО: віддаємо 400, щоб не викликати Logout на фронті
+            return res.status(400).json({ success: false, message: "Анкету вже видалено або не знайдено" });
+        }
+
+        // 3. БЕЗПЕЧНА ПЕРЕВІРКА ПРАВ: витягуємо ID з токена у всіх можливих форматах
+        const requestUserId = String(req.user?.id || req.user?._id || req.user?.userId);
+        const profileOwnerId = String(profile.userId?._id || profile.userId);
+
+        console.log(`[DELETE] Хто видаляє: ${requestUserId} | Власник: ${profileOwnerId}`);
+
+        if (profileOwnerId !== requestUserId && req.user?.role !== 'admin') {
+            console.log(`❌ Блокування: Спроба видалити чужу анкету!`);
+            // ВАЖЛИВО: Ставимо статус 400 (Bad Request), а не 403, щоб фронтенд НЕ робив Logout
+            return res.status(400).json({ success: false, message: "Ви не можете видалити чужу анкету" });
+        }
+
+        // 4. Видаляємо
         await Profile.findByIdAndDelete(req.params.id); 
 
         const io = getIO();
         if (io) io.emit('global_sync', { action: 'reload_catalog' });
 
-        res.json({ success: true }); 
+        console.log(`✅ Анкета успішно видалена`);
+        res.json({ success: true, message: "Анкету успішно видалено" }); 
+
     } catch (error) { 
-        res.status(500).json({ success: false }); 
+        console.error("❌ Помилка видалення анкети:", error.message);
+        // ВАЖЛИВО: Віддаємо статус 400 замість 500, щоб при краші бази вас не викидало з акаунту
+        res.status(400).json({ success: false, message: "Помилка сервера при видаленні: " + error.message }); 
     } 
 });
 

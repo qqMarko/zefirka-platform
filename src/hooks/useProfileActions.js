@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { accent } from '../styles/theme';
+// 🟢 1. ДОДАНО ІМПОРТ STORE ДЛЯ ТОКЕНА
+import useStore from '../store/useStore'; 
 
 export const useProfileActions = ({ 
     userUniqueId, balance, user, loadBalance, loadMyModels, loadCatalog, models, setModels, myModels, setMyModels 
@@ -58,16 +60,25 @@ export const useProfileActions = ({
         } catch (error) { toast.error('Помилка з\'єднання з сервером.', { id: loadingToast }); }
     };
 
+<<<<<<< HEAD
     // 🟢 ВИПРАВЛЕНО: Додано BASE_URL та Токен авторизації
+=======
+    // 🟢 2. ВИПРАВЛЕНА ФУНКЦІЯ ВИДАЛЕННЯ
+>>>>>>> 9dc3468 (fix: виправлено падіння каталогу (onlineUsers) та помилку 401 при видаленні анкети)
     const executeDelete = async (id) => {
         setConfirmModal({ isOpen: false });
         try {
             const BASE_URL = import.meta.env.VITE_API_URL || 'http://192.168.0.102:5000/api'; 
+<<<<<<< HEAD
             const currentToken = localStorage.getItem('zefirka_token') || localStorage.getItem('token'); // Беремо токен
+=======
+            const token = useStore.getState().token; // Дістаємо токен
+>>>>>>> 9dc3468 (fix: виправлено падіння каталогу (onlineUsers) та помилку 401 при видаленні анкети)
 
             const response = await fetch(`${BASE_URL}/profiles/${id}`, { 
                 method: 'DELETE',
                 headers: {
+<<<<<<< HEAD
                     'Authorization': `Bearer ${currentToken}` // Передаємо токен, щоб не було 401 помилки
                 }
             });
@@ -80,6 +91,24 @@ export const useProfileActions = ({
         } catch (error) { 
             console.error(error);
             toast.error('❌ Не вдалося видалити анкету'); 
+=======
+                    'Authorization': `Bearer ${token}` // Обов'язково передаємо токен!
+                }
+            });
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.message || 'Помилка сервера');
+            }
+
+            setModels(models.filter(m => m.id !== id && m._id !== id)); // Фільтруємо і по id і по _id для надійності
+            setMyModels(myModels.filter(m => m.id !== id && m._id !== id));
+            toast('Анкету видалено', { icon: '🗑️', style: { background: '#111', color: '#fff', border: '1px solid #ff4444' } });
+            
+        } catch (error) { 
+            console.error("Помилка при видаленні:", error);
+            toast.error(`❌ Не вдалося видалити анкету: ${error.message}`); 
+>>>>>>> 9dc3468 (fix: виправлено падіння каталогу (onlineUsers) та помилку 401 при видаленні анкети)
         }
     };
 
