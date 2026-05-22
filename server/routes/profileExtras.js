@@ -43,9 +43,17 @@ export default (sendNotification) => {
             const { clientId, clientName, rating, text } = req.body;
             const profileId = req.params.id;
 
-            const clientProfile = await Profile.findOne({ userId: clientId });
-            if (!clientProfile || clientProfile.vLevel === 0) {
-                return res.status(403).json({ success: false, message: 'Тільки Premium-клієнти можуть залишати відгуки!' });
+            // 🟢 1. ШУКАЄМО КЛІЄНТА В БАЗІ ЮЗЕРІВ (щоб перевірити його VIP-статус)
+            const clientUser = await User.findById(clientId);
+            
+            // 🟢 ДОЗВОЛЕНІ СТАТУСИ ДЛЯ ВІДГУКІВ
+            const allowedVips = ['priority', 'concierge'];
+
+            if (!clientUser || !allowedVips.includes(clientUser.vipPackage?.toLowerCase())) {
+                return res.status(403).json({ 
+                    success: false, 
+                    message: 'Тільки клієнти зі статусом PRIORITY або CONCIERGE можуть залишати відгуки!' 
+                });
             }
 
             const modelProfile = await Profile.findById(profileId);
@@ -54,10 +62,24 @@ export default (sendNotification) => {
             const alreadyReviewed = modelProfile.reviews.find(r => String(r.clientId) === String(clientId));
             if (alreadyReviewed) return res.status(400).json({ success: false, message: 'Ви вже залишали відгук цій моделі!' });
 
+           // 🟢 ПЕРЕВІРКА АКТИВНОГО VIP-СТАТУСУ МОДЕЛІ ДЛЯ МОДЕРАЦІЇ ВІДГУКУ
             let isReviewApproved = true; 
             const modelUser = await User.findById(modelProfile.userId);
-            if (modelUser && (modelUser.vipPackage === 'premium' || modelUser.vipPackage === 'diamond')) {
-                isReviewApproved = false;
+            
+            if (modelUser) {
+                const modelVip = modelUser.vipPackage ? modelUser.vipPackage.toLowerCase() : '';
+                
+                // Якщо це преміум або діамант
+                if (modelVip === 'premium' || modelVip === 'diamond') {
+                    
+                    // Перевіряємо, чи цей VIP досі АКТИВНИЙ (не прострочений)
+                    const expireDate = modelUser.vipExpiresAt || modelProfile.vipExpiresAt;
+                    const isVipActive = !expireDate || new Date(expireDate) > new Date();
+                    
+                    if (isVipActive) {
+                        isReviewApproved = false; // Відправляємо на модерацію ТІЛЬКИ якщо статус активний
+                    }
+                }
             }
 
             const newReview = { clientId, clientName: clientName || 'Premium Client', rating: Number(rating), text, status: isReviewApproved ? 'approved' : 'pending' };
