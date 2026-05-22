@@ -17,12 +17,23 @@ const CatalogGrid = ({ currentModels, setSelectedModel, setContactSelectionModel
         return fKey;
     };
 
+    // 🟢 БРОНЕБІЙНА ПЕРЕВІРКА ОНЛАЙНУ ЗА ЧАСОМ
     const checkIfOnline = (lastActiveDate) => {
         if (!lastActiveDate) return false;
         const lastActiveTime = new Date(lastActiveDate).getTime();
         const currentTime = new Date().getTime();
+        
+        if (isNaN(lastActiveTime)) return false;
+
+        const diff = currentTime - lastActiveTime;
         const tenMinutesInMs = 10 * 60 * 1000;
-        return (currentTime - lastActiveTime) < tenMinutesInMs;
+        
+        // Якщо є розсинхрон годинників (сервер поспішає)
+        if (diff < 0) {
+            return Math.abs(diff) < tenMinutesInMs;
+        }
+
+        return diff < tenMinutesInMs;
     };
 
     return (
@@ -30,46 +41,45 @@ const CatalogGrid = ({ currentModels, setSelectedModel, setContactSelectionModel
             {currentModels.map(m => {
                 const isFav = favorites?.some(fav => fav.id === m.id); 
                 
-                const ownerId = m.userId?._id || m.userId;
-                const isOwner = Boolean(myId && ownerId && String(myId) === String(ownerId));
+                // Надійне отримання ID власника
+                const ownerId = m.userId?._id ? String(m.userId._id) : String(m.userId);
+                const isOwner = Boolean(myId && ownerId && String(myId) === ownerId);
                 
-                // 🟢 ОНЛАЙН
-                let displayOnline = Boolean(m.isOnline);
-                const populatedUser = typeof m.userId === 'object' ? m.userId : null;
+                // 🟢 ЖОРСТКА ЛОГІКА ОНЛАЙНУ
+                let displayOnline = false;
 
-                if (Array.isArray(onlineUsers)) {
-                    displayOnline = displayOnline || onlineUsers.some(ou => 
-                        ou === ownerId || 
-                        String(ou) === String(ownerId) || 
-                        (ou && ou.userId && String(ou.userId) === String(ownerId))
-                    );
-                } else if (onlineUsers && typeof onlineUsers === 'object') {
-                    displayOnline = displayOnline || Boolean(onlineUsers[ownerId]);
-                }
+                if (ownerId && ownerId !== 'undefined' && ownerId !== 'null') {
+                    // 1. Читаємо статус користувача зі стору сокетів
+                    const socketData = onlineUsers[ownerId];
+                    
+                    // Перевіряємо саме слово 'online', а не просто наявність об'єкта
+                    if (socketData && socketData.status === 'online') {
+                        displayOnline = true;
+                    }
 
-                if (!displayOnline) {
-                    if (isOwner) {
-                        displayOnline = user?.lastActive ? checkIfOnline(user.lastActive) : true;
-                    } else if (populatedUser) {
-                        displayOnline = checkIfOnline(populatedUser.lastActive);
+                    // 2. Якщо в сокетах статус 'offline' або його там немає, перевіряємо час (до 10 хв)
+                    if (!displayOnline) {
+                        const userObj = isOwner ? user : (typeof m.userId === 'object' ? m.userId : null);
+                        
+                        // Якщо сокет передав точний час виходу (lastSeen), беремо його! Інакше беремо з БД.
+                        const timeToCheck = socketData?.lastSeen || userObj?.lastActive;
+                        
+                        if (timeToCheck) {
+                            displayOnline = checkIfOnline(timeToCheck);
+                        }
                     }
                 }
-
-                // 🟢 БРОНЕБІЙНА ЛОГІКА ДОВІРИ
-                let displayTrust = 100;
                 
-                // Перевіряємо всі можливі місця та назви змінних
+                // 🟢 ЛОГІКА ДОВІРИ
+                let displayTrust = 100;
+                const populatedUser = typeof m.userId === 'object' ? m.userId : null;
                 const backendTrust = populatedUser?.trustScore ?? populatedUser?.trustPercentage;
                 const storeTrust = user?.trustScore ?? user?.trustPercentage;
                 const profileTrust = m.trustScore ?? m.trustPercentage;
 
-                if (backendTrust != null) {
-                    displayTrust = backendTrust;
-                } else if (isOwner && storeTrust != null) {
-                    displayTrust = storeTrust;
-                } else if (profileTrust != null) {
-                    displayTrust = profileTrust;
-                }
+                if (backendTrust != null) displayTrust = backendTrust;
+                else if (isOwner && storeTrust != null) displayTrust = storeTrust;
+                else if (profileTrust != null) displayTrust = profileTrust;
                 
                 let trustColor = '#4caf50';
                 if (displayTrust < 70) trustColor = '#ffb300';
@@ -130,7 +140,7 @@ const CatalogGrid = ({ currentModels, setSelectedModel, setContactSelectionModel
                                                 boxShadow: displayOnline ? '0 0 8px #4CAF50' : 'none',
                                                 transition: 'background-color 0.3s ease'
                                             }}></span>
-                                            {displayOnline ? (t[currentLang]?.onlineOnly || "Онлайн") : (currentLang === 'ua' ? 'Офлайн' : 'Offline')} 
+                                            {displayOnline ? (t[currentLang]?.onlineStatus || "Онлайн") : (t[currentLang]?.offlineStatus || "Офлайн")} 
                                             <span style={{color: '#888'}}>•</span> {m.age} {t[currentLang]?.age || "років"}
                                         </div>
                                     </div>

@@ -26,11 +26,18 @@ export const initSockets = (io) => {
         // Як тільки хтось заходить на сайт - відправляємо йому поточну знижку
         socket.emit('global_promo', activePromo);
 
-        socket.on('user_connected', (userId) => {
+        socket.on('user_connected', async (userId) => {
             const idStr = String(userId);
             onlineUsers.set(idStr, socket.id);
             io.emit('user_status_change', { userId: idStr, status: 'online' });
             socket.emit('sync_online_users', Array.from(onlineUsers.keys()));
+
+            // 🟢 Фіксуємо вхід у базу даних
+            try {
+                await User.findByIdAndUpdate(idStr, { lastActive: new Date() });
+            } catch (e) {
+                console.error('Помилка оновлення lastActive при підключенні:', e.message);
+            }
 
             if (pendingEmails.has(idStr)) {
                 clearTimeout(pendingEmails.get(idStr));
@@ -38,10 +45,19 @@ export const initSockets = (io) => {
             }
         });
 
-        socket.on('user_away', (userId) => {
-            if (onlineUsers.has(String(userId))) {
-                onlineUsers.delete(String(userId));
-                io.emit('user_status_change', { userId: String(userId), status: 'offline', lastSeen: new Date() });
+        socket.on('user_away', async (userId) => {
+            const idStr = String(userId);
+            if (onlineUsers.has(idStr)) {
+                onlineUsers.delete(idStr);
+                const now = new Date();
+                io.emit('user_status_change', { userId: idStr, status: 'offline', lastSeen: now });
+                
+                // 🟢 Фіксуємо AFK/вихід у базу даних
+                try {
+                    await User.findByIdAndUpdate(idStr, { lastActive: now });
+                } catch (e) {
+                    console.error('Помилка оновлення lastActive при відході користувача:', e.message);
+                }
             }
         });
 
@@ -95,7 +111,7 @@ export const initSockets = (io) => {
 
         socket.on('join_dispute', (disputeId) => { socket.join(`dispute_${disputeId}`); });
         
-       socket.on('send_dispute_message', async (data) => {
+        socket.on('send_dispute_message', async (data) => {
             try {
                 const dispute = await Dispute.findById(data.disputeId);
                 if (dispute && dispute.status === 'open') {
@@ -114,7 +130,7 @@ export const initSockets = (io) => {
             } catch (error) { console.error("🔥 ПОМИЛКА DISPUTE:", error); }
         });
 
-        socket.on('disconnect', () => {
+        socket.on('disconnect', async () => {
             let disconnectedUserId = null;
             for (const [userId, socketId] of onlineUsers.entries()) {
                 if (socketId === socket.id) {
@@ -124,7 +140,15 @@ export const initSockets = (io) => {
                 }
             }
             if (disconnectedUserId) {
-                io.emit('user_status_change', { userId: disconnectedUserId, status: 'offline', lastSeen: new Date() });
+                const now = new Date();
+                io.emit('user_status_change', { userId: disconnectedUserId, status: 'offline', lastSeen: now });
+                
+                // 🟢 Фіксуємо розрив з'єднання у базі даних
+                try {
+                    await User.findByIdAndUpdate(disconnectedUserId, { lastActive: now });
+                } catch (e) {
+                    console.error('Помилка оновлення lastActive при відключенні сокету:', e.message);
+                }
             }
         });
     });

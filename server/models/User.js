@@ -9,6 +9,10 @@ const userSchema = new mongoose.Schema({
     isBanned: { type: Boolean, default: false },
     isVerified: { type: Boolean, default: false },
     trustScore: { type: Number, default: 100 },
+    trustPercentage: { type: Number, default: 100 },
+    
+    // 🟢 ЧАС ОСТАННЬОЇ АКТИВНОСТІ НА ПЛАТФОРМІ
+    lastActive: { type: Date, default: Date.now },
     
     // 🟢 НАЛАШТУВАННЯ СПОВІЩЕНЬ
     pushEnabled: { type: Boolean, default: true },
