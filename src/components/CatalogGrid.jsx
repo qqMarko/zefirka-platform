@@ -45,32 +45,37 @@ const CatalogGrid = ({ currentModels, setSelectedModel, setContactSelectionModel
                 const ownerId = m.userId?._id ? String(m.userId._id) : String(m.userId);
                 const isOwner = Boolean(myId && ownerId && String(myId) === ownerId);
                 
-               // 🟢 ЖОРСТКА ЛОГІКА ОНЛАЙНУ
-let displayOnline = false;
+         // 🟢 ЛОГІКА ОНЛАЙНУ ТІЛЬКИ ДЛЯ КАРТОК (ЗАТРИМКА 10 ХВ)
+                let displayOnline = false;
 
-if (ownerId && ownerId !== 'undefined' && ownerId !== 'null') {
-    const socketData = onlineUsers[ownerId];
-    
-    // 1. Якщо сокет ЯВНО каже, що користувач онлайн
-    if (socketData && socketData.status === 'online') {
-        displayOnline = true;
-    } 
-    // 2. Якщо сокет ЯВНО передав статус офлайн - статус миттєво стає офлайн, не чекаючи 10 хвилин
-    else if (socketData && socketData.status === 'offline') {
-        displayOnline = false;
-    } 
-    // 3. Якщо користувача немає в оперативних даних сокетів (наприклад, щойно зайшли на сторінку)
-    else {
-        const userObj = isOwner ? user : (typeof m.userId === 'object' ? m.userId : null);
-        
-        // Беремо lastActive суто з бази даних
-        const timeToCheck = userObj?.lastActive || m.lastActive;
-        
-        if (timeToCheck) {
-            displayOnline = checkIfOnline(timeToCheck);
-        }
-    }
-}
+                if (ownerId && ownerId !== 'undefined' && ownerId !== 'null') {
+                    const socketData = onlineUsers[ownerId];
+                    
+                    if (socketData && socketData.status === 'online') {
+                        // 1. Людина прямо зараз на сайті і вкладка відкрита
+                        displayOnline = true;
+                    } 
+                    else if (socketData && socketData.status === 'offline') {
+                        // 2. Людина згорнула вкладку або вийшла. 
+                        // Чат вже бачить її як offline, але ДЛЯ КАРТОЧОК ми перевіряємо, чи пройшло 10 хв.
+                        const timeToCheck = socketData.lastSeen;
+                        if (timeToCheck) {
+                            displayOnline = checkIfOnline(timeToCheck);
+                        } else {
+                            displayOnline = false;
+                        }
+                    } 
+                    else {
+                        // 3. Інформації в сокетах ще немає (щойно завантажили сторінку)
+                        // Беремо останню активність з бази даних
+                        const userObj = isOwner ? user : (typeof m.userId === 'object' ? m.userId : null);
+                        const timeToCheck = userObj?.lastActive || m.lastActive;
+                        
+                        if (timeToCheck) {
+                            displayOnline = checkIfOnline(timeToCheck);
+                        }
+                    }
+                }
                 
                 // 🟢 ЛОГІКА ДОВІРИ
                 let displayTrust = 100;
