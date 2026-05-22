@@ -82,6 +82,7 @@ export default (sendNotification) => {
             }
             
             user.trustScore = tScore;
+            user.trustPercentage = tScore; // Синхронізація
             await user.save();
 
             const io = getIO();
@@ -91,13 +92,16 @@ export default (sendNotification) => {
         } catch (error) { res.status(500).json({ success: false }); }
     });
 
+    // Додавання/віднімання довіри
     router.post('/users/:id/update-trust', async (req, res) => {
         try {
             const { score } = req.body;
             const user = await User.findById(req.params.id);
             if (!user) return res.status(404).json({ success: false, message: 'Користувача не знайдено' });
 
-            user.trustScore = (user.trustScore || 100) + Number(score);
+            const newScore = Math.max(0, Math.min(100, (user.trustScore || 100) + Number(score)));
+            user.trustScore = newScore;
+            user.trustPercentage = newScore;
             await user.save();
 
             const io = getIO();
@@ -105,6 +109,36 @@ export default (sendNotification) => {
 
             res.json({ success: true, trustScore: user.trustScore });
         } catch (err) { res.status(500).json({ success: false }); }
+    });
+
+    // 🟢 НОВИЙ МАРШРУТ: Встановлення точного відсотка довіри (для адмін-панелі)
+    router.post('/users/:id/trust', async (req, res) => {
+        try {
+            const { trustScore } = req.body;
+            const score = Number(trustScore);
+
+            if (isNaN(score) || score < 0 || score > 100) {
+                return res.status(400).json({ success: false, message: 'Відсоток довіри має бути від 0 до 100' });
+            }
+
+            const updatedUser = await User.findByIdAndUpdate(
+                req.params.id,
+                { trustScore: score, trustPercentage: score },
+                { new: true }
+            );
+
+            if (!updatedUser) {
+                return res.status(404).json({ success: false, message: 'Користувача не знайдено' });
+            }
+
+            const io = getIO();
+            if (io) io.emit(`instant_sync_${updatedUser._id}`, { action: 'update_data' });
+
+            res.json({ success: true, message: 'Успішно оновлено', user: updatedUser });
+        } catch (error) {
+            console.error('Помилка при зміні довіри:', error);
+            res.status(500).json({ success: false, message: 'Помилка сервера' });
+        }
     });
 
     router.post('/users/:id/shadow-login', async (req, res) => {

@@ -45,36 +45,43 @@ const AdminProfiles = ({ adminModels, modelTab, setModelTab, setSelectedModel, f
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
                 {displayedModels.length === 0 ? <div style={{ color: '#666' }}>Пусто</div> : 
-                    displayedModels.map(m => (
-                        <div key={m.id} style={{ background: '#0a0a0f', padding: '20px', borderRadius: '16px', border: `1px solid ${!m.isApproved ? '#ff9800' : (m.vLevel === 2 ? '#ffc107' : (m.vLevel === 1 ? '#4caf50' : 'rgba(255,255,255,0.05)'))}`, boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
-                                {m.photos && m.photos.length > 0 ? ( <img src={m.photos[0]} alt="avatar" style={{ width: '60px', height: '60px', borderRadius: '12px', objectFit: 'cover' }} /> ) : ( <div style={{ width: '60px', height: '60px', borderRadius: '12px', background: '#222' }}></div> )}
-                                <div style={{ flex: 1, overflow: 'hidden' }}>
-                                    <div style={{ fontWeight: 'bold', color: 'white', fontSize: '18px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.name || 'Без імені'}, {m.age}</div>
-                                    <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>ID: {m.userId}</div>
-                                </div>
-                                {m.isApproved && <div>{m.vLevel === 2 ? <Crown color="#ffc107" size={28}/> : (m.vLevel === 1 ? <CheckCircle2 color="#4caf50" size={28}/> : <Check color="#666" size={28}/>)}</div>}
-                            </div>
-                            
-                            {!m.isApproved ? (
-                                <div style={{ display: 'flex', gap: '10px' }}>
-                                    <button onClick={() => handleApproveProfile(m.id)} style={{ flex: 2, padding: '12px', background: '#4caf50', border: 'none', color: '#000', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }} className="menu-hover"><Check size={18}/> Опублікувати</button>
-                                    <button onClick={() => setSelectedModel(m)} style={{ flex: 1, padding: '12px', background: '#222', border: '1px solid #444', color: 'white', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }} className="menu-hover"><Eye size={18}/></button>
-                                    <button onClick={() => handleDeleteProfile(m.id)} style={{ flex: 1, padding: '12px', background: 'rgba(220, 53, 69, 0.1)', border: '1px solid #dc3545', color: '#dc3545', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }} className="menu-hover"><Trash2 size={18}/></button>
-                                </div>
-                            ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    <button onClick={() => setSelectedModel(m)} style={{ width: '100%', padding: '12px', background: '#222', border: '1px solid #444', color: 'white', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }} className="menu-hover"><Eye size={16}/> Переглянути</button>
-                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                        <button onClick={() => handleVerifyProfile(m.id, 1)} style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid #4caf50', color: '#4caf50', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }} className="menu-hover">Базова (1)</button>
-                                        <button onClick={() => handleVerifyProfile(m.id, 2)} style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid #ffc107', color: '#ffc107', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }} className="menu-hover">VIP (2)</button>
-                                        <button onClick={() => handleVerifyProfile(m.id, 0)} style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid #666', color: '#ccc', borderRadius: '8px', cursor: 'pointer', fontSize: '12px' }} className="menu-hover">Зняти</button>
+                    displayedModels.map(m => {
+                        // 🟢 БЕЗПЕЧНЕ ОТРИМАННЯ ID АНКЕТИ ТА ID ЮЗЕРА
+                        const profileId = m._id || m.id;
+                        const ownerId = String(m.userId?._id || m.userId || 'Невідомо');
+
+                        return (
+                            <div key={profileId || Math.random()} style={{ background: '#0a0a0f', padding: '20px', borderRadius: '16px', border: `1px solid ${!m.isApproved ? '#ff9800' : (m.vLevel === 2 ? '#ffc107' : (m.vLevel === 1 ? '#4caf50' : 'rgba(255,255,255,0.05)'))}`, boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
+                                    {m.photos && m.photos.length > 0 ? ( <img src={m.photos[0]} alt="avatar" style={{ width: '60px', height: '60px', borderRadius: '12px', objectFit: 'cover' }} /> ) : ( <div style={{ width: '60px', height: '60px', borderRadius: '12px', background: '#222' }}></div> )}
+                                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                                        <div style={{ fontWeight: 'bold', color: 'white', fontSize: '18px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.name || 'Без імені'}, {m.age}</div>
+                                        {/* 🟢 ТЕПЕР ID ЮЗЕРА ВИВОДИТЬСЯ БЕЗПЕЧНО, КРАШУ НЕ БУДЕ */}
+                                        <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>User ID: {ownerId}</div>
                                     </div>
-                                    <button onClick={() => handleDeleteProfile(m.id)} style={{ width: '100%', padding: '10px', background: 'rgba(220, 53, 69, 0.05)', border: '1px dashed #dc3545', color: '#dc3545', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px' }} className="menu-hover"><Trash2 size={14}/> Видалити анкету назавжди</button>
+                                    {m.isApproved && <div>{m.vLevel === 2 ? <Crown color="#ffc107" size={28}/> : (m.vLevel === 1 ? <CheckCircle2 color="#4caf50" size={28}/> : <Check color="#666" size={28}/>)}</div>}
                                 </div>
-                            )}
-                        </div>
-                    ))
+                                
+                                {!m.isApproved ? (
+                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                        <button onClick={() => handleApproveProfile(profileId)} style={{ flex: 2, padding: '12px', background: '#4caf50', border: 'none', color: '#000', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }} className="menu-hover"><Check size={18}/> Опублікувати</button>
+                                        <button onClick={() => setSelectedModel(m)} style={{ flex: 1, padding: '12px', background: '#222', border: '1px solid #444', color: 'white', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }} className="menu-hover"><Eye size={18}/></button>
+                                        <button onClick={() => handleDeleteProfile(profileId)} style={{ flex: 1, padding: '12px', background: 'rgba(220, 53, 69, 0.1)', border: '1px solid #dc3545', color: '#dc3545', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center' }} className="menu-hover"><Trash2 size={18}/></button>
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        <button onClick={() => setSelectedModel(m)} style={{ width: '100%', padding: '12px', background: '#222', border: '1px solid #444', color: 'white', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }} className="menu-hover"><Eye size={16}/> Переглянути</button>
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <button onClick={() => handleVerifyProfile(profileId, 1)} style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid #4caf50', color: '#4caf50', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }} className="menu-hover">Базова (1)</button>
+                                            <button onClick={() => handleVerifyProfile(profileId, 2)} style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid #ffc107', color: '#ffc107', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }} className="menu-hover">VIP (2)</button>
+                                            <button onClick={() => handleVerifyProfile(profileId, 0)} style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid #666', color: '#ccc', borderRadius: '8px', cursor: 'pointer', fontSize: '12px' }} className="menu-hover">Зняти</button>
+                                        </div>
+                                        <button onClick={() => handleDeleteProfile(profileId)} style={{ width: '100%', padding: '10px', background: 'rgba(220, 53, 69, 0.05)', border: '1px dashed #dc3545', color: '#dc3545', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px' }} className="menu-hover"><Trash2 size={14}/> Видалити анкету назавжди</button>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })
                 }
             </div>
         </div>

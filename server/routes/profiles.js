@@ -14,15 +14,11 @@ router.get('/', async (req, res) => {
 
         if (isValid(maxAge)) query.age = { $lte: Number(maxAge) };
         if (isValid(maxPrice)) query.priceFrom = { $lte: Number(maxPrice) };
-        
         if (isValid(fetishes)) query.fetishes = { $in: fetishes.split(',') };
         if (isValid(hair)) query.hairColor = { $in: hair.split(',') };
         if (isValid(body)) query.bodyType = { $in: body.split(',') };
         if (isValid(genders)) query.gender = { $in: genders.split(',') };
-        
-        if (isValid(userId)) {
-            query.userId = userId;
-        }
+        if (isValid(userId)) query.userId = userId;
 
         if (fetchAll !== 'true' && !isValid(userId)) {
             query.isApproved = true; 
@@ -33,8 +29,8 @@ router.get('/', async (req, res) => {
         if (fetchAll === 'true') {
             const profiles = await Profile.find(query)
                 .sort(sortLogic)
-                // 🚀 ПІДТЯГУЄМО lastActive ДЛЯ ПЕРЕВІРКИ ОНЛАЙНУ
-                .populate('userId', 'trustScore lastActive');
+                // 🟢 ТЕПЕР ДІСТАЄМО ОБИДВІ МОЖЛИВІ НАЗВИ ВІДСОТКУ
+                .populate('userId', 'trustScore trustPercentage lastActive'); 
                 
             return res.json({ success: true, data: profiles, totalItems: profiles.length, totalPages: 1 });
         }
@@ -49,8 +45,8 @@ router.get('/', async (req, res) => {
             .sort(sortLogic)
             .skip(skip)
             .limit(limitNumber)
-            // 🚀 ПІДТЯГУЄМО lastActive ДЛЯ ПЕРЕВІРКИ ОНЛАЙНУ
-            .populate('userId', 'trustScore lastActive');
+            // 🟢 І ТУТ ТАКОЖ
+            .populate('userId', 'trustScore trustPercentage lastActive'); 
         
         res.json({ success: true, data: profiles, totalItems, totalPages: Math.ceil(totalItems / limitNumber) || 1, currentPage: pageNumber });
     } catch (error) { 
@@ -61,14 +57,10 @@ router.get('/', async (req, res) => {
 router.post('/', authMiddleware, async (req, res) => { 
     try { 
         const userId = req.body.userId || req.user.id;
-        
-        if (!userId) {
-            return res.status(400).json({ success: false, message: 'Не передано userId' });
-        }
+        if (!userId) return res.status(400).json({ success: false, message: 'Не передано userId' });
 
         const User = (await import('../models/User.js')).default;
         const user = await User.findById(userId);
-        
         if (!user) return res.status(404).json({ success: false, message: 'Юзера не знайдено' });
 
         let maxProfiles = 1; 
@@ -79,13 +71,10 @@ router.post('/', authMiddleware, async (req, res) => {
         const currentProfilesCount = await Profile.countDocuments({ userId: user._id });
 
         if (currentProfilesCount >= maxProfiles) {
-            return res.status(400).json({ 
-                success: false, 
-                message: `Ліміт вичерпано! Максимум анкет для вашого статусу: ${maxProfiles}` 
-            });
+            return res.status(400).json({ success: false, message: `Ліміт вичерпано! Максимум анкет: ${maxProfiles}` });
         }
 
-        const newProfile = new Profile({ ...req.body, userId: userId }); // Примусово ставимо userId з токена
+        const newProfile = new Profile({ ...req.body, userId: userId }); 
         const savedProfile = await newProfile.save();
         
         const io = getIO();
@@ -99,11 +88,8 @@ router.post('/', authMiddleware, async (req, res) => {
 
 router.put('/:id', authMiddleware, async (req, res) => { 
     try { 
-        // 🟢 Перевірка на власника
         const profile = await Profile.findById(req.params.id);
-        if (!profile) {
-            return res.status(404).json({ success: false, message: "Анкету не знайдено" });
-        }
+        if (!profile) return res.status(404).json({ success: false, message: "Анкету не знайдено" });
 
         if (String(profile.userId) !== String(req.user.id) && req.user.role !== 'admin') {
             return res.status(403).json({ success: false, message: "Ви не можете редагувати чужу анкету" });
@@ -116,54 +102,32 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
         res.json({ success: true, data: updated }); 
     } catch (error) { 
-        console.error("Помилка оновлення анкети:", error);
         res.status(500).json({ success: false, message: "Помилка сервера" }); 
     } 
 });
 
 router.delete('/:id', authMiddleware, async (req, res) => { 
     try { 
-        console.log(`[DELETE] Запит на видалення анкети з ID: "${req.params.id}"`);
-        
-        // 1. Захист від битих запитів з фронтенду
-        if (!req.params.id || req.params.id === 'undefined' || req.params.id === '[object Object]') {
-            return res.status(400).json({ success: false, message: "Помилка фронтенду: передано неправильний ID анкети" });
-        }
+        if (!req.params.id || req.params.id === 'undefined') return res.status(400).json({ success: false, message: "Неправильний ID" });
 
-        // 2. Знаходимо анкету
         const profile = await Profile.findById(req.params.id);
-        
-        if (!profile) {
-            console.log(`[DELETE] Анкету ${req.params.id} не знайдено в базі.`);
-            // ВАЖЛИВО: віддаємо 400, щоб не викликати Logout на фронті
-            return res.status(400).json({ success: false, message: "Анкету вже видалено або не знайдено" });
-        }
+        if (!profile) return res.status(400).json({ success: false, message: "Анкету не знайдено" });
 
-        // 3. БЕЗПЕЧНА ПЕРЕВІРКА ПРАВ: витягуємо ID з токена у всіх можливих форматах
         const requestUserId = String(req.user?.id || req.user?._id || req.user?.userId);
         const profileOwnerId = String(profile.userId?._id || profile.userId);
 
-        console.log(`[DELETE] Хто видаляє: ${requestUserId} | Власник: ${profileOwnerId}`);
-
         if (profileOwnerId !== requestUserId && req.user?.role !== 'admin') {
-            console.log(`❌ Блокування: Спроба видалити чужу анкету!`);
-            // ВАЖЛИВО: Ставимо статус 400 (Bad Request), а не 403, щоб фронтенд НЕ робив Logout
             return res.status(400).json({ success: false, message: "Ви не можете видалити чужу анкету" });
         }
 
-        // 4. Видаляємо
         await Profile.findByIdAndDelete(req.params.id); 
 
         const io = getIO();
         if (io) io.emit('global_sync', { action: 'reload_catalog' });
 
-        console.log(`✅ Анкета успішно видалена`);
         res.json({ success: true, message: "Анкету успішно видалено" }); 
-
     } catch (error) { 
-        console.error("❌ Помилка видалення анкети:", error.message);
-        // ВАЖЛИВО: Віддаємо статус 400 замість 500, щоб при краші бази вас не викидало з акаунту
-        res.status(400).json({ success: false, message: "Помилка сервера при видаленні: " + error.message }); 
+        res.status(400).json({ success: false, message: "Помилка сервера: " + error.message }); 
     } 
 });
 

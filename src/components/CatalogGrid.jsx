@@ -1,19 +1,10 @@
 import React from 'react';
 import { ShieldCheck, CheckCircle2, Heart, MessageCircle, Rocket, Crown, Gem } from 'lucide-react'; 
-<<<<<<< HEAD
-=======
-// 🚀 ДОДАНО ІМПОРТ STORE ДЛЯ ПЕРЕВІРКИ ВЛАСНИКА ТА ОНЛАЙНУ
->>>>>>> 9dc3468 (fix: виправлено падіння каталогу (onlineUsers) та помилку 401 при видаленні анкети)
 import useStore from '../store/useStore';
 
 const CatalogGrid = ({ currentModels, setSelectedModel, setContactSelectionModel, t, currentLang, accent, favorites = [], handleToggleFavorite }) => {
     
-<<<<<<< HEAD
-    const { userUniqueId, user } = useStore();
-=======
-    // 🚀 ВИТЯГУЄМО ДАНІ КОРИСТУВАЧА ЗІ STORE
-    const { userUniqueId, user, onlineUsers } = useStore(); // Без дефолтного [], перевіримо безпечно нижче
->>>>>>> 9dc3468 (fix: виправлено падіння каталогу (onlineUsers) та помилку 401 при видаленні анкети)
+    const { userUniqueId, user, onlineUsers } = useStore();
     const myId = user?._id || user?.id || userUniqueId;
 
     const getFetishTranslation = (fKey) => {
@@ -26,13 +17,11 @@ const CatalogGrid = ({ currentModels, setSelectedModel, setContactSelectionModel
         return fKey;
     };
 
-    // 🟢 ФУНКЦІЯ ПЕРЕВІРКИ ОНЛАЙНУ (10 ХВИЛИН)
     const checkIfOnline = (lastActiveDate) => {
         if (!lastActiveDate) return false;
         const lastActiveTime = new Date(lastActiveDate).getTime();
         const currentTime = new Date().getTime();
         const tenMinutesInMs = 10 * 60 * 1000;
-        // Якщо різниця між зараз і lastActive менша за 10 хв — юзер онлайн
         return (currentTime - lastActiveTime) < tenMinutesInMs;
     };
 
@@ -44,50 +33,48 @@ const CatalogGrid = ({ currentModels, setSelectedModel, setContactSelectionModel
                 const ownerId = m.userId?._id || m.userId;
                 const isOwner = Boolean(myId && ownerId && String(myId) === String(ownerId));
                 
-<<<<<<< HEAD
-                // 🟢 ЛОГІКА СТАТУСУ ТА ДОВІРИ
-                let displayOnline = false;
-                let displayTrust = 100;
-
+                // 🟢 ОНЛАЙН
+                let displayOnline = Boolean(m.isOnline);
                 const populatedUser = typeof m.userId === 'object' ? m.userId : null;
 
-                if (isOwner) {
-                    // Якщо це наша анкета, перевіряємо наш власний lastActive зі стору
-                    displayOnline = user?.lastActive ? checkIfOnline(user.lastActive) : true;
-                    displayTrust = user?.trustScore ?? 100;
-                } else if (populatedUser) {
-                    // Для чужих анкет перевіряємо їхній lastActive, який підтягнув бекенд
-                    displayOnline = checkIfOnline(populatedUser.lastActive);
-                    displayTrust = populatedUser.trustScore ?? 100;
-                }
-                
-                // Колір для довіри
-                let trustColor = '#4caf50';
-                if (displayTrust < 70) trustColor = '#ffb300';
-                if (displayTrust < 40) trustColor = '#ff4444';
-
-=======
-                // 🟢 1. УЛЬТРА-БЕЗПЕЧНА ПЕРЕВІРКА ОНЛАЙНУ (Захист від крашу)
-                let isOnline = Boolean(m.isOnline);
                 if (Array.isArray(onlineUsers)) {
-                    // Якщо це масив (рядків або об'єктів)
-                    isOnline = isOnline || onlineUsers.some(ou => 
+                    displayOnline = displayOnline || onlineUsers.some(ou => 
                         ou === ownerId || 
                         String(ou) === String(ownerId) || 
                         (ou && ou.userId && String(ou.userId) === String(ownerId))
                     );
                 } else if (onlineUsers && typeof onlineUsers === 'object') {
-                    // Якщо це об'єкт-словник
-                    isOnline = isOnline || Boolean(onlineUsers[ownerId]);
+                    displayOnline = displayOnline || Boolean(onlineUsers[ownerId]);
                 }
 
-                // 🟢 2. БЕЗПЕЧНА ПЕРЕВІРКА ДОВІРИ (захист від null)
-                const trustScore = (m.trustScore !== undefined && m.trustScore !== null) 
-                    ? m.trustScore 
-                    : (m.trustPercentage || 100);
+                if (!displayOnline) {
+                    if (isOwner) {
+                        displayOnline = user?.lastActive ? checkIfOnline(user.lastActive) : true;
+                    } else if (populatedUser) {
+                        displayOnline = checkIfOnline(populatedUser.lastActive);
+                    }
+                }
 
-                // ЛОГІКА СВІТІННЯ КАРТКИ ЗАЛЕЖНО ВІД СТАТУСУ
->>>>>>> 9dc3468 (fix: виправлено падіння каталогу (onlineUsers) та помилку 401 при видаленні анкети)
+                // 🟢 БРОНЕБІЙНА ЛОГІКА ДОВІРИ
+                let displayTrust = 100;
+                
+                // Перевіряємо всі можливі місця та назви змінних
+                const backendTrust = populatedUser?.trustScore ?? populatedUser?.trustPercentage;
+                const storeTrust = user?.trustScore ?? user?.trustPercentage;
+                const profileTrust = m.trustScore ?? m.trustPercentage;
+
+                if (backendTrust != null) {
+                    displayTrust = backendTrust;
+                } else if (isOwner && storeTrust != null) {
+                    displayTrust = storeTrust;
+                } else if (profileTrust != null) {
+                    displayTrust = profileTrust;
+                }
+                
+                let trustColor = '#4caf50';
+                if (displayTrust < 70) trustColor = '#ffb300';
+                if (displayTrust < 40) trustColor = '#ff4444';
+
                 let cardStyle = { border: '1px solid rgba(255,255,255,0.05)', shadow: '0 10px 30px rgba(0,0,0,0.5)' };
                 if (m.vLevel === 3) cardStyle = { border: '2px solid #00ffff', shadow: '0 0 20px rgba(0, 255, 255, 0.2)' };
                 else if (m.vLevel === 2) cardStyle = { border: '2px solid #ffd700', shadow: '0 0 20px rgba(255, 215, 0, 0.15)' };
@@ -95,7 +82,7 @@ const CatalogGrid = ({ currentModels, setSelectedModel, setContactSelectionModel
                 else if (m.bumpedAt) cardStyle = { border: '1px solid #ff9800', shadow: '0 0 15px rgba(255, 152, 0, 0.2)' };
 
                 return (
-                    <div key={m.id} className="model-card" style={{ backgroundColor: '#0a0a0f', borderRadius: '20px', overflow: 'hidden', border: cardStyle.border, position: 'relative', transition: 'all 0.3s ease', boxShadow: cardStyle.shadow }}>
+                    <div key={m.id || m._id || Math.random()} className="model-card" style={{ backgroundColor: '#0a0a0f', borderRadius: '20px', overflow: 'hidden', border: cardStyle.border, position: 'relative', transition: 'all 0.3s ease', boxShadow: cardStyle.shadow }}>
                         
                         {m.bumpedAt && !m.vLevel && (
                             <div style={{ position: 'absolute', top: '15px', left: '15px', background: '#ff9800', color: '#000', padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: '900', zIndex: 10, display: 'flex', alignItems: 'center', gap: '5px', letterSpacing: '0.5px', boxShadow: '0 4px 10px rgba(255, 152, 0, 0.4)' }}>
@@ -133,31 +120,18 @@ const CatalogGrid = ({ currentModels, setSelectedModel, setContactSelectionModel
                                             {m.vLevel > 0 && <CheckCircle2 size={18} color={m.vLevel === 3 ? '#00ffff' : (m.vLevel === 2 ? '#ffd700' : '#4CAF50')} style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}/>}
                                         </div>
                                         
-                                        {/* 🟢 ВІДОБРАЖЕННЯ ОНЛАЙН СТАТУСУ */}
                                         <div style={{ color: '#ddd', fontSize: '13px', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '6px' }}>
-<<<<<<< HEAD
-                                            {/* 🟢 ІНДИКАТОР ОНЛАЙНУ */}
-=======
->>>>>>> 9dc3468 (fix: виправлено падіння каталогу (onlineUsers) та помилку 401 при видаленні анкети)
                                             <span style={{ 
                                                 display: 'inline-block', 
                                                 width: '8px', 
                                                 height: '8px', 
-<<<<<<< HEAD
                                                 background: displayOnline ? '#4CAF50' : '#666', 
                                                 borderRadius: '50%', 
                                                 boxShadow: displayOnline ? '0 0 8px #4CAF50' : 'none',
                                                 transition: 'background-color 0.3s ease'
                                             }}></span>
                                             {displayOnline ? (t[currentLang]?.onlineOnly || "Онлайн") : (currentLang === 'ua' ? 'Офлайн' : 'Offline')} 
-                                            <span style={{color: '#888'}}>•</span> {m.age} {t[currentLang]?.age}
-=======
-                                                background: isOnline ? '#4CAF50' : '#6b7280', 
-                                                borderRadius: '50%', 
-                                                boxShadow: isOnline ? '0 0 8px #4CAF50' : 'none' 
-                                            }}></span>
-                                            {isOnline ? 'Online' : 'Offline'} <span style={{color: '#888'}}>•</span> {m.age} {t[currentLang]?.age || "років"}
->>>>>>> 9dc3468 (fix: виправлено падіння каталогу (onlineUsers) та помилку 401 при видаленні анкети)
+                                            <span style={{color: '#888'}}>•</span> {m.age} {t[currentLang]?.age || "років"}
                                         </div>
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
@@ -192,8 +166,6 @@ const CatalogGrid = ({ currentModels, setSelectedModel, setContactSelectionModel
                                     </button>
                                 )}
 
-<<<<<<< HEAD
-                                {/* 🟢 ВІДОБРАЖЕННЯ ДОВІРИ */}
                                 <div style={{ 
                                     display: 'flex', 
                                     alignItems: 'center', 
@@ -206,12 +178,6 @@ const CatalogGrid = ({ currentModels, setSelectedModel, setContactSelectionModel
                                 }} title={t[currentLang]?.trustScore}>
                                     <ShieldCheck size={18} color={trustColor} style={{ marginRight: '5px' }} />
                                     <span style={{ fontSize: '13px', color: trustColor, fontWeight: 'bold' }}>{displayTrust}%</span>
-=======
-                                {/* 🟢 ВІДОБРАЖЕННЯ ВІДСОТКУ ДОВІРИ */}
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(76, 175, 80, 0.1)', padding: '0 15px', borderRadius: '12px', border: '1px solid rgba(76, 175, 80, 0.2)', cursor: 'help' }} title={t[currentLang]?.trustScore}>
-                                    <ShieldCheck size={18} color="#4caf50" style={{ marginRight: '5px' }} />
-                                    <span style={{ fontSize: '13px', color: '#4caf50', fontWeight: 'bold' }}>{trustScore}%</span>
->>>>>>> 9dc3468 (fix: виправлено падіння каталогу (onlineUsers) та помилку 401 при видаленні анкети)
                                 </div>
                             </div>
                         </div>
