@@ -164,12 +164,27 @@ const useStore = create((set, get) => ({
 
         socket.emit('user_connected', userId);
 
+        
         socket.off('sync_online_users');
-        socket.on('sync_online_users', (onlineIds) => {
-            onlineIds.forEach(id => {
-                get().setOnlineUser(id, { status: 'online' });
-            });
+socket.on('sync_online_users', (onlineIds) => {
+    set((state) => {
+        const updatedUsers = { ...state.onlineUsers };
+        
+        // Переводимо в 'offline' всіх, кого немає в новому списку від сервера
+        Object.keys(updatedUsers).forEach(id => {
+            if (!onlineIds.includes(id) && updatedUsers[id]?.status === 'online') {
+                updatedUsers[id] = { status: 'offline', lastSeen: new Date() };
+            }
         });
+
+        // Додаємо актуальних користувачів, які зараз дійсно онлайн
+        onlineIds.forEach(id => {
+            updatedUsers[id] = { status: 'online' };
+        });
+
+        return { onlineUsers: updatedUsers };
+    });
+});
 
         socket.off('connect');
         socket.on('connect', () => {
