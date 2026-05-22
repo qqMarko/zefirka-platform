@@ -259,10 +259,12 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
 
                         {/* ВЕРХНЯ СІТКА: ЦІНА ТА ДОВІРА */}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
-                            <div style={{ background: '#141417', border: '1px solid #232326', borderRadius: '16px', padding: '16px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '11px', color: '#71717a', textTransform: 'uppercase', fontWeight: '700', marginBottom: '6px' }}>Ціна вірту</div>
-                                <div style={{ fontSize: '22px', fontWeight: '800', color: '#fff' }}>{model.priceFrom} <span style={{ fontSize: '13px', color: '#52525b' }}>₴</span></div>
-                            </div>
+                           <div style={{ background: '#141417', border: '1px solid #232326', borderRadius: '16px', padding: '16px', textAlign: 'center' }}>
+                           <div style={{ fontSize: '11px', color: '#71717a', textTransform: 'uppercase', fontWeight: '700', marginBottom: '6px' }}>Ціна вірту</div>
+                           <div style={{ fontSize: '18px', fontWeight: '800', color: '#fff' }}>
+                            від {model.priceFrom} {model.priceTo ? `до ${model.priceTo}` : ''} <span style={{ fontSize: '13px', color: '#52525b' }}>₴</span>
+                        </div>
+                        </div>
                             <div style={{ background: '#141417', border: '1px solid #232326', borderRadius: '16px', padding: '16px', textAlign: 'center' }}>
                                 <div style={{ fontSize: '11px', color: '#71717a', textTransform: 'uppercase', fontWeight: '700', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}><ShieldCheck size={12} color={trustColor}/> Довіра</div>
                                 <div style={{ fontSize: '22px', fontWeight: '800', color: trustColor }}>{displayTrust}%</div>

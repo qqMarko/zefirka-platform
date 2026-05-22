@@ -8,13 +8,17 @@ const profileSchema = new mongoose.Schema({
     age: { type: Number },
     height: { type: String },
     weight: { type: Number },
+    
     priceFrom: { type: Number },
+    priceTo: { type: Number }, // 🟢 ДОДАНО ДРУГУ ЦІНУ
+    
     gender: { type: String },
     bodyType: { type: String },
     hairColor: { type: String },
     fetishes: [{ type: String }],
+    
     contactType: { type: String },
-    contactTypes: [{ type: String }],
+    contactTypes: [{ type: String }], // 🟢 ДОДАНО МАСИВ ДЛЯ ДЕКІЛЬКОХ СОЦМЕРЕЖ
     contact: { type: String },
     
     // 📸 ОСЬ ТЕ ПОЛЕ, ЯКОГО НЕ ВИСТАЧАЛО І ЯКЕ БЛОКУВАЛО ФОТКИ!
@@ -40,7 +44,7 @@ const profileSchema = new mongoose.Schema({
         rating: { type: Number, required: true, min: 1, max: 5 }, 
         text: { type: String }, 
         date: { type: Date, default: Date.now },
-        status: { type: String, default: 'approved' } // 🟢 ДОДАЛИ СТАТУС ('approved' або 'pending')
+        status: { type: String, default: 'approved' } 
     }],
     
 }, { timestamps: true });
