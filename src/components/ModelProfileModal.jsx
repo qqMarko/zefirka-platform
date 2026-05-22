@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, ChevronLeft, ChevronRight, CheckCircle2, ShieldCheck, Send, Heart, MapPin, Sparkles, Star, Target, Crown, CalendarDays, Zap, Info } from 'lucide-react'; 
+import { X, ChevronLeft, ChevronRight, CheckCircle2, ShieldCheck, Send, Heart, MapPin, Sparkles, Star, Target, Crown, CalendarDays, Zap, Info, AlertTriangle } from 'lucide-react'; 
 import useStore from '../store/useStore';
 import { t } from '../data/translations';
 import { accent } from '../styles/theme';
@@ -7,12 +7,14 @@ import useSmoothScroll from '../hooks/useSmoothScroll';
 import { toast } from 'react-hot-toast';
 
 const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], handleToggleFavorite }) => {
-    // 🚀 ДОДАВ ВИТЯГУВАННЯ 'user' ЗІ СТОРУ
     const { currentLang, userUniqueId, user } = useStore();
     const [photoIndex, setPhotoIndex] = useState(0);
     const [showContacts, setShowContacts] = useState(false);
     
-    // ⭐ Відгуки
+    // 🟢 Стейт для модального вікна з попередженням
+    const [showWarningModal, setShowWarningModal] = useState(false);
+    const [selectedSocial, setSelectedSocial] = useState(null);
+
     const [rating, setRating] = useState(5);
     const [reviewText, setReviewText] = useState('');
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -23,10 +25,7 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
     const scrollRef = useRef(null);
     useSmoothScroll(scrollRef);
 
-    // 🚀 ЗАЛІЗОБЕТОННА ПЕРЕВІРКА НА ВЛАСНИКА
-    // 1. Беремо твій ID з профілю, якщо залогінений, або з локальної сесії
     const myId = user?._id || user?.id || userUniqueId;
-    // 2. Беремо ID власника анкети (підстраховка, якщо база віддала об'єкт)
     const ownerId = model?.userId?._id || model?.userId;
 
     const isOwner = Boolean(
@@ -34,17 +33,27 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
         (myId && ownerId && String(myId) === String(ownerId))
     );
 
-    // (Для нас з тобою: виведемо в консоль F12, щоб переконатись, що вони однакові)
-    useEffect(() => {
-        console.log("🛡️ ПЕРЕВІРКА ВЛАСНИКА:", { myId, ownerId, isOwner, modelName: model?.name });
-    }, [myId, ownerId, isOwner, model]);
+    // 🟢 НАДІЙНА ЛОГІКА ОТРИМАННЯ ВІДСОТКА ДОВІРИ (як у каталозі)
+    let displayTrust = 100;
+    const populatedUser = typeof model?.userId === 'object' ? model.userId : null;
+    const backendTrust = populatedUser?.trustScore ?? populatedUser?.trustPercentage;
+    const storeTrust = user?.trustScore ?? user?.trustPercentage;
+    const profileTrust = model?.trustScore ?? model?.trustPercentage;
+
+    if (backendTrust != null) displayTrust = backendTrust;
+    else if (isOwner && storeTrust != null) displayTrust = storeTrust;
+    else if (profileTrust != null) displayTrust = profileTrust;
+
+    // 🟢 Динамічний колір для довіри
+    let trustColor = '#10b981'; // Зелений
+    if (displayTrust < 70) trustColor = '#f59e0b'; // Жовтий
+    if (displayTrust < 40) trustColor = '#ef4444'; // Червоний
 
     useEffect(() => {
         document.body.style.overflow = 'hidden';
         return () => { document.body.style.overflow = ''; };
     }, []);
 
-    // 📊 Трекінг
     useEffect(() => {
         if (model?.id && !isOwner) {
             const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
@@ -52,14 +61,32 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
         }
     }, [model?.id, isOwner]);
 
-    const handleContactClick = (type) => {
+    // 🟢 Масив кольорів для різних соцмереж
+    const contactNetworks = [
+        { id: 'Telegram', color: '#24A1DE' },
+        { id: 'WhatsApp', color: '#25D366' },
+        { id: 'Viber', color: '#7360F2' }
+    ];
+
+    const handleSocialClick = (network) => {
+        setSelectedSocial(network);
+        setShowWarningModal(true);
+    };
+
+    const confirmSocialRedirect = () => {
         if (!isOwner) {
             const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
             fetch(`${BASE_URL}/profiles/${model.id}/track`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'click' }), keepalive: true }).catch(e => console.log(e));
         }
+        
+        setShowWarningModal(false);
+        // Тут в ідеалі має бути логіка переходу (наприклад, відкриття посилання)
+        alert(`Перехід у ${selectedSocial}: ${model.contact || "не вказано"}`); 
+    };
 
-        if (type === 'chat') { openPrivateChat(model); onClose(); }
-        else { alert(`Перехід у ${model.contactType || "месенджер"}: ${model.contact || "не вказано"}`); }
+    const handleInternalChatClick = () => {
+        openPrivateChat(model); 
+        onClose();
     };
 
    const submitReview = async () => {
@@ -76,7 +103,6 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
             const data = await res.json();
 
             if (data.success) {
-                // Якщо відгук пішов на перевірку
                 if (data.isPending) {
                     toast.success('🛡️ Відгук відправлено на перевірку адміністратору!', { id: loadingToast, duration: 5000 });
                 } else {
@@ -91,7 +117,6 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
         finally { setIsSubmittingReview(false); }
     };
 
-    // 🔥 НОВА ФУНКЦІЯ: ВИДАЛЕННЯ ВІДГУКУ (DIAMOND)
     const handleDeleteReview = async (reviewId) => {
         if (!window.confirm("🗑 Ви впевнені, що хочете назавжди видалити цей відгук?")) return;
         
@@ -117,6 +142,7 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
             toast.error('Мережева помилка', { id: loadingToast });
         }
     };
+    
     const nextPhoto = (e) => { e.stopPropagation(); if (model?.photos?.length > 0) setPhotoIndex((prev) => (prev + 1) % model.photos.length); };
     const prevPhoto = (e) => { e.stopPropagation(); if (model?.photos?.length > 0) setPhotoIndex((prev) => (prev - 1 + model.photos.length) % model.photos.length); };
 
@@ -129,12 +155,16 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
         return fKey;
     };
 
+    // Отримуємо масив соцмереж (або зі старого contactType, або з нового масиву contactTypes)
+    const availableSocials = model.contactTypes && model.contactTypes.length > 0 
+        ? model.contactTypes 
+        : (model.contactType ? [model.contactType] : []);
+
     return (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(10px)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fadeIn 0.3s ease' }} onClick={onClose}>
             
             <div onClick={(e) => e.stopPropagation()} className="fade-in-up" style={{ width: '100%', maxWidth: '600px', height: '100%', maxHeight: '90vh', background: '#09090b', borderRadius: '24px', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 25px 50px -12px rgba(0,0,0,1)', border: '1px solid #27272a' }}>
                 
-                {/* 🔒 ПЛАВАЮЧІ КНОПКИ (Над фото) */}
                 <div style={{ position: 'absolute', top: '15px', left: '15px', right: '15px', display: 'flex', justifyContent: 'space-between', zIndex: 100 }}>
                     <button onClick={onClose} style={{ width: '40px', height: '40px', background: 'rgba(0,0,0,0.5)', borderRadius: '50%', cursor: 'pointer', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)', transition: '0.2s' }} className="hover-scale">
                         <X size={20} color="white" />
@@ -171,7 +201,7 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
                         )}
                     </div>
 
-                    <div style={{ padding: '24px 24px 120px 24px', position: 'relative', zIndex: 20 }}>
+                    <div style={{ padding: '24px 24px 150px 24px', position: 'relative', zIndex: 20 }}>
                         
                         <div style={{ marginBottom: '24px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -193,9 +223,10 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
                                 <div style={{ fontSize: '11px', color: '#71717a', textTransform: 'uppercase', fontWeight: '700', marginBottom: '6px' }}>Ціна вірту</div>
                                 <div style={{ fontSize: '20px', fontWeight: '800', color: '#fff' }}>{model.priceFrom} <span style={{ fontSize: '12px', color: '#52525b' }}>₴</span></div>
                             </div>
-                            <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '16px 12px', textAlign: 'center' }}>
+                           <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '16px 12px', textAlign: 'center' }}>
                                 <div style={{ fontSize: '11px', color: '#71717a', textTransform: 'uppercase', fontWeight: '700', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}><ShieldCheck size={12}/> Довіра</div>
-                                <div style={{ fontSize: '20px', fontWeight: '800', color: '#10b981' }}>{model.trustScore || 80}%</div>
+                                {/* 🟢 ВИВОДИМО ПРАВИЛЬНИЙ ВІДСОТОК ТА ДИНАМІЧНИЙ КОЛІР */}
+                                <div style={{ fontSize: '20px', fontWeight: '800', color: trustColor }}>{displayTrust}%</div>
                             </div>
                             <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '16px 12px', textAlign: 'center' }}>
                                 <div style={{ fontSize: '11px', color: '#71717a', textTransform: 'uppercase', fontWeight: '700', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}><Star size={12}/> Рейтинг</div>
@@ -206,8 +237,9 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '30px' }}>
                             {[
                                 { icon: CalendarDays, val: `${model.age} років` },
-                                { icon: Target, val: `${model.height || "—"} см` },
-                                { icon: Crown, val: `${model.weight || "—"} кг` },
+                                // 🟢 Виправлено виведення зросту і ваги
+                                { icon: Target, val: model.height ? `${model.height} см` : "—" },
+                                { icon: Crown, val: model.weight ? `${model.weight} кг` : "—" },
                                 { val: t[currentLang]?.bodyTypes?.[model.bodyType] || model.bodyType || "—" },
                                 { val: t[currentLang]?.hairColors?.[model.hairColor] || model.hairColor || "—" }
                             ].map((item, i) => (
@@ -219,8 +251,9 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
 
                         <div style={{ marginBottom: '30px' }}>
                             <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#fff', marginBottom: '10px' }}>Про мене</h3>
+                            {/* 🟢 Виправлено на model.bio || model.desc */}
                             <p style={{ margin: 0, color: '#a1a1aa', fontSize: '15px', lineHeight: '1.6', whiteSpace: 'pre-line' }}>
-                                {model.desc || 'Опис готується до публікації...'}
+                                {model.bio || model.desc || 'Опис готується до публікації...'}
                             </p>
                         </div>
 
@@ -261,51 +294,49 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                 {localReviews.length > 0 ? (
-    localReviews.filter(r => isOwner || r.status !== 'pending').map((review, i) => (
-        <div key={i} style={{ background: '#18181b', borderRadius: '16px', padding: '16px', marginBottom: '12px', border: '1px solid #27272a', position: 'relative' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ fontWeight: 'bold', color: 'white', fontSize: '14px' }}>{review.clientName}</div>
-                    
-                    {/* Плашка модерації для власника */}
-                    {review.status === 'pending' && (
-                        <div style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', fontSize: '10px', fontWeight: 'bold', padding: '2px 6px', borderRadius: '4px', border: '1px solid #f59e0b' }}>
-                            НА ПЕРЕВІРЦІ
-                        </div>
-                    )}
-                </div>
-                <div style={{ color: '#52525b', fontSize: '12px' }}>
-                    {new Date(review.date).toLocaleDateString()}
-                </div>
-            </div>
-            
-            <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
-                {[1, 2, 3, 4, 5].map(star => (
-                    <Star key={star} size={14} color={star <= review.rating ? "#f59e0b" : "#3f3f46"} fill={star <= review.rating ? "#f59e0b" : "none"} />
-                ))}
-            </div>
-            
-            <p style={{ color: '#a1a1aa', fontSize: '13px', lineHeight: '1.5', margin: 0 }}>
-                {review.text}
-            </p>
+                                    localReviews.filter(r => isOwner || r.status !== 'pending').map((review, i) => (
+                                        <div key={i} style={{ background: '#18181b', borderRadius: '16px', padding: '16px', marginBottom: '12px', border: '1px solid #27272a', position: 'relative' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <div style={{ fontWeight: 'bold', color: 'white', fontSize: '14px' }}>{review.clientName}</div>
+                                                    
+                                                    {review.status === 'pending' && (
+                                                        <div style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', fontSize: '10px', fontWeight: 'bold', padding: '2px 6px', borderRadius: '4px', border: '1px solid #f59e0b' }}>
+                                                            НА ПЕРЕВІРЦІ
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div style={{ color: '#52525b', fontSize: '12px' }}>
+                                                    {new Date(review.date).toLocaleDateString()}
+                                                </div>
+                                            </div>
+                                            
+                                            <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
+                                                {[1, 2, 3, 4, 5].map(star => (
+                                                    <Star key={star} size={14} color={star <= review.rating ? "#f59e0b" : "#3f3f46"} fill={star <= review.rating ? "#f59e0b" : "none"} />
+                                                ))}
+                                            </div>
+                                            
+                                            <p style={{ color: '#a1a1aa', fontSize: '13px', lineHeight: '1.5', margin: 0 }}>
+                                                {review.text}
+                                            </p>
 
-            {/* 🔥 КНОПКА ВИДАЛЕННЯ ДЛЯ DIAMOND */}
-            {isOwner && user?.vipPackage === 'diamond' && (
-                <button 
-                    onClick={() => handleDeleteReview(review._id)}
-                    style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold', transition: '0.2s' }}
-                    className="hover-scale"
-                >
-                    🗑 Видалити
-                </button>
-            )}
-        </div>
-    ))
-) : (
-    <div style={{ textAlign: 'center', color: '#52525b', fontSize: '13px', padding: '20px' }}>
-        Ще немає відгуків. Будьте першим!
-    </div>
-)}
+                                            {isOwner && user?.vipPackage === 'diamond' && (
+                                                <button 
+                                                    onClick={() => handleDeleteReview(review._id)}
+                                                    style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold', transition: '0.2s' }}
+                                                    className="hover-scale"
+                                                >
+                                                    🗑 Видалити
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div style={{ textAlign: 'center', color: '#52525b', fontSize: '13px', padding: '20px' }}>
+                                        Ще немає відгуків. Будьте першим!
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -318,24 +349,60 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
                             <ShieldCheck size={20} color="#71717a" /> ЦЕ ВАША АНКЕТА
                         </div>
                     ) : !showContacts ? (
-                        <button onClick={() => setShowContacts(true)} style={{ width: '100%', padding: '18px', background: accent, border: 'none', borderRadius: '16px', color: '#000', fontSize: '16px', fontWeight: '800', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', transition: '0.2s' }} className="hover-scale">
+                        <button onClick={() => setShowContacts(true)} style={{ width: '100%', padding: '18px', background: accent, border: 'none', borderRadius: '16px', color: '#000', fontSize: '16px', fontWeight: '900', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', transition: '0.2s', boxShadow: `0 10px 30px ${accent}66` }} className="hover-scale">
                             <Sparkles size={20} /> ІНІЦІЮВАТИ СПІЛКУВАННЯ
                         </button>
                     ) : (
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', animation: 'fadeInUp 0.3s ease' }}>
-                            <button onClick={() => handleContactClick('chat')} style={{ padding: '14px', background: '#18181b', border: `1px solid ${accent}`, borderRadius: '14px', color: '#fff', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', transition: '0.2s' }} className="hover-scale">
+                        <div style={{ display: 'grid', gridTemplateColumns: availableSocials.length === 0 ? '1fr' : '1fr 1fr', gap: '12px', animation: 'fadeInUp 0.3s ease' }}>
+                            <button onClick={handleInternalChatClick} style={{ padding: '14px', background: '#18181b', border: `1px solid ${accent}`, borderRadius: '14px', color: '#fff', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', transition: '0.2s' }} className="hover-scale">
                                 <ShieldCheck size={24} color={accent}/> 
                                 <div style={{fontSize: '13px', fontWeight: '700'}}>Внутрішній Чат</div>
                             </button>
-                            <button onClick={() => handleContactClick('messenger')} style={{ padding: '14px', background: '#18181b', border: `1px solid #10b981`, borderRadius: '14px', color: '#fff', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', transition: '0.2s' }} className="hover-scale">
-                                <Send size={24} color="#10b981"/> 
-                                <div style={{fontSize: '13px', fontWeight: '700'}}>{model.contactType || 'Месенджер'}</div>
-                            </button>
+                            
+                            {availableSocials.length > 0 ? (
+                                availableSocials.map(network => {
+                                    const netData = contactNetworks.find(n => n.id === network) || contactNetworks[0];
+                                    return (
+                                        <button key={network} onClick={() => handleSocialClick(network)} style={{ padding: '14px', background: '#18181b', border: `1px solid ${netData.color}`, borderRadius: '14px', color: '#fff', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', transition: '0.2s' }} className="hover-scale">
+                                            <Send size={24} color={netData.color}/> 
+                                            <div style={{fontSize: '13px', fontWeight: '700'}}>{network}</div>
+                                        </button>
+                                    )
+                                })
+                            ) : (
+                                <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: `1px dashed #3f3f46`, borderRadius: '14px', color: '#71717a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: '600' }}>
+                                    Соцмережі не вказані
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
-
             </div>
+
+            {/* 🟢 МОДАЛЬНЕ ВІКНО ПОПЕРЕДЖЕННЯ ПРО ПЕРЕХІД */}
+            {showWarningModal && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(10px)', zIndex: 6000, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fadeIn 0.2s ease' }} onClick={() => setShowWarningModal(false)}>
+                    <div onClick={(e) => e.stopPropagation()} className="fade-in-up" style={{ width: '90%', maxWidth: '400px', background: '#18181b', borderRadius: '24px', border: '1px solid #27272a', padding: '30px', textAlign: 'center', boxShadow: '0 20px 50px rgba(0,0,0,0.8)' }}>
+                        <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                            <AlertTriangle size={30} color="#ef4444" />
+                        </div>
+                        <h3 style={{ color: 'white', fontSize: '20px', fontWeight: '900', marginBottom: '15px' }}>ПОПЕРЕДЖЕННЯ</h3>
+                        <p style={{ color: '#a1a1aa', fontSize: '14px', lineHeight: '1.6', marginBottom: '20px' }}>
+                            Переходячи в <b>{selectedSocial}</b>, ви залишаєте безпечну зону нашої платформи. <br/><br/>
+                            <b style={{ color: '#ef4444' }}>Ми не несемо відповідальності</b> за будь-які фінансові операції або домовленості поза цим сайтом.<br/><br/>
+                            <b style={{ color: '#10b981' }}>Рекомендуємо:</b> для вашої безпеки ведіть листування у нашому <b>Внутрішньому Чаті</b>.
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <button onClick={handleInternalChatClick} style={{ width: '100%', padding: '14px', background: accent, border: 'none', borderRadius: '12px', color: '#000', fontSize: '14px', fontWeight: '900', cursor: 'pointer' }}>
+                                НАПИСАТИ В ЧАТІ САЙТУ
+                            </button>
+                            <button onClick={confirmSocialRedirect} style={{ width: '100%', padding: '14px', background: 'transparent', border: '1px solid #3f3f46', borderRadius: '12px', color: '#a1a1aa', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}>
+                                ВСЕ ОДНО ПЕРЕЙТИ В {selectedSocial}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <style>{`
                 @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }

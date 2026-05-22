@@ -189,6 +189,8 @@ const CreateProfileModal = () => {
             const finalProfileData = {
                 userId: userUniqueId, name: formData.name, title: formData.title, 
                 age: parseInt(formData.age) || 18, 
+                height: formData.height,
+                weight: parseInt(formData.weight) || null,
                 priceFrom: parseInt(formData.priceFrom) || 500,
                 priceTo: formData.priceTo ? parseInt(formData.priceTo) : null,
                 gender: formData.gender, bodyType: formData.bodyType, hairColor: formData.hairColor, fetishes: formData.fetishes, 

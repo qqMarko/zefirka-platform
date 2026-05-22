@@ -14,6 +14,7 @@ const profileSchema = new mongoose.Schema({
     hairColor: { type: String },
     fetishes: [{ type: String }],
     contactType: { type: String },
+    contactTypes: [{ type: String }],
     contact: { type: String },
     
     // 📸 ОСЬ ТЕ ПОЛЕ, ЯКОГО НЕ ВИСТАЧАЛО І ЯКЕ БЛОКУВАЛО ФОТКИ!
