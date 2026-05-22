@@ -24,9 +24,27 @@ const AdminProfiles = ({ adminModels, modelTab, setModelTab, setSelectedModel, f
     const handleDeleteProfile = async (profileId) => {
         if (!window.confirm("Точно видалити цю анкету назавжди?")) return;
         try {
-            const res = await fetch(`/api/profiles/${profileId}`, { method: 'DELETE' });
-            if (res.ok) { toast.success('🗑 Анкету видалено!'); fetchUsers(); if (loadCatalog) loadCatalog(); }
-        } catch (error) { toast.error('Помилка сервера'); }
+            // 🟢 Дістаємо токен поточного користувача (адміна)
+            const token = localStorage.getItem('zefirka_token'); 
+
+            const res = await fetch(`/api/profiles/${profileId}`, { 
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}` // 🟢 ДОДАЄМО ТОКЕН У ЗАПИТ
+                }
+            });
+            
+            if (res.ok) { 
+                toast.success('🗑 Анкету видалено!'); 
+                fetchUsers(); 
+                if (loadCatalog) loadCatalog(); 
+            } else {
+                // Якщо раптом сервер повернув помилку
+                toast.error('❌ Не вдалося видалити анкету');
+            }
+        } catch (error) { 
+            toast.error('Помилка сервера'); 
+        }
     };
 
     const pendingModels = adminModels.filter(m => !m.isApproved);
