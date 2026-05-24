@@ -255,6 +255,19 @@ export default (sendNotification) => {
         } catch (error) { res.status(500).json({ success: false }); } 
     });
 
+    // 👇 ДОДАЙТЕ ЦЕЙ МАРШРУТ ДЛЯ ВИДАЛЕННЯ СПОРУ ЧЕРЕЗ СМІТНИК 👇
+    router.delete('/disputes/:id', async (req, res) => {
+        try {
+            const dispute = await Dispute.findByIdAndDelete(req.params.id);
+            if (!dispute) {
+                return res.status(404).json({ success: false, message: 'Спір не знайдено' });
+            }
+            res.json({ success: true, message: 'Спір успішно видалено' });
+        } catch (error) {
+            console.error('Помилка видалення спору:', error);
+            res.status(500).json({ success: false, message: 'Помилка сервера' });
+        }
+    });
     // ================= 🔥 РУПОР ЗІ ЗНИЖКАМИ (ВСТАНОВЛЕНО ТУТ) =================
     
     // Отримання стану рупора для фронтенду

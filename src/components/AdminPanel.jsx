@@ -6,7 +6,6 @@ import useStore from '../store/useStore';
 import ModelProfileModal from './ModelProfileModal';
 import DisputesTab from './DisputesTab';
 
-// Імпортуємо розбиті компоненти (створимо їх нижче)
 import AdminSidebar from './admin/AdminSidebar';
 import AdminDashboard from './admin/AdminDashboard';
 import AdminUsers from './admin/AdminUsers';
@@ -20,7 +19,6 @@ const AdminPanel = () => {
     const navigate = useNavigate();
     const { userRole, loadCatalog, onlineUsers, userUniqueId } = useStore();
     
-    // СТЕЙТИ ДАНИХ
     const [users, setUsers] = useState([]);
     const [adminModels, setAdminModels] = useState([]); 
     const [topUps, setTopUps] = useState([]); 
@@ -28,7 +26,6 @@ const AdminPanel = () => {
     const [adminDisputes, setAdminDisputes] = useState([]);
     const [loading, setLoading] = useState(true);
     
-    // СТЕЙТИ НАВІГАЦІЇ ТА UI
     const [activeTab, setActiveTab] = useState('dashboard'); 
     const [modelTab, setModelTab] = useState('pending'); 
     const [searchQuery, setSearchQuery] = useState('');
@@ -57,6 +54,12 @@ const AdminPanel = () => {
         finally { setLoading(false); }
     };
 
+    // ФУНКЦІЯ: Прибирає спір з адмінки після закриття
+    const handleCloseDisputeLocally = (disputeId) => {
+        setAdminDisputes(prev => prev.filter(d => d._id !== disputeId));
+        setViewDispute(null);
+    };
+
     useEffect(() => { if (userRole === 'admin') fetchUsers(); }, [userRole]);
 
     useEffect(() => {
@@ -70,7 +73,6 @@ const AdminPanel = () => {
 
     if (userRole !== 'admin') return <div style={{ color: '#ff4444', padding: '100px', textAlign: 'center', background: '#000', minHeight: '100vh', fontSize: '24px', fontWeight: 'bold' }}>🛑 ДОСТУП ЗАБОРОНЕНО.</div>;
 
-    // ВЛАСТИВОСТІ ДЛЯ ПЕРЕДАЧІ В ДОЧІРНІ КОМПОНЕНТИ
     const sharedProps = { 
         users, fetchUsers, loadCatalog, onlineUsers, isMobile, activeTab, setActiveTab 
     };
@@ -84,24 +86,15 @@ const AdminPanel = () => {
             />
 
             <div className="custom-scrollbar" style={{ flex: 1, padding: isMobile ? '20px' : '40px', overflowY: 'auto', background: 'radial-gradient(circle at top right, #111 0%, #050508 100%)' }}>
-                
                 {activeTab === 'dashboard' && <AdminDashboard {...sharedProps} adminModels={adminModels} topUps={topUps} adminDisputes={adminDisputes} setModelTab={setModelTab} loading={loading} />}
-                
                 {activeTab === 'users' && <AdminUsers {...sharedProps} searchQuery={searchQuery} setSearchQuery={setSearchQuery} />}
-                
                 {activeTab === 'profiles' && <AdminProfiles {...sharedProps} adminModels={adminModels} modelTab={modelTab} setModelTab={setModelTab} setSelectedModel={setSelectedModel} />}
-                
                 {activeTab === 'finances' && <AdminFinances {...sharedProps} topUps={topUps} setFullImage={setFullImage} />}
-                
-                {activeTab === 'arbiter' && <AdminArbiter {...sharedProps} adminDisputes={adminDisputes} setViewDispute={setViewDispute} />}
-                
+                {activeTab === 'arbiter' && <AdminArbiter {...sharedProps} adminDisputes={adminDisputes} setViewDispute={setViewDispute} setAdminDisputes={setAdminDisputes} />}
                 {activeTab === 'chats' && <AdminPanopticon {...sharedProps} allChats={allChats} setViewChat={setViewChat} />}
-                
                 {activeTab === 'broadcast' && <AdminBroadcast />}
-
             </div>
 
-            {/* МОДАЛКИ (Глобальні для адмінки) */}
             {selectedModel && (
                 <div style={{ position: 'fixed', zIndex: 100000 }}>
                     <ModelProfileModal model={selectedModel} onClose={() => setSelectedModel(null)} openPrivateChat={() => toast('Чат недоступний в адмінці', { icon: '🛑' })} favorites={[]} handleToggleFavorite={() => {}} />
@@ -123,22 +116,29 @@ const AdminPanel = () => {
                             </div>
                             <button onClick={() => setViewDispute(null)} style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer' }}><X size={24} /></button>
                         </div>
-                        <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-                            <DisputesTab userUniqueId={userUniqueId} userRole="admin" hasDisputeAccess={true} forcedDispute={viewDispute} />
+                        {/* РОЗУМНИЙ СКРОЛ ДОДАНО СЮДИ */}
+                        <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
+                            <DisputesTab 
+                                userUniqueId={userUniqueId} 
+                                userRole="admin" 
+                                hasDisputeAccess={true} 
+                                forcedDispute={viewDispute} 
+                                onDisputeClosed={handleCloseDisputeLocally} /* ПЕРЕДАЄМО ФУНКЦІЮ */
+                            />
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Модалка для чатів */}
-             {viewChat && (
+            {viewChat && (
                 <div style={{ position: 'fixed', inset: 0, zIndex: 100000, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '10px' : '20px' }}>
                     <div className="fade-in-up" style={{ background: '#050508', border: '1px solid #ff4444', borderRadius: '16px', width: '100%', maxWidth: '700px', height: isMobile ? '95vh' : '85vh', display: 'flex', flexDirection: 'column' }}>
                         <div style={{ padding: '20px', background: '#111', borderRadius: '16px 16px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <h2 style={{ margin: 0, color: '#ff4444', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px' }}><Eye /> Прослушка</h2>
                             <X onClick={() => setViewChat(null)} style={{ cursor: 'pointer', color: '#888' }} size={24} />
                         </div>
-                        <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '15px' }} className="custom-scrollbar">
+                        {/* РОЗУМНИЙ СКРОЛ ДОДАНО СЮДИ */}
+                        <div className="custom-scrollbar" style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '15px' }}>
                             {viewChat.messages.map((m, i) => {
                                 const isFirst = m.senderId === viewChat.participants[0];
                                 return (

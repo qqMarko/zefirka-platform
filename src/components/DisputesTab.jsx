@@ -3,29 +3,25 @@ import { ShieldAlert } from 'lucide-react';
 import useStore, { socket } from '../store/useStore';
 import { toast } from 'react-hot-toast';
 
-// Імпортуємо розбиті компоненти
 import DisputeSidebar from './disputes/DisputeSidebar';
 import DisputeCreate from './disputes/DisputeCreate';
 import DisputeChat from './disputes/DisputeChat';
 import AdminVerdictModal from './disputes/AdminVerdictModal';
 import UserVerdictModal from './disputes/UserVerdictModal';
 
-const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, accent = '#ff4081' }) => {
-    // СТЕЙТИ ДАНИХ
+// ДОДАНО onDisputeClosed у пропси
+const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, accent = '#ff4081', onDisputeClosed }) => {
     const [disputes, setDisputes] = useState([]);
     const [activeDispute, setActiveDispute] = useState(null);
     const [isCreatingDispute, setIsCreatingDispute] = useState(false);
     const [fullscreenImage, setFullscreenImage] = useState(null);
 
-    // СТЕЙТИ АДМІНА (Заплановані дії та Вирок)
     const [adminActions, setAdminActions] = useState({
         initiator: { trustChange: 0, ban: false },
         accused: { trustChange: 0, ban: false }
     });
     const [showVerdictModal, setShowVerdictModal] = useState(false);
     const [verdictText, setVerdictText] = useState('');
-
-    // СТЕЙТ ГЛОБАЛЬНОГО ВИРОКУ
     const [verdictResultModal, setVerdictResultModal] = useState(null);
 
     const triggerClientUpdate = () => {
@@ -47,7 +43,6 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
         } catch (err) { console.error(err); }
     };
 
-    // Скидання дій при зміні спору
     useEffect(() => {
         setAdminActions({ initiator: { trustChange: 0, ban: false }, accused: { trustChange: 0, ban: false } });
     }, [activeDispute?._id]);
@@ -62,7 +57,6 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
         if (hasDisputeAccess) fetchDisputes();
     }, [userUniqueId, userRole, hasDisputeAccess, forcedDispute]);
 
-    // СОКЕТИ
     useEffect(() => {
         const handleNewMessage = (newMsg) => {
             setActiveDispute(prev => (prev && (prev._id === newMsg.disputeId || !newMsg.disputeId) ? { ...prev, messages: [...prev.messages, newMsg] } : prev));
@@ -93,7 +87,6 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
         };
     }, [activeDispute, userRole]);
 
-    // ВИКОНАННЯ ВИРОКУ
     const executeVerdictAndResolve = async () => {
         if (!verdictText.trim()) return toast.error('Будь ласка, введіть текст вироку!');
         setShowVerdictModal(false);
@@ -142,6 +135,12 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
             
             if (data.success) {
                 toast.success('Спір закрито!', { id: loading });
+                
+                // ВАЖЛИВО: Оновлюємо AdminPanel
+                if (typeof onDisputeClosed === 'function') {
+                    onDisputeClosed(activeDispute._id);
+                }
+
                 setAdminActions({ initiator: { trustChange: 0, ban: false }, accused: { trustChange: 0, ban: false } });
                 triggerClientUpdate(); 
                 setActiveDispute(prev => ({ ...prev, status: 'closed', verdict: finalVerdictText }));
@@ -187,6 +186,7 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
                     disputes={disputes} activeDispute={activeDispute} setActiveDispute={setActiveDispute}
                     setIsCreatingDispute={setIsCreatingDispute} userRole={userRole} 
                     setVerdictResultModal={setVerdictResultModal} accent={accent}
+                    onDeleteDispute={deleteDispute}
                 />
             )}
 
@@ -194,15 +194,41 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
                 {isCreatingDispute ? (
                     <DisputeCreate userUniqueId={userUniqueId} fetchDisputes={fetchDisputes} setIsCreatingDispute={setIsCreatingDispute} setActiveDispute={setActiveDispute} accent={accent} />
                 ) : activeDispute ? (
-                    <DisputeChat 
-                        activeDispute={activeDispute} userUniqueId={userUniqueId} userRole={userRole}
-                        setFullscreenImage={setFullscreenImage} adminActions={adminActions} setAdminActions={setAdminActions}
-                        setShowVerdictModal={setShowVerdictModal} accent={accent}
-                    />
+                    <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto' }}>
+                        <DisputeChat 
+                            activeDispute={activeDispute} userUniqueId={userUniqueId} userRole={userRole}
+                            setFullscreenImage={setFullscreenImage} adminActions={adminActions} setAdminActions={setAdminActions}
+                            setShowVerdictModal={setShowVerdictModal} accent={accent}
+                        />
+                    </div>
                 ) : <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#333' }}>Виберіть спір з лівого меню</div>}
             </div>
         </div>
     );
+
+    const deleteDispute = async (id, e) => {
+    e.stopPropagation(); // Щоб при кліку на кошик не відкривався сам спір
+    if (!window.confirm('Ви впевнені, що хочете видалити цей спір назавжди?')) return;
+
+    const loadingId = toast.loading('Видалення...');
+    try {
+        const res = await fetch(`/api/admin/disputes/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        
+        if (data.success || res.ok) {
+            toast.success('Спір видалено', { id: loadingId });
+            // Оновлюємо список
+            setDisputes(prev => prev.filter(d => d._id !== id));
+            // Якщо видалили той спір, який зараз відкритий - закриваємо його
+            if (activeDispute?._id === id) setActiveDispute(null);
+        } else {
+            toast.error('Помилка видалення', { id: loadingId });
+        }
+    } catch (err) {
+        toast.error('Помилка сервера', { id: loadingId });
+    }
+};
+
 };
 
 export default DisputesTab;
