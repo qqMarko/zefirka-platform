@@ -11,6 +11,13 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
     const [photoIndex, setPhotoIndex] = useState(0);
     const [showContacts, setShowContacts] = useState(false);
     
+    // 🖼️ LIGHTBOX стани
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [lightboxIndex, setLightboxIndex] = useState(0);
+    const [zoom, setZoom] = useState(1);
+    const [dragStart, setDragStart] = useState(null);
+    const [offset, setOffset] = useState({ x: 0, y: 0 });
+    
     const [showWarningModal, setShowWarningModal] = useState(false);
     const [selectedSocial, setSelectedSocial] = useState(null);
 
@@ -22,6 +29,7 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
     const [localTotal, setLocalTotal] = useState(model?.totalReviews || 0);
 
     const scrollRef = useRef(null);
+    const lightboxImgRef = useRef(null);
     useSmoothScroll(scrollRef);
 
     const myId = user?._id || user?.id || userUniqueId;
@@ -128,6 +136,53 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
     const nextPhoto = (e) => { e.stopPropagation(); if (model?.photos?.length > 0) setPhotoIndex((prev) => (prev + 1) % model.photos.length); };
     const prevPhoto = (e) => { e.stopPropagation(); if (model?.photos?.length > 0) setPhotoIndex((prev) => (prev - 1 + model.photos.length) % model.photos.length); };
 
+    // 🖼️ LIGHTBOX функції
+    const openLightbox = (index) => {
+        setLightboxIndex(index);
+        setZoom(1);
+        setOffset({ x: 0, y: 0 });
+        setLightboxOpen(true);
+    };
+    const closeLightbox = () => { setLightboxOpen(false); setZoom(1); setOffset({ x: 0, y: 0 }); };
+    const lightboxNext = (e) => { e?.stopPropagation(); setLightboxIndex(prev => (prev + 1) % model.photos.length); setZoom(1); setOffset({ x: 0, y: 0 }); };
+    const lightboxPrev = (e) => { e?.stopPropagation(); setLightboxIndex(prev => (prev - 1 + model.photos.length) % model.photos.length); setZoom(1); setOffset({ x: 0, y: 0 }); };
+    const handleWheel = (e) => { 
+        const delta = e.deltaY > 0 ? -0.15 : 0.15;
+        setZoom(prev => Math.min(4, Math.max(1, parseFloat((prev + delta).toFixed(2)))));
+    };
+
+    // 🔧 Реєструємо wheel з passive:false — інакше preventDefault не спрацює і сторінка скролиться
+    useEffect(() => {
+        const el = lightboxImgRef.current;
+        if (!el || !lightboxOpen) return;
+        const onWheel = (e) => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.15 : 0.15;
+            setZoom(prev => Math.min(4, Math.max(1, parseFloat((prev + delta).toFixed(2)))));
+        };
+        el.addEventListener('wheel', onWheel, { passive: false });
+        return () => el.removeEventListener('wheel', onWheel);
+    }, [lightboxOpen]);
+    const handleMouseDown = (e) => { if (zoom > 1) setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y }); };
+    const handleMouseMove = (e) => { if (dragStart && zoom > 1) setOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }); };
+    const handleMouseUp = () => setDragStart(null);
+    // Touch zoom
+    const lastTouchDist = useRef(null);
+    const handleTouchStart = (e) => { if (e.touches.length === 2) { lastTouchDist.current = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); } };
+    const handleTouchMove = (e) => { if (e.touches.length === 2 && lastTouchDist.current) { const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); const delta = dist - lastTouchDist.current; setZoom(prev => Math.min(4, Math.max(1, prev + delta * 0.01))); lastTouchDist.current = dist; } };
+    const handleTouchEnd = () => { lastTouchDist.current = null; };
+    // Keyboard nav
+    useEffect(() => {
+        if (!lightboxOpen) return;
+        const onKey = (e) => {
+            if (e.key === 'Escape') closeLightbox();
+            if (e.key === 'ArrowRight') lightboxNext();
+            if (e.key === 'ArrowLeft') lightboxPrev();
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [lightboxOpen, lightboxIndex]);
+
     if (!model) return null;
     const isFav = favorites?.some(fav => fav.id === model.id); 
     const modelFetishes = model.fetishes || [];
@@ -207,29 +262,125 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
 
                 <div ref={scrollRef} className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
                     
-                    {/* 🟢 КРОК 1: СТАБІЛЬНИЙ БЛОК ФОТО БЕЗ ВТРАТИ ЯКОСТІ ТА РОЗТЯГУВАННЯ */}
-                    <div style={{ position: 'relative', width: '100%', height: '420px', background: '#000', overflow: 'hidden' }}>
+                    {/* 🖼️ ФОТО БЛОК */}
+                    <div
+                        style={{ position: 'relative', width: '100%', aspectRatio: '3/4', maxHeight: '560px', background: '#0a0a0f', overflow: 'hidden', cursor: 'zoom-in' }}
+                        onClick={() => model?.photos?.length > 0 && openLightbox(photoIndex)}
+                    >
                         {model.photos && model.photos.length > 0 ? (
-                            <img src={model.photos[photoIndex]} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 15%' }} alt={model.name} />
-                        ) : ( 
-                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3f3f46', fontSize: '14px', letterSpacing: '2px' }}>NO MEDIA</div> 
-                        )}
-                        
-                        <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '35%', background: 'linear-gradient(to top, #09090b 0%, transparent 100%)', pointerEvents: 'none' }}></div>
+                            <>
+                                {/* Розмитий фон */}
+                                <img src={model.photos[photoIndex]} alt="" style={{ position: 'absolute', inset: '-10px', width: 'calc(100% + 20px)', height: 'calc(100% + 20px)', objectFit: 'cover', objectPosition: 'center top', filter: 'blur(24px) brightness(0.25) saturate(1.4)', pointerEvents: 'none' }} />
 
+                                {/* Основне фото — повне без обрізки */}
+                                <img src={model.photos[photoIndex]} alt={model.name} style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center top' }} />
+
+                                {/* Нижній градієнт */}
+                                <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '40%', background: 'linear-gradient(to top, #09090b 0%, rgba(9,9,11,0.6) 50%, transparent 100%)', zIndex: 2, pointerEvents: 'none' }} />
+                            </>
+                        ) : (
+                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3f3f46', fontSize: '14px', letterSpacing: '2px' }}>NO MEDIA</div>
+                        )}
+
+                        {/* Бейдж збільшити / лічильник — поверх всього */}
+                        {model.photos?.length > 0 && (
+                            <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 20, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', borderRadius: '20px', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '5px', color: 'rgba(255,255,255,0.85)', fontSize: '11px', fontWeight: '700', border: '1px solid rgba(255,255,255,0.12)', pointerEvents: 'none', letterSpacing: '0.3px' }}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/></svg>
+                                {model.photos.length > 1 ? `${photoIndex + 1} / ${model.photos.length}` : 'Збільшити'}
+                            </div>
+                        )}
+
+                        {/* Навігація між фото */}
                         {model.photos?.length > 1 && (
                             <>
-                                <div onClick={prevPhoto} style={{ position: 'absolute', top: 0, left: 0, width: '50%', height: '100%', cursor: 'w-resize', zIndex: 10 }}></div>
-                                <div onClick={nextPhoto} style={{ position: 'absolute', top: 0, right: 0, width: '50%', height: '100%', cursor: 'e-resize', zIndex: 10 }}></div>
-                                
-                                <div style={{ position: 'absolute', bottom: '20px', left: '0', width: '100%', display: 'flex', justifyContent: 'center', gap: '6px', zIndex: 20 }}>
+                                <div onClick={(e) => { e.stopPropagation(); prevPhoto(e); }} style={{ position: 'absolute', top: 0, left: 0, width: '45%', height: '100%', cursor: 'w-resize', zIndex: 10 }} />
+                                <div onClick={(e) => { e.stopPropagation(); nextPhoto(e); }} style={{ position: 'absolute', top: 0, right: 0, width: '45%', height: '100%', cursor: 'e-resize', zIndex: 10 }} />
+
+                                {/* Крапки-індикатори */}
+                                <div style={{ position: 'absolute', bottom: '18px', left: 0, width: '100%', display: 'flex', justifyContent: 'center', gap: '5px', zIndex: 20 }}>
                                     {model.photos.map((_, i) => (
-                                        <div key={i} onClick={(e) => { e.stopPropagation(); setPhotoIndex(i); }} style={{ width: i === photoIndex ? '18px' : '6px', height: '6px', borderRadius: '3px', background: i === photoIndex ? accent : 'rgba(255,255,255,0.4)', cursor: 'pointer', transition: '0.3s' }} />
+                                        <div key={i} onClick={(e) => { e.stopPropagation(); setPhotoIndex(i); }}
+                                            style={{ width: i === photoIndex ? '20px' : '6px', height: '6px', borderRadius: '3px', background: i === photoIndex ? accent : 'rgba(255,255,255,0.35)', cursor: 'pointer', transition: 'all 0.3s ease', boxShadow: i === photoIndex ? `0 0 8px ${accent}88` : 'none' }}
+                                        />
                                     ))}
                                 </div>
                             </>
                         )}
                     </div>
+
+                    {/* 🖼️ LIGHTBOX */}
+                    {lightboxOpen && (
+                        <div
+                            style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.97)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            onClick={closeLightbox}
+                        >
+                            {/* Кнопка закрити */}
+                            <button onClick={closeLightbox} style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', borderRadius: '50%', width: '44px', height: '44px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', zIndex: 10, backdropFilter: 'blur(8px)', transition: '0.2s' }}>✕</button>
+
+                            {/* Лічильник і zoom */}
+                            <div style={{ position: 'absolute', top: '16px', left: '16px', display: 'flex', gap: '8px', zIndex: 10 }}>
+                                {model.photos.length > 1 && (
+                                    <div style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', borderRadius: '20px', padding: '6px 14px', fontSize: '13px', fontWeight: '700', backdropFilter: 'blur(8px)' }}>
+                                        {lightboxIndex + 1} / {model.photos.length}
+                                    </div>
+                                )}
+                                <div style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', borderRadius: '20px', padding: '6px 14px', fontSize: '13px', fontWeight: '700', backdropFilter: 'blur(8px)' }}>
+                                    {Math.round(zoom * 100)}%
+                                </div>
+                            </div>
+
+                            {/* Кнопки zoom */}
+                            <div style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '10px', zIndex: 10 }}>
+                                <button onClick={(e) => { e.stopPropagation(); setZoom(prev => Math.max(1, +(prev - 0.5).toFixed(1))); if (zoom <= 1.5) setOffset({ x: 0, y: 0 }); }} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '50%', width: '44px', height: '44px', cursor: 'pointer', fontSize: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>−</button>
+                                <button onClick={(e) => { e.stopPropagation(); setZoom(1); setOffset({ x: 0, y: 0 }); }} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '12px', padding: '0 16px', height: '44px', cursor: 'pointer', fontSize: '12px', fontWeight: '700', backdropFilter: 'blur(8px)' }}>СКИНУТИ</button>
+                                <button onClick={(e) => { e.stopPropagation(); setZoom(prev => Math.min(4, +(prev + 0.5).toFixed(1))); }} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '50%', width: '44px', height: '44px', cursor: 'pointer', fontSize: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>+</button>
+                            </div>
+
+                            {/* Стрілки між фото */}
+                            {model.photos.length > 1 && (
+                                <>
+                                    <button onClick={(e) => { e.stopPropagation(); lightboxPrev(e); }} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', borderRadius: '50%', width: '52px', height: '52px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, fontSize: '22px', backdropFilter: 'blur(8px)', transition: '0.2s' }}>‹</button>
+                                    <button onClick={(e) => { e.stopPropagation(); lightboxNext(e); }} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '50%', width: '52px', height: '52px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, fontSize: '22px', backdropFilter: 'blur(8px)', transition: '0.2s' }}>›</button>
+                                </>
+                            )}
+
+                            {/* Саме фото */}
+                            <div
+                                ref={lightboxImgRef}
+                                style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: zoom > 1 ? 'grab' : 'zoom-in' }}
+                                onClick={(e) => e.stopPropagation()}
+                                onMouseDown={handleMouseDown}
+                                onMouseMove={handleMouseMove}
+                                onMouseUp={handleMouseUp}
+                                onMouseLeave={handleMouseUp}
+                                onTouchStart={handleTouchStart}
+                                onTouchMove={handleTouchMove}
+                                onTouchEnd={handleTouchEnd}
+                            >
+                                <img
+                                    src={model.photos[lightboxIndex]}
+                                    alt={model.name}
+                                    draggable={false}
+                                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', transform: `scale(${zoom}) translate(${offset.x / zoom}px, ${offset.y / zoom}px)`, transition: dragStart ? 'none' : 'transform 0.15s ease', userSelect: 'none', borderRadius: zoom === 1 ? '8px' : '0' }}
+                                />
+                            </div>
+
+                            {/* Мініатюри внизу якщо фото > 1 */}
+                            {model.photos.length > 1 && (
+                                <div style={{ position: 'absolute', bottom: '80px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', zIndex: 10, padding: '8px', background: 'rgba(0,0,0,0.5)', borderRadius: '16px', backdropFilter: 'blur(8px)' }}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    {model.photos.map((photo, i) => (
+                                        <div key={i} onClick={() => { setLightboxIndex(i); setZoom(1); setOffset({ x: 0, y: 0 }); }}
+                                            style={{ width: i === lightboxIndex ? '52px' : '44px', height: i === lightboxIndex ? '52px' : '44px', borderRadius: '10px', overflow: 'hidden', cursor: 'pointer', border: `2px solid ${i === lightboxIndex ? accent : 'transparent'}`, transition: '0.2s', flexShrink: 0, opacity: i === lightboxIndex ? 1 : 0.55 }}
+                                        >
+                                            <img src={photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     <div style={{ padding: '24px 24px 150px 24px', position: 'relative', zIndex: 20 }}>
                         
