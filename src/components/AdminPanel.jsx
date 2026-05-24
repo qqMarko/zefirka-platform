@@ -108,7 +108,9 @@ const AdminPanel = () => {
             )}
 
             {viewDispute && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 100000, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '10px' : '20px' }}>
+    <div 
+        onWheel={(e) => e.stopPropagation()} 
+        style={{ position: 'fixed', inset: 0, zIndex: 100000, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '10px' : '20px' }}>
                     <div className="fade-in-up" style={{ background: '#050508', border: '1px solid #ff4444', borderRadius: '24px', width: '100%', maxWidth: '1000px', height: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 0 50px rgba(255,68,68,0.2)', overflow: 'hidden' }}>
                         <div style={{ padding: '15px 25px', background: 'rgba(255,68,68,0.1)', borderBottom: '1px solid rgba(255,68,68,0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -132,6 +134,7 @@ const AdminPanel = () => {
 
             {viewChat && (
                 <div style={{ position: 'fixed', inset: 0, zIndex: 100000, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '10px' : '20px' }}>
+                    onWheel={(e) => e.stopPropagation()}
                     <div className="fade-in-up" style={{ background: '#050508', border: '1px solid #ff4444', borderRadius: '16px', width: '100%', maxWidth: '700px', height: isMobile ? '95vh' : '85vh', display: 'flex', flexDirection: 'column' }}>
                         <div style={{ padding: '20px', background: '#111', borderRadius: '16px 16px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <h2 style={{ margin: 0, color: '#ff4444', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px' }}><Eye /> Прослушка</h2>
