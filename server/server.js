@@ -7,6 +7,7 @@ import helmet from 'helmet';
 import mongoose from 'mongoose';
 import morgan from 'morgan';
 import winston from 'winston';
+import rateLimit from 'express-rate-limit'; // 🔒 НОВИЙ ІМПОРТ
 
 // 🟢 МОДЕЛІ БД
 import User from './models/User.js'; 
@@ -30,7 +31,13 @@ import { initCronJobs } from './jobs/cronJobs.js';
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*', methods: ['GET', 'POST'] } });
+// 🔒 CORS: дозволяємо запити тільки з нашого фронтенду, не з будь-якого сайту
+// CLIENT_URL задаєш у .env — наприклад https://zefirka.com або http://localhost:5173
+const allowedOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
+
+const io = new Server(server, { 
+    cors: { origin: allowedOrigin, methods: ['GET', 'POST'] } 
+});
 const PORT = process.env.PORT || 5000;
 
 // ==========================================
@@ -48,10 +55,20 @@ if (process.env.NODE_ENV !== 'production') logger.add(new winston.transports.Con
 app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
 
 app.use(helmet({ crossOriginResourcePolicy: false })); 
-app.use(cors());
-app.use(express.json({ limit: '100mb' }));
-app.use(express.urlencoded({ limit: '100mb', extended: true }));
-app.use('/uploads', express.static('uploads')); 
+app.use(cors({ origin: allowedOrigin })); // 🔒 Тільки наш домен
+app.use(express.json({ limit: '5mb' }));  // 🔒 Було 100mb — це запрошення до атаки
+app.use(express.urlencoded({ limit: '5mb', extended: true }));
+app.use('/uploads', express.static('uploads'));
+
+// 🔒 RATE LIMITING — захист від brute-force атак на авторизацію
+// Наприклад: не більше 10 спроб входу з одного IP за 15 хвилин
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 хвилин
+    max: 10,
+    message: { success: false, message: 'Забагато спроб. Спробуйте через 15 хвилин.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 
 app.use((req, res, next) => { 
     if (process.env.NODE_ENV !== 'production') console.log(`📡 Радар: [${req.method}] ${req.url}`); 
@@ -91,44 +108,11 @@ initSockets(io);
 initCronJobs(sendNotification);
 
 // ==========================================
-// 🔥 ДОДАНО: ЛОГІКА РУПОРА ТА ЗНИЖОК
-// ==========================================
-let megaphoneSettings = {
-    message: '',
-    vipDiscountPercent: 0,
-    activeVipPackages: [], // 🔥 ДОДАНО: Масив пакетів, на які діє знижка
-    bumpDiscountPercent: 0,
-    isActive: false
-};
-
-// Віддаємо статус на фронтенд при завантаженні сторінки
-app.get('/api/admin/megaphone/status', (req, res) => {
-    res.json({ success: true, settings: megaphoneSettings });
-});
-
-// Зберігаємо нові налаштування і пушимо їх всім онлайн-клієнтам
-app.post('/api/admin/megaphone/broadcast', (req, res) => {
-    const { message, vipDiscountPercent, activeVipPackages, bumpDiscountPercent, isActive } = req.body;
-    
-    megaphoneSettings = { 
-        message: message || '', 
-        vipDiscountPercent: Number(vipDiscountPercent) || 0, 
-        activeVipPackages: Array.isArray(activeVipPackages) ? activeVipPackages : [], // 🔥 Зберігаємо обрані пакети
-        bumpDiscountPercent: Number(bumpDiscountPercent) || 0, 
-        isActive: Boolean(isActive)
-    };
-    
-    // Розсилаємо магію по сокетах
-    io.emit('megaphone_update', megaphoneSettings);
-    
-    res.json({ success: true, message: 'Рупор успішно оновлено!' });
-});
-
-// ==========================================
 // 🔗 ОСНОВНІ РОУТИ
 // ==========================================
 // 1. Стандартні роути
-app.use('/api/auth', authRoutes);
+// 🔒 authLimiter — захист від перебору паролів (max 10 спроб за 15 хвилин)
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/profiles', profileRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes(sendNotification));

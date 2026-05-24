@@ -5,7 +5,7 @@ import nodemailer from 'nodemailer';
 import { UAParser } from 'ua-parser-js'; 
 import User from '../models/User.js';
 import authMiddleware from '../middlewares/auth.js';
-import { getIO } from '../sockets/socketManager.js'; // 🚀 ОБОВ'ЯЗКОВО ДЛЯ СОКЕТІВ
+import { getIO } from '../sockets/socketManager.js';
 
 const router = express.Router();
 const otpStore = new Map();
@@ -15,20 +15,17 @@ const getTransporter = () => nodemailer.createTransport({
     auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS } 
 });
 
-const getJwtSecret = () => process.env.JWT_SECRET || 'super_secret_key';
+const getJwtSecret = () => process.env.JWT_SECRET;
 
 const getDeviceInfo = (req) => {
     try {
         const uaString = req.headers['user-agent'] || '';
         const parser = new UAParser(uaString);
         const result = parser.getResult();
-        
         const browser = result.browser?.name || 'Невідомий браузер';
         const os = result.os?.name || 'Невідома ОС';
-        
         const rawIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
         const ip = rawIp.split(',')[0].trim() || 'Невідомий IP';
-        
         return { device: `${browser} • ${os}`, ip };
     } catch (error) {
         return { device: 'Невідомий пристрій', ip: 'Невідомий IP' };
@@ -154,9 +151,6 @@ router.post('/verify-2fa-login', async (req, res) => {
     }
 });
 
-// ==========================================
-// 🚫 ЗАВЕРШИТИ ВСІ ІНШІ СЕАНСИ
-// ==========================================
 router.post('/logout-all', async (req, res) => {
     try {
         const authHeader = req.headers.authorization;
@@ -181,9 +175,7 @@ router.post('/logout-all', async (req, res) => {
         }
 
         const io = getIO();
-        if (io) {
-            io.emit(`force_logout_${decoded.id}`, { keepToken: token });
-        }
+        if (io) io.emit(`force_logout_${decoded.id}`, { keepToken: token });
 
         res.json({ success: true, message: 'Всі інші сеанси успішно завершено' });
     } catch (error) {
@@ -191,9 +183,6 @@ router.post('/logout-all', async (req, res) => {
     }
 });
 
-// ==========================================
-// 🔴 ЗАВЕРШИТИ КОНКРЕТНИЙ СЕАНС (ОДИН)
-// ==========================================
 router.post('/logout-session', async (req, res) => {
     try {
         const authHeader = req.headers.authorization;
@@ -208,17 +197,13 @@ router.post('/logout-session', async (req, res) => {
 
         const decoded = jwt.verify(currentToken, getJwtSecret());
 
-        // Видаляємо з бази конкретний токен
         await User.updateOne(
             { _id: decoded.id },
             { $pull: { sessions: { token: sessionToken } } }
         );
 
-        // Відправляємо сигнал САМЕ ТОМУ пристрою, щоб він вийшов
         const io = getIO();
-        if (io) {
-            io.emit(`kill_session_${decoded.id}`, { removedToken: sessionToken });
-        }
+        if (io) io.emit(`kill_session_${decoded.id}`, { removedToken: sessionToken });
 
         res.json({ success: true, message: 'Сеанс успішно завершено' });
     } catch (error) {
@@ -236,10 +221,11 @@ router.get('/sessions', authMiddleware, async (req, res) => {
     }
 });
 
-router.post('/toggle-2fa', async (req, res) => {
+// 🔒 userId більше не береться з body — тільки з токена
+router.post('/toggle-2fa', authMiddleware, async (req, res) => {
     try {
-        const { userId, enabled } = req.body;
-        const user = await User.findById(userId);
+        const { enabled } = req.body;
+        const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ success: false, message: 'Користувача не знайдено' });
 
         user.twoFactorEnabled = enabled;
@@ -251,10 +237,11 @@ router.post('/toggle-2fa', async (req, res) => {
     }
 });
 
-router.post('/change-password', async (req, res) => {
+// 🔒 userId більше не береться з body — тільки з токена
+router.post('/change-password', authMiddleware, async (req, res) => {
     try {
-        const { userId, oldPassword, newPassword } = req.body;
-        const user = await User.findById(userId);
+        const { oldPassword, newPassword } = req.body;
+        const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ success: false, message: 'Користувача не знайдено' });
 
         const cleanOld = String(oldPassword).trim();
@@ -322,10 +309,11 @@ router.post('/reset-password', async (req, res) => {
     }
 });
 
-router.post('/toggle-email-notif', async (req, res) => {
+// 🔒 userId більше не береться з body — тільки з токена
+router.post('/toggle-email-notif', authMiddleware, async (req, res) => {
     try {
-        const { userId, enabled } = req.body;
-        const user = await User.findById(userId);
+        const { enabled } = req.body;
+        const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ success: false, message: 'Користувача не знайдено' });
 
         user.emailNotifications = enabled;

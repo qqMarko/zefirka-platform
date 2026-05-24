@@ -7,8 +7,9 @@ import Profile from '../models/Profile.js';
 import Dispute from '../models/Dispute.js';
 import TopUpRequest from '../models/TopUpRequest.js'; 
 import Chat from '../models/Chat.js'; 
-import Megaphone from '../models/Megaphone.js'; // 🔥 Підключили модель Рупора
+import Megaphone from '../models/Megaphone.js';
 import { getIO, setActivePromo } from '../sockets/socketManager.js';
+import adminMiddleware from '../middlewares/admin.js'; // 🔒 НОВИЙ ІМПОРТ
 
 const getTransporter = () => nodemailer.createTransport({ 
     service: 'gmail', auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS } 
@@ -33,15 +34,18 @@ const sendSmartEmail = async (user, subject, textContent) => {
 export default (sendNotification) => {
     const router = express.Router();
 
+    // 🔒 ВСІ МАРШРУТИ НИЖЧЕ ЗАХИЩЕНІ adminMiddleware
+    // Тобто запит пройде далі тільки якщо в заголовку є токен адміністратора
+
     // ================= КОРИСТУВАЧІ =================
-    router.get('/users', async (req, res) => { 
+    router.get('/users', adminMiddleware, async (req, res) => { 
         try { 
             const users = await User.find().select('-password').sort({ createdAt: -1 });
             res.json({ success: true, data: users }); 
         } catch (error) { res.status(500).json({ success: false }); } 
     });
 
-    router.post('/users/:id/toggle-ban', async (req, res) => {
+    router.post('/users/:id/toggle-ban', adminMiddleware, async (req, res) => {
         try {
             const user = await User.findById(req.params.id);
             if (!user) return res.status(404).json({ success: false, message: 'Користувача не знайдено' });
@@ -62,7 +66,7 @@ export default (sendNotification) => {
         } catch (error) { res.status(500).json({ success: false }); }
     });
 
-    router.post('/users/:id/balance', async (req, res) => {
+    router.post('/users/:id/balance', adminMiddleware, async (req, res) => {
         try {
             const { amount } = req.body;
             const user = await User.findById(req.params.id);
@@ -82,7 +86,7 @@ export default (sendNotification) => {
             }
             
             user.trustScore = tScore;
-            user.trustPercentage = tScore; // Синхронізація
+            user.trustPercentage = tScore;
             await user.save();
 
             const io = getIO();
@@ -92,8 +96,7 @@ export default (sendNotification) => {
         } catch (error) { res.status(500).json({ success: false }); }
     });
 
-    // Додавання/віднімання довіри
-    router.post('/users/:id/update-trust', async (req, res) => {
+    router.post('/users/:id/update-trust', adminMiddleware, async (req, res) => {
         try {
             const { score } = req.body;
             const user = await User.findById(req.params.id);
@@ -111,8 +114,7 @@ export default (sendNotification) => {
         } catch (err) { res.status(500).json({ success: false }); }
     });
 
-    // 🟢 НОВИЙ МАРШРУТ: Встановлення точного відсотка довіри (для адмін-панелі)
-    router.post('/users/:id/trust', async (req, res) => {
+    router.post('/users/:id/trust', adminMiddleware, async (req, res) => {
         try {
             const { trustScore } = req.body;
             const score = Number(trustScore);
@@ -136,12 +138,11 @@ export default (sendNotification) => {
 
             res.json({ success: true, message: 'Успішно оновлено', user: updatedUser });
         } catch (error) {
-            console.error('Помилка при зміні довіри:', error);
             res.status(500).json({ success: false, message: 'Помилка сервера' });
         }
     });
 
-    router.post('/users/:id/shadow-login', async (req, res) => {
+    router.post('/users/:id/shadow-login', adminMiddleware, async (req, res) => {
         try {
             const user = await User.findById(req.params.id);
             if (!user) return res.status(404).json({ success: false, message: 'Користувача не знайдено' });
@@ -150,13 +151,12 @@ export default (sendNotification) => {
 
             res.json({ success: true, token, userId: user._id, role: user.role, email: user.email });
         } catch (error) { 
-            console.error("Shadow login error:", error);
             res.status(500).json({ success: false }); 
         }
     });
 
     // ================= АНКЕТИ =================
-    router.post('/profiles/:id/verify', async (req, res) => { 
+    router.post('/profiles/:id/verify', adminMiddleware, async (req, res) => { 
         try { 
             const profile = await Profile.findByIdAndUpdate(req.params.id, { vLevel: req.body.vLevel }, { new: true });
             const io = getIO();
@@ -165,7 +165,7 @@ export default (sendNotification) => {
         } catch (error) { res.status(500).json({ success: false }); } 
     });
 
-    router.post('/profiles/:id/approve', async (req, res) => {
+    router.post('/profiles/:id/approve', adminMiddleware, async (req, res) => {
         try {
             await mongoose.connection.collection('profiles').updateOne(
                 { _id: new mongoose.Types.ObjectId(req.params.id) },
@@ -179,30 +179,30 @@ export default (sendNotification) => {
             if (profile) {
                 if(sendNotification) sendNotification(profile.userId, `✅ Вашу анкету "${profile.name}" схвалено модератором і опубліковано в каталозі!`);
                 const user = await User.findById(profile.userId);
-                await sendSmartEmail(user, '🎉 Анкету опубліковано!', `Вітаємо! Вашу анкету <b>"${profile.name}"</b> успішно перевірено модератором і опубліковано в загальному каталозі. Тепер клієнти можуть вас бачити!`);
+                await sendSmartEmail(user, '🎉 Анкету опубліковано!', `Вітаємо! Вашу анкету <b>"${profile.name}"</b> успішно перевірено модератором і опубліковано в загальному каталозі.`);
             }
 
             res.json({ success: true, profile: { ...profile?.toObject(), isApproved: true } });
         } catch (error) { res.status(500).json({ success: false }); }
     });
 
-    // ================= PANOPTICON (ЧАТИ) =================
-    router.get('/chats', async (req, res) => {
+    // ================= ЧАТИ =================
+    router.get('/chats', adminMiddleware, async (req, res) => {
         try {
             const chats = await Chat.find().sort({ updatedAt: -1 });
             res.json({ success: true, data: chats });
         } catch (error) { res.status(500).json({ success: false }); }
     });
 
-    // ================= ФІНАНСИ (ЧЕКИ) =================
-    router.get('/topups', async (req, res) => {
+    // ================= ФІНАНСИ =================
+    router.get('/topups', adminMiddleware, async (req, res) => {
         try {
             const requests = await TopUpRequest.find({ status: 'pending' }).sort({ createdAt: -1 });
             res.json({ success: true, data: requests });
         } catch (error) { res.status(500).json({ success: false }); }
     });
 
-    router.post('/topups/:id/approve', async (req, res) => {
+    router.post('/topups/:id/approve', adminMiddleware, async (req, res) => {
         try {
             const topup = await TopUpRequest.findById(req.params.id);
             if (!topup || topup.status !== 'pending') return res.status(400).json({ success: false });
@@ -212,7 +212,7 @@ export default (sendNotification) => {
                 user.balance += topup.amount;
                 await user.save();
                 if(sendNotification) sendNotification(user._id, `💳 Ваш баланс поповнено на ${topup.amount} ₴! Заявка схвалена.`);
-                await sendSmartEmail(user, '💳 Поповнення успішне', `Ваш баланс успішно поповнено на <b>${topup.amount} UAH</b>. Кошти вже на вашому рахунку!`);
+                await sendSmartEmail(user, '💳 Поповнення успішне', `Ваш баланс успішно поповнено на <b>${topup.amount} UAH</b>.`);
                 
                 const io = getIO();
                 if (io) io.emit(`instant_sync_${user._id}`, { action: 'update_data' });
@@ -224,7 +224,7 @@ export default (sendNotification) => {
         } catch (error) { res.status(500).json({ success: false }); }
     });
 
-    router.post('/topups/:id/reject', async (req, res) => {
+    router.post('/topups/:id/reject', adminMiddleware, async (req, res) => {
         try {
             const topup = await TopUpRequest.findById(req.params.id);
             if (!topup || topup.status !== 'pending') return res.status(400).json({ success: false });
@@ -234,44 +234,40 @@ export default (sendNotification) => {
 
             const user = await User.findById(topup.userId);
             if (user && sendNotification) {
-                sendNotification(user._id, `❌ Ваша заявка на поповнення (${topup.amount} ₴) була відхилена адміністратором. Перевірте квитанцію.`);
+                sendNotification(user._id, `❌ Ваша заявка на поповнення (${topup.amount} ₴) була відхилена адміністратором.`);
             }
             res.json({ success: true });
         } catch (error) { res.status(500).json({ success: false }); }
     });
 
     // ================= СПОРИ =================
-    router.get('/disputes', async (req, res) => { 
+    router.get('/disputes', adminMiddleware, async (req, res) => { 
         try { 
             const disputes = await Dispute.find().sort({ createdAt: -1 });
             res.json({ success: true, data: disputes }); 
         } catch (error) { res.status(500).json({ success: false }); } 
     });
 
-    router.post('/disputes/:id/resolve', async (req, res) => { 
+    router.post('/disputes/:id/resolve', adminMiddleware, async (req, res) => { 
         try { 
             await Dispute.findByIdAndDelete(req.params.id); 
             res.json({ success: true }); 
         } catch (error) { res.status(500).json({ success: false }); } 
     });
 
-    // 👇 ДОДАЙТЕ ЦЕЙ МАРШРУТ ДЛЯ ВИДАЛЕННЯ СПОРУ ЧЕРЕЗ СМІТНИК 👇
-    router.delete('/disputes/:id', async (req, res) => {
+    router.delete('/disputes/:id', adminMiddleware, async (req, res) => {
         try {
             const dispute = await Dispute.findByIdAndDelete(req.params.id);
-            if (!dispute) {
-                return res.status(404).json({ success: false, message: 'Спір не знайдено' });
-            }
+            if (!dispute) return res.status(404).json({ success: false, message: 'Спір не знайдено' });
             res.json({ success: true, message: 'Спір успішно видалено' });
         } catch (error) {
-            console.error('Помилка видалення спору:', error);
             res.status(500).json({ success: false, message: 'Помилка сервера' });
         }
     });
-    // ================= 🔥 РУПОР ЗІ ЗНИЖКАМИ (ВСТАНОВЛЕНО ТУТ) =================
-    
-    // Отримання стану рупора для фронтенду
+
+    // ================= РУПОР =================
     router.get('/megaphone/status', async (req, res) => {
+        // Цей маршрут PUBLIC — фронтенд читає статус рупора без логіну (щоб показати банер)
         try {
             let settings = await Megaphone.findOne({});
             if (!settings) {
@@ -283,42 +279,27 @@ export default (sendNotification) => {
         }
     });
 
-    // Оновлення рупора (стара логіка + нова логіка зі знижками)
-    router.post('/broadcast', async (req, res) => {
+    router.post('/broadcast', adminMiddleware, async (req, res) => {
         try {
-            // Отримуємо нові змінні (текст, знижки)
             const { text, target, vipDiscountPercent = 0, bumpDiscountPercent = 0, isActive = true } = req.body;
             if (!text) return res.status(400).json({ success: false, message: 'Порожній текст' });
 
-            // 1. Оновлюємо базу даних рупора
             const settings = await Megaphone.findOneAndUpdate(
                 {}, 
-                { 
-                  message: text, 
-                  vipDiscountPercent: vipDiscountPercent, 
-                  bumpDiscountPercent: bumpDiscountPercent, 
-                  isActive: isActive 
-                },
+                { message: text, vipDiscountPercent, bumpDiscountPercent, isActive },
                 { new: true, upsert: true }
             );
 
-            // 2. Розсилаємо сигнал всім клієнтам на сайті миттєво
             const io = getIO();
-            if (io) {
-                io.emit('megaphone_update', settings);
-            }
+            if (io) io.emit('megaphone_update', settings);
 
-            // 3. Стара логіка: розсилка особистих сповіщень конкретній групі юзерів
-            setActivePromo({ text, discount: vipDiscountPercent }); // якщо ця функція десь потрібна ще
+            setActivePromo({ text, discount: vipDiscountPercent });
 
             let query = {};
-            if (target === 'model' || target === 'client') {
-                query.role = target;
-            }
+            if (target === 'model' || target === 'client') query.role = target;
 
             const users = await User.find(query);
             let sentCount = 0;
-
             for (const user of users) {
                 if (!user.isBanned && sendNotification) {
                     sendNotification(user._id, `📢 ${text}`);
@@ -328,13 +309,11 @@ export default (sendNotification) => {
 
             res.json({ success: true, count: sentCount, settings });
         } catch (error) { 
-            console.error('Broadcast error:', error);
             res.status(500).json({ success: false }); 
         }
     });
 
-    // Очищення рупора
-    router.post('/clear-broadcast', async (req, res) => {
+    router.post('/clear-broadcast', adminMiddleware, async (req, res) => {
         try {
             setActivePromo({ text: '', discount: 0 });
             
@@ -353,8 +332,7 @@ export default (sendNotification) => {
         }
     });
 
-    // 🗑 ЗНЯТТЯ VIP СТАТУСУ
-    router.post('/remove-vip/:userId', async (req, res) => {
+    router.post('/remove-vip/:userId', adminMiddleware, async (req, res) => {
         try {
             const user = await User.findById(req.params.userId);
             if (!user) return res.status(404).json({ success: false, message: 'Користувача не знайдено' });
@@ -371,7 +349,6 @@ export default (sendNotification) => {
 
             res.json({ success: true, message: 'VIP статус успішно знято!' });
         } catch (error) {
-            console.error("🔥 Помилка зняття VIP:", error);
             res.status(500).json({ success: false, message: 'Помилка сервера' });
         }
     });

@@ -1,7 +1,7 @@
 import React from 'react';
-import { Crown, Wallet, Settings, AlertTriangle, MessageCircle } from 'lucide-react';
+import { Crown, Wallet, Settings, AlertTriangle, MessageCircle, Lock } from 'lucide-react';
 
-export const getUserMenuItems = (t, currentLang, userRole) => [
+export const getUserMenuItems = (t, currentLang, userRole, hasDisputeAccess) => [
     { 
         id: 'vip', 
         label: userRole === 'model' ? (t[currentLang]?.vip || 'VIP статус') : (t[currentLang]?.clientPremium || 'Преміум'), 
@@ -20,8 +20,9 @@ export const getUserMenuItems = (t, currentLang, userRole) => [
     { 
         id: 'disputes', 
         label: t[currentLang]?.dispTab || 'Арбітраж', 
-        icon: <AlertTriangle size={18}/>, 
-        isArbitrage: true 
+        icon: hasDisputeAccess ? <AlertTriangle size={18}/> : <Lock size={18} color="#888"/>, 
+        isArbitrage: true,
+        isDisabled: !hasDisputeAccess // Блокуємо прапорець, якщо немає доступу
     },
     { 
         id: 'support', 

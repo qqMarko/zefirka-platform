@@ -38,6 +38,13 @@ const useStore = create((set, get) => ({
     activePromoText: '',
     activeDiscount: 0,
 
+    hasDisputeAccess: () => {
+        const { user } = get();
+        // Додаємо сюди всі пакети, які мають доступ до арбітражу
+        const allowedPackages = ['premium', 'diamond', 'guest', 'priority', 'concierge'];
+        return allowedPackages.includes(user.vipPackage?.toLowerCase());
+    },
+
     setBalance: (amount) => set({ balance: amount }),
     setUser: (userData) => set({ user: { ...get().user, ...userData } }), 
 

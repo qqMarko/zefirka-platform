@@ -149,16 +149,17 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
         } catch (e) { toast.error('Помилка виконання', { id: loading }); }
     };
 
+   // Якщо немає доступу і це не примусовий перегляд адміном — жорстко блокуємо контент
     if (!hasDisputeAccess && !forcedDispute) {
         return (
-            <>
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '500px', background: '#050508', borderRadius: '16px', border: `1px solid ${accent}44`, overflow: 'hidden' }}>
                 <UserVerdictModal verdictResultModal={verdictResultModal} setVerdictResultModal={setVerdictResultModal} accent={accent} />
-                <div style={{ padding: '50px', textAlign: 'center', background: 'rgba(0,0,0,0.8)', borderRadius: '16px', border: '1px solid #333' }}>
-                    <ShieldAlert size={60} color="#555" style={{margin: '0 auto 20px'}}/>
-                    <h2 style={{color: '#fff'}}>Розділ Арбітражу</h2>
-                    <p style={{color: '#888'}}>Доступ до цього розділу мають лише користувачі з пакетами Premium, Diamond та вище.</p>
+                <div style={{ padding: '50px', textAlign: 'center', margin: 'auto' }}>
+                    <Lock size={60} color="#555" style={{margin: '0 auto 20px'}}/>
+                    <h2 style={{color: '#fff'}}>Розділ Арбітражу недоступний</h2>
+                    <p style={{color: '#888'}}>Цей розділ доступний лише для пакетів Premium, Diamond та вище.</p>
                 </div>
-            </>
+            </div>
         );
     }
 
