@@ -2,11 +2,11 @@ import React from 'react';
 import { Crown, CheckCircle2, Check, Eye, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const AdminProfiles = ({ adminModels, modelTab, setModelTab, setSelectedModel, fetchUsers, loadCatalog }) => {
+const AdminProfiles = ({ adminModels, modelTab, setModelTab, setSelectedModel, fetchUsers, loadCatalog, authFetch }) => {
     
     const handleVerifyProfile = async (profileId, vLevel) => {
         try {
-            const res = await fetch(`/api/admin/profiles/${profileId}/verify`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vLevel }) });
+            const res = await authFetch(`/api/admin/profiles/${profileId}/verify`, { method: 'POST', body: JSON.stringify({ vLevel }) });
             if (res.ok) { toast.success('✅ Статус змінено!'); fetchUsers(); if (loadCatalog) loadCatalog(); }
         } catch (error) { toast.error('Помилка сервера'); }
     };
@@ -14,7 +14,7 @@ const AdminProfiles = ({ adminModels, modelTab, setModelTab, setSelectedModel, f
     const handleApproveProfile = async (profileId) => {
         const loadingToast = toast.loading('Зберігаю в базу...');
         try {
-            const res = await fetch(`/api/admin/profiles/${profileId}/approve`, { method: 'POST' });
+            const res = await authFetch(`/api/admin/profiles/${profileId}/approve`, { method: 'POST' });
             const data = await res.json();
             if (res.ok && data.success && data.profile.isApproved) { toast.success('✅ Анкету опубліковано!', { id: loadingToast }); fetchUsers(); if (loadCatalog) loadCatalog(); } 
             else { toast.error('❌ Помилка: База не зберегла статус.', { id: loadingToast }); }
@@ -25,14 +25,7 @@ const AdminProfiles = ({ adminModels, modelTab, setModelTab, setSelectedModel, f
         if (!window.confirm("Точно видалити цю анкету назавжди?")) return;
         try {
             // 🟢 Дістаємо токен поточного користувача (адміна)
-            const token = localStorage.getItem('zefirka_token'); 
-
-            const res = await fetch(`/api/profiles/${profileId}`, { 
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}` // 🟢 ДОДАЄМО ТОКЕН У ЗАПИТ
-                }
-            });
+            const res = await authFetch(`/api/profiles/${profileId}`, { method: 'DELETE' });
             
             if (res.ok) { 
                 toast.success('🗑 Анкету видалено!'); 

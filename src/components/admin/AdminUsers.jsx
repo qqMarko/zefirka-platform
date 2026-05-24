@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import useStore from '../../store/useStore';
 import { useNavigate } from 'react-router-dom';
 
-const AdminUsers = ({ users, isMobile, searchQuery, setSearchQuery, fetchUsers }) => {
+const AdminUsers = ({ users, isMobile, searchQuery, setSearchQuery, fetchUsers, authFetch }) => {
     const navigate = useNavigate();
 
     const handleCustomBalance = async (userId, type) => {
@@ -15,8 +15,8 @@ const AdminUsers = ({ users, isMobile, searchQuery, setSearchQuery, fetchUsers }
         
         const amount = type === 'add' ? Math.abs(num) : -Math.abs(num);
         try {
-            const res = await fetch(`/api/admin/users/${userId}/balance`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount })
+            const res = await authFetch(`/api/admin/users/${userId}/balance`, {
+                method: 'POST', body: JSON.stringify({ amount })
             });
             if (res.ok) { toast.success(amount > 0 ? `💳 Баланс поповнено!` : `💸 Штраф виписано!`); fetchUsers(); }
         } catch (error) { toast.error('Помилка сервера'); }
@@ -25,7 +25,7 @@ const AdminUsers = ({ users, isMobile, searchQuery, setSearchQuery, fetchUsers }
     const handleToggleBan = async (userId) => {
         if (!window.confirm("Змінити статус доступу для цього користувача?")) return;
         try {
-            const res = await fetch(`/api/admin/users/${userId}/toggle-ban`, { method: 'POST' });
+            const res = await authFetch(`/api/admin/users/${userId}/toggle-ban`, { method: 'POST' });
             if (res.ok) { toast.success('🔄 Статус оновлено!'); fetchUsers(); } 
         } catch (error) { toast.error('Мережева помилка'); }
     };
@@ -33,7 +33,7 @@ const AdminUsers = ({ users, isMobile, searchQuery, setSearchQuery, fetchUsers }
     const handleShadowLogin = async (userId, email) => {
         if (!window.confirm(`👻 Увійти в акаунт ${email}?\n\nВи зможете повернутися в Адмінку кліком на верхню панель.`)) return;
         try {
-            const res = await fetch(`/api/admin/users/${userId}/shadow-login`, { method: 'POST' });
+            const res = await authFetch(`/api/admin/users/${userId}/shadow-login`, { method: 'POST' });
             const data = await res.json();
             if (data.success) {
                 localStorage.setItem('adminToken', localStorage.getItem('token'));
@@ -51,7 +51,7 @@ const AdminUsers = ({ users, isMobile, searchQuery, setSearchQuery, fetchUsers }
         try {
             let BASE_URL = import.meta.env.VITE_API_URL || '';
             if (BASE_URL.endsWith('/api')) BASE_URL = BASE_URL.slice(0, -4);
-            const res = await fetch(`${BASE_URL}/api/admin/remove-vip/${userId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }});
+            const res = await authFetch(`/api/admin/remove-vip/${userId}`, { method: 'POST' });
             const data = await res.json();
             if (data.success) { toast.success('✅ VIP статус знято!', { id: loadingToast }); fetchUsers(); } 
             else toast.error(`❌ ${data.message}`, { id: loadingToast });

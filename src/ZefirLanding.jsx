@@ -112,8 +112,13 @@ const ZefirkaPlatform = () => {
     const userPkg = String(user?.vipPackage || user?.package || '').trim().toLowerCase();
     const userVLevel = Number(user?.vLevel) || 0;
     const hasHighVLevel = userVLevel >= 2 || (Array.isArray(myModels) && myModels.some(m => Number(m.vLevel) >= 2));
-    const allowedPackages = ['premium', 'diamond', 'guest', 'priority', 'concierge'];
-    const hasDisputeAccess = userRole === 'admin' || allowedPackages.includes(userPkg) || hasHighVLevel;
+    // Реальні ID пакетів як вони зберігаються в БД (wallet.js рядки 91-95):
+    // Моделі: 'start', 'premium', 'diamond'
+    // Клієнти: 'premium_client' (GUEST), 'priority_chat' (PRIORITY), 'concierge'
+    const allowedPackages = ['premium', 'diamond', 'premium_client', 'priority_chat', 'concierge'];
+    // ✅ ВИПРАВЛЕНО: перевіряємо чи VIP ще активний (не закінчився 30-денний термін)
+    const isVipActive = !user?.vipExpiresAt || new Date(user.vipExpiresAt) > new Date();
+    const hasDisputeAccess = userRole === 'admin' || (allowedPackages.includes(userPkg) && isVipActive) || hasHighVLevel;
 
     useEffect(() => { 
         if (userUniqueId) { loadBalance(userUniqueId); loadNotifications(userUniqueId); }

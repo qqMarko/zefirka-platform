@@ -2,12 +2,12 @@ import React from 'react';
 import { Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const AdminFinances = ({ topUps, fetchUsers, users, setFullImage }) => {
+const AdminFinances = ({ topUps, fetchUsers, users, setFullImage, authFetch }) => {
 
     const handleApproveTopUp = async (id, amount) => {
         if (!window.confirm(`Зарахувати ${amount} ₴ юзеру?`)) return;
         try {
-            const res = await fetch(`/api/admin/topups/${id}/approve`, { method: 'POST' });
+            const res = await authFetch(`/api/admin/topups/${id}/approve`, { method: 'POST' });
             if (res.ok) { toast.success('✅ Кошти зараховано!'); fetchUsers(); }
         } catch (error) { toast.error('Помилка'); }
     };
@@ -15,7 +15,7 @@ const AdminFinances = ({ topUps, fetchUsers, users, setFullImage }) => {
     const handleRejectTopUp = async (id) => {
         if (!window.confirm('Відхилити цей чек? Юзер не отримає гроші.')) return;
         try {
-            const res = await fetch(`/api/admin/topups/${id}/reject`, { method: 'POST' });
+            const res = await authFetch(`/api/admin/topups/${id}/reject`, { method: 'POST' });
             if (res.ok) { toast.success('❌ Заявку відхилено'); fetchUsers(); }
         } catch (error) { toast.error('Помилка'); }
     };

@@ -60,11 +60,10 @@ const Header = ({
     unreadNotifs, showNotifDropdown, setShowNotifDropdown, markNotificationsAsRead,
     notifications, email, userUniqueId, showUserDropdown, setShowUserDropdown,
     setShowVipModal, setShowWalletModal, setShowSettingsModal, hasActiveDisputeAlert,
-    setHasActiveDisputeAlert, setShowSupport, handleLogout, user
+    setHasActiveDisputeAlert, setShowSupport, handleLogout, user, hasDisputeAccess
 }) => {
 
-    // 🔥 МАГІЯ: Дістаємо доступ до арбітражу НАПРЯМУ зі стору, щоб він реагував миттєво!
-    const { hasDisputeAccess } = useStore();
+    // hasDisputeAccess приходить як пропс з ZefirLanding — вже boolean
 
     return (
         <header className="main-header" style={{ flexShrink: 0, position: 'sticky', top: '15px', zIndex: 3000, width: '100%', maxWidth: '1600px', margin: '0 auto 50px auto', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 clamp(10px, 3vw, 30px)', boxSizing: 'border-box', background: 'rgba(5, 5, 8, 0.95)', backdropFilter: 'blur(12px)', border: `1px solid rgba(233, 30, 99, 0.2)`, borderRadius: '20px', boxShadow: `0 10px 30px -5px rgba(233, 30, 99, 0.25)` }}>
@@ -221,42 +220,24 @@ const Header = ({
                                         <div style={{ padding: '10px 15px', color: '#ccc', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', borderRadius: '8px', fontSize: '13px', fontWeight: '600' }} className="dropdown-item-hover" onClick={() => {setShowWalletModal(true); setShowUserDropdown(false);}}><Wallet size={18}/> {t[currentLang]?.wallet || 'Гаманець'}</div>
                                         <div style={{ padding: '10px 15px', color: '#ccc', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', borderRadius: '8px', fontSize: '13px', fontWeight: '600' }} className="dropdown-item-hover" onClick={() => {setShowSettingsModal(true); setShowUserDropdown(false);}}><Settings size={18}/> {t[currentLang]?.settings || 'Налаштування'}</div>
                                         
-                                        {/* 🚀 ЗАМОЧОК ДЛЯ АРБІТРАЖУ (Надійно перевіряє hasDisputeAccess) */}
-                                        <div 
-                                            style={{ 
-                                                padding: '10px 15px', 
-                                                color: hasDisputeAccess ? '#ccc' : '#666', 
-                                                display: 'flex', 
-                                                alignItems: 'center', 
-                                                gap: '12px', 
-                                                cursor: hasDisputeAccess ? 'pointer' : 'not-allowed', 
-                                                borderRadius: '8px', 
-                                                fontSize: '13px', 
-                                                fontWeight: '600', 
-                                                position: 'relative',
-                                                opacity: hasDisputeAccess ? 1 : 0.5,
-                                                filter: hasDisputeAccess ? 'none' : 'grayscale(1)',
-                                                transition: 'all 0.3s ease'
-                                            }} 
-                                            className={hasDisputeAccess ? "dropdown-item-hover" : ""} 
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                if (!hasDisputeAccess) {
-                                                    toast.error('Доступ до Арбітражу відкрито лише для VIP-користувачів');
-                                                    return; // Перериваємо клік
-                                                }
-                                                navigate('/disputes'); 
-                                                setShowUserDropdown(false); 
-                                                setHasActiveDisputeAlert(false);
-                                            }}
-                                        >
-                                            {/* Якщо є доступ - трикутник, якщо немає - Замочок */}
-                                            {hasDisputeAccess ? <AlertTriangle size={18}/> : <Lock size={18}/>} 
-                                            
-                                            <span>{t[currentLang]?.dispTab || 'Арбітраж (Спори)'}</span>
-                                            
-                                            {hasActiveDisputeAlert && hasDisputeAccess && <span style={{position: 'absolute', right: '15px', width: '10px', height: '10px', background: '#ff4444', borderRadius: '50%', boxShadow: '0 0 10px #ff4444'}}></span>}
-                                        </div>
+                                        {/* АРБІТРАЖ — доступний тільки з VIP */}
+                                        {hasDisputeAccess ? (
+                                            <div
+                                                style={{ padding: '10px 15px', color: '#ccc', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', borderRadius: '8px', fontSize: '13px', fontWeight: '600', position: 'relative' }}
+                                                className="dropdown-item-hover"
+                                                onClick={() => { navigate('/disputes'); setShowUserDropdown(false); setHasActiveDisputeAlert(false); }}
+                                            >
+                                                <AlertTriangle size={18}/>
+                                                <span>{t[currentLang]?.dispTab || 'Арбітраж (Спори)'}</span>
+                                                {hasActiveDisputeAlert && <span style={{ position: 'absolute', right: '15px', width: '10px', height: '10px', background: '#ff4444', borderRadius: '50%', boxShadow: '0 0 10px #ff4444' }}></span>}
+                                            </div>
+                                        ) : (
+                                            <div style={{ padding: '10px 15px', display: 'flex', alignItems: 'center', gap: '12px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'default', userSelect: 'none', opacity: 0.35, pointerEvents: 'none' }}>
+                                                <Lock size={18} color="#666"/>
+                                                <span style={{ color: '#555' }}>{t[currentLang]?.dispTab || 'Арбітраж (Спори)'}</span>
+                                                <span style={{ marginLeft: 'auto', fontSize: '9px', fontWeight: '800', color: '#444', background: '#111', border: '1px solid #2a2a2a', padding: '2px 6px', borderRadius: '4px', letterSpacing: '0.5px' }}>VIP</span>
+                                            </div>
+                                        )}
                                         
                                         <div style={{ padding: '10px 15px', color: '#ccc', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', borderRadius: '8px', fontSize: '13px', fontWeight: '600' }} className="dropdown-item-hover" onClick={() => {setShowSupport(true); setShowUserDropdown(false);}}><MessageCircle size={18}/> {t[currentLang]?.support || 'Підтримка'}</div>
                                     </div>

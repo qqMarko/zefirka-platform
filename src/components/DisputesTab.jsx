@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, Lock } from 'lucide-react';
 import useStore, { socket } from '../store/useStore';
 import { toast } from 'react-hot-toast';
 
@@ -9,7 +9,6 @@ import DisputeChat from './disputes/DisputeChat';
 import AdminVerdictModal from './disputes/AdminVerdictModal';
 import UserVerdictModal from './disputes/UserVerdictModal';
 
-// ДОДАНО onDisputeClosed у пропси
 const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, accent = '#ff4081', onDisputeClosed }) => {
     const [disputes, setDisputes] = useState([]);
     const [activeDispute, setActiveDispute] = useState(null);
@@ -43,6 +42,28 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
         } catch (err) { console.error(err); }
     };
 
+    // ✅ ВИПРАВЛЕНО: deleteDispute перенесено ВИЩЕ return, щоб не крашило компонент
+    const deleteDispute = async (id, e) => {
+        e.stopPropagation();
+        if (!window.confirm('Ви впевнені, що хочете видалити цей спір назавжди?')) return;
+
+        const loadingId = toast.loading('Видалення...');
+        try {
+            const res = await fetch(`/api/admin/disputes/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+
+            if (data.success || res.ok) {
+                toast.success('Спір видалено', { id: loadingId });
+                setDisputes(prev => prev.filter(d => d._id !== id));
+                if (activeDispute?._id === id) setActiveDispute(null);
+            } else {
+                toast.error('Помилка видалення', { id: loadingId });
+            }
+        } catch (err) {
+            toast.error('Помилка сервера', { id: loadingId });
+        }
+    };
+
     useEffect(() => {
         setAdminActions({ initiator: { trustChange: 0, ban: false }, accused: { trustChange: 0, ban: false } });
     }, [activeDispute?._id]);
@@ -66,9 +87,9 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
             const closedId = typeof data === 'object' ? data.id : data;
             const serverVerdict = typeof data === 'object' ? data.verdict : 'Спір вирішено адміністрацією.';
 
-            fetchDisputes(); 
-            triggerClientUpdate(); 
-            
+            fetchDisputes();
+            triggerClientUpdate();
+
             setActiveDispute(prev => {
                 if (prev && prev._id === closedId) {
                     setVerdictResultModal(serverVerdict);
@@ -95,27 +116,27 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
 
         try {
             const actions = [];
-            let penaltiesInfo = []; 
-            
+            let penaltiesInfo = [];
+
             if (adminActions.initiator.ban) {
                 actions.push(fetch(`/api/admin/users/${activeDispute.initiatorId}/toggle-ban`, { method: 'POST' }));
                 penaltiesInfo.push('🔴 Ініціатора заблоковано.');
             }
             if (adminActions.initiator.trustChange !== 0) {
-                actions.push(fetch(`/api/admin/users/${activeDispute.initiatorId}/update-trust`, { 
-                    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ score: adminActions.initiator.trustChange }) 
+                actions.push(fetch(`/api/admin/users/${activeDispute.initiatorId}/update-trust`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ score: adminActions.initiator.trustChange })
                 }));
                 const sign = adminActions.initiator.trustChange > 0 ? '+' : '';
                 penaltiesInfo.push(`⭐ Рейтинг ініціатора: ${sign}${adminActions.initiator.trustChange}`);
             }
-            
+
             if (adminActions.accused.ban) {
                 actions.push(fetch(`/api/admin/users/${activeDispute.accusedId}/toggle-ban`, { method: 'POST' }));
                 penaltiesInfo.push('🔴 Порушника заблоковано.');
             }
             if (adminActions.accused.trustChange !== 0) {
-                actions.push(fetch(`/api/admin/users/${activeDispute.accusedId}/update-trust`, { 
-                    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ score: adminActions.accused.trustChange }) 
+                actions.push(fetch(`/api/admin/users/${activeDispute.accusedId}/update-trust`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ score: adminActions.accused.trustChange })
                 }));
                 const sign = adminActions.accused.trustChange > 0 ? '+' : '';
                 penaltiesInfo.push(`⭐ Рейтинг порушника: ${sign}${adminActions.accused.trustChange}`);
@@ -132,24 +153,22 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
                 method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ verdict: finalVerdictText })
             });
             const data = await res.json();
-            
+
             if (data.success) {
                 toast.success('Спір закрито!', { id: loading });
-                
-                // ВАЖЛИВО: Оновлюємо AdminPanel
+
                 if (typeof onDisputeClosed === 'function') {
                     onDisputeClosed(activeDispute._id);
                 }
 
                 setAdminActions({ initiator: { trustChange: 0, ban: false }, accused: { trustChange: 0, ban: false } });
-                triggerClientUpdate(); 
+                triggerClientUpdate();
                 setActiveDispute(prev => ({ ...prev, status: 'closed', verdict: finalVerdictText }));
                 fetchDisputes();
             } else toast.error(data.message || 'Помилка', { id: loading });
         } catch (e) { toast.error('Помилка виконання', { id: loading }); }
     };
 
-   // Якщо немає доступу і це не примусовий перегляд адміном — жорстко блокуємо контент
     if (!hasDisputeAccess && !forcedDispute) {
         return (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '500px', background: '#050508', borderRadius: '16px', border: `1px solid ${accent}44`, overflow: 'hidden' }}>
@@ -164,13 +183,13 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
     }
 
     return (
-        <div style={{ 
+        <div style={{
             display: 'flex', height: forcedDispute ? '100%' : 'calc(100vh - 180px)', minHeight: forcedDispute ? '0' : '500px', maxHeight: forcedDispute ? 'none' : '800px',
-            width: '100%', background: '#050508', borderRadius: forcedDispute ? '0' : '16px', border: forcedDispute ? 'none' : `1px solid ${accent}44`, overflow: 'hidden' 
+            width: '100%', background: '#050508', borderRadius: forcedDispute ? '0' : '16px', border: forcedDispute ? 'none' : `1px solid ${accent}44`, overflow: 'hidden'
         }}>
             <UserVerdictModal verdictResultModal={verdictResultModal} setVerdictResultModal={setVerdictResultModal} accent={accent} />
-            
-            <AdminVerdictModal 
+
+            <AdminVerdictModal
                 showVerdictModal={showVerdictModal} setShowVerdictModal={setShowVerdictModal}
                 verdictText={verdictText} setVerdictText={setVerdictText}
                 executeVerdictAndResolve={executeVerdictAndResolve} accent={accent}
@@ -183,9 +202,9 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
             )}
 
             {!forcedDispute && (
-                <DisputeSidebar 
+                <DisputeSidebar
                     disputes={disputes} activeDispute={activeDispute} setActiveDispute={setActiveDispute}
-                    setIsCreatingDispute={setIsCreatingDispute} userRole={userRole} 
+                    setIsCreatingDispute={setIsCreatingDispute} userRole={userRole}
                     setVerdictResultModal={setVerdictResultModal} accent={accent}
                     onDeleteDispute={deleteDispute}
                 />
@@ -196,7 +215,7 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
                     <DisputeCreate userUniqueId={userUniqueId} fetchDisputes={fetchDisputes} setIsCreatingDispute={setIsCreatingDispute} setActiveDispute={setActiveDispute} accent={accent} />
                 ) : activeDispute ? (
                     <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto' }}>
-                        <DisputeChat 
+                        <DisputeChat
                             activeDispute={activeDispute} userUniqueId={userUniqueId} userRole={userRole}
                             setFullscreenImage={setFullscreenImage} adminActions={adminActions} setAdminActions={setAdminActions}
                             setShowVerdictModal={setShowVerdictModal} accent={accent}
@@ -206,30 +225,6 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
             </div>
         </div>
     );
-
-    const deleteDispute = async (id, e) => {
-    e.stopPropagation(); // Щоб при кліку на кошик не відкривався сам спір
-    if (!window.confirm('Ви впевнені, що хочете видалити цей спір назавжди?')) return;
-
-    const loadingId = toast.loading('Видалення...');
-    try {
-        const res = await fetch(`/api/admin/disputes/${id}`, { method: 'DELETE' });
-        const data = await res.json();
-        
-        if (data.success || res.ok) {
-            toast.success('Спір видалено', { id: loadingId });
-            // Оновлюємо список
-            setDisputes(prev => prev.filter(d => d._id !== id));
-            // Якщо видалили той спір, який зараз відкритий - закриваємо його
-            if (activeDispute?._id === id) setActiveDispute(null);
-        } else {
-            toast.error('Помилка видалення', { id: loadingId });
-        }
-    } catch (err) {
-        toast.error('Помилка сервера', { id: loadingId });
-    }
-};
-
 };
 
 export default DisputesTab;

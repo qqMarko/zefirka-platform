@@ -41,7 +41,7 @@ const useStore = create((set, get) => ({
     hasDisputeAccess: () => {
         const { user } = get();
         // Додаємо сюди всі пакети, які мають доступ до арбітражу
-        const allowedPackages = ['premium', 'diamond', 'guest', 'priority', 'concierge'];
+        const allowedPackages = ['premium', 'diamond', 'premium_client', 'priority_chat', 'concierge'];
         return allowedPackages.includes(user.vipPackage?.toLowerCase());
     },
 

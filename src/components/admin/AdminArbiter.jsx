@@ -2,7 +2,7 @@ import React from 'react';
 import { Gavel, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const AdminArbiter = ({ adminDisputes, setViewDispute, setAdminDisputes }) => {
+const AdminArbiter = ({ adminDisputes, setViewDispute, setAdminDisputes, authFetch }) => {
 
     const handleDeleteDispute = async (id, e) => {
         e.stopPropagation(); 
@@ -10,7 +10,7 @@ const AdminArbiter = ({ adminDisputes, setViewDispute, setAdminDisputes }) => {
 
         const loadingId = toast.loading('Видалення...');
         try {
-            const res = await fetch(`/api/admin/disputes/${id}`, { method: 'DELETE' });
+            const res = await authFetch(`/api/admin/disputes/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 toast.success('Спір видалено', { id: loadingId });
                 if (setAdminDisputes) setAdminDisputes(prev => prev.filter(d => d._id !== id));

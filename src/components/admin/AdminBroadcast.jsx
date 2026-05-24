@@ -24,13 +24,17 @@ const AdminBroadcast = () => {
     let BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     if (BACKEND_URL.endsWith('/api')) BACKEND_URL = BACKEND_URL.slice(0, -4);
 
+    const getAuthHeaders = () => ({
+        Authorization: `Bearer ${localStorage.getItem('zefirka_token')}`
+    });
+
     useEffect(() => {
         fetchStatus();
     }, []);
 
     const fetchStatus = async () => {
         try {
-            const res = await axios.get(`${BACKEND_URL}/api/admin/megaphone/status`, { withCredentials: true });
+            const res = await axios.get(`${BACKEND_URL}/api/admin/megaphone/status`, { headers: getAuthHeaders() });
             if (res.data.success && res.data.settings) {
                 setMessage(res.data.settings.message || '');
                 setVipDiscountPercent(res.data.settings.vipDiscountPercent || 0);
@@ -57,7 +61,7 @@ const AdminBroadcast = () => {
         try {
             const response = await axios.post(`${BACKEND_URL}/api/admin/megaphone/broadcast`, {
                 message, vipDiscountPercent, activeVipPackages, bumpDiscountPercent, isActive
-            }, { withCredentials: true });
+            }, { headers: getAuthHeaders() });
 
             if (response.data.success) {
                 toast.success('Рупор та акції успішно оновлено!', { 

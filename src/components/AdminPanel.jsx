@@ -15,6 +15,15 @@ import AdminArbiter from './admin/AdminArbiter';
 import AdminPanopticon from './admin/AdminPanopticon';
 import AdminBroadcast from './admin/AdminBroadcast';
 
+// 🔒 Хелпер: додає токен адміна до кожного fetch-запиту
+const authFetch = (url, options = {}) => {
+    const token = localStorage.getItem('zefirka_token');
+    return fetch(url, {
+        ...options,
+        headers: { 'Content-Type': 'application/json', ...options.headers, Authorization: `Bearer ${token}` },
+    });
+};
+
 const AdminPanel = () => {
     const navigate = useNavigate();
     const { userRole, loadCatalog, onlineUsers, userUniqueId } = useStore();
@@ -40,10 +49,10 @@ const AdminPanel = () => {
         setLoading(true);
         try {
             const [resUsers, resModels, resTopUps, resChats] = await Promise.all([
-                fetch(`/api/admin/users?t=${Date.now()}`).then(res => res.json()),
-                fetch(`/api/profiles?fetchAll=true&t=${Date.now()}`).then(res => res.json()),
-                fetch(`/api/admin/topups?t=${Date.now()}`).then(res => res.json()),
-                fetch(`/api/admin/chats?t=${Date.now()}`).then(res => res.json())
+                authFetch(`/api/admin/users?t=${Date.now()}`).then(res => res.json()),
+                authFetch(`/api/profiles?fetchAll=true&t=${Date.now()}`).then(res => res.json()),
+                authFetch(`/api/admin/topups?t=${Date.now()}`).then(res => res.json()),
+                authFetch(`/api/admin/chats?t=${Date.now()}`).then(res => res.json())
             ]);
 
             if (resUsers.success) setUsers(resUsers.data);
@@ -64,7 +73,7 @@ const AdminPanel = () => {
 
     useEffect(() => {
         if (activeTab === 'arbiter') {
-            fetch('/api/admin/disputes')
+            authFetch('/api/admin/disputes')
                 .then(res => res.json())
                 .then(data => { if (data.success) setAdminDisputes(data.data); })
                 .catch(err => console.error(err));
@@ -87,10 +96,10 @@ const AdminPanel = () => {
 
             <div className="custom-scrollbar" style={{ flex: 1, padding: isMobile ? '20px' : '40px', overflowY: 'auto', background: 'radial-gradient(circle at top right, #111 0%, #050508 100%)' }}>
                 {activeTab === 'dashboard' && <AdminDashboard {...sharedProps} adminModels={adminModels} topUps={topUps} adminDisputes={adminDisputes} setModelTab={setModelTab} loading={loading} />}
-                {activeTab === 'users' && <AdminUsers {...sharedProps} searchQuery={searchQuery} setSearchQuery={setSearchQuery} />}
-                {activeTab === 'profiles' && <AdminProfiles {...sharedProps} adminModels={adminModels} modelTab={modelTab} setModelTab={setModelTab} setSelectedModel={setSelectedModel} />}
-                {activeTab === 'finances' && <AdminFinances {...sharedProps} topUps={topUps} setFullImage={setFullImage} />}
-                {activeTab === 'arbiter' && <AdminArbiter {...sharedProps} adminDisputes={adminDisputes} setViewDispute={setViewDispute} setAdminDisputes={setAdminDisputes} />}
+                {activeTab === 'users' && <AdminUsers {...sharedProps} searchQuery={searchQuery} setSearchQuery={setSearchQuery} authFetch={authFetch} />}
+                {activeTab === 'profiles' && <AdminProfiles {...sharedProps} adminModels={adminModels} modelTab={modelTab} setModelTab={setModelTab} setSelectedModel={setSelectedModel} authFetch={authFetch} />}
+                {activeTab === 'finances' && <AdminFinances {...sharedProps} topUps={topUps} setFullImage={setFullImage} authFetch={authFetch} />}
+                {activeTab === 'arbiter' && <AdminArbiter {...sharedProps} adminDisputes={adminDisputes} setViewDispute={setViewDispute} setAdminDisputes={setAdminDisputes} authFetch={authFetch} />}
                 {activeTab === 'chats' && <AdminPanopticon {...sharedProps} allChats={allChats} setViewChat={setViewChat} />}
                 {activeTab === 'broadcast' && <AdminBroadcast />}
             </div>
