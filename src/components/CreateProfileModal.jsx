@@ -60,10 +60,20 @@ const CreateProfileModal = () => {
     }, [step]); // step важливий, бо елемент з'являється тільки на 3 кроці
 
     useEffect(() => {
-        try {
-            nsfwjs.load().then(model => setNsfwModel(model)).catch(err => console.log("AI Load Warn:", err));
-        } catch (e) {
-            console.warn("NSFWJS не встановлено.");
+        // Defer NSFW model load so modal opens instantly without lag
+        const loadModel = () => {
+            try {
+                nsfwjs.load().then(model => setNsfwModel(model)).catch(err => console.log("AI Load Warn:", err));
+            } catch (e) {
+                console.warn("NSFWJS не встановлено.");
+            }
+        };
+        if (typeof requestIdleCallback !== 'undefined') {
+            const id = requestIdleCallback(loadModel, { timeout: 2000 });
+            return () => cancelIdleCallback(id);
+        } else {
+            const timer = setTimeout(loadModel, 500);
+            return () => clearTimeout(timer);
         }
     }, []);
 

@@ -349,7 +349,7 @@ const CatalogGrid = ({
                                                 }} />
                                                 {displayOnline ? (t[currentLang]?.onlineStatus || 'Онлайн') : (t[currentLang]?.offlineStatus || 'Офлайн')}
                                                 <span style={{ color: '#888' }}>•</span>
-                                                {m.age} {t[currentLang]?.age || 'років'}
+                                                {m.age} {t[currentLang]?.ageUnit || 'років'}
                                             </div>
                                         </div>
                                         <div style={{ textAlign: 'right' }}>

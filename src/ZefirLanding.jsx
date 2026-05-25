@@ -346,7 +346,7 @@ const ZefirkaPlatform = () => {
                         ) : <Navigate to="/" replace /> } />
 
                         <Route path="/messages" element={ isLoggedIn ? <MessagesTab setCurrentPage={(target) => navigate(target === 'catalog' || !target ? previousPage : `/${target}`)} setSelectedModel={setSelectedModel} /> : <Navigate to="/" replace /> } />
-                        <Route path="/faq" element={ <FaqSection t={t} currentLang={currentLang} accent={accent} /> } />
+                        <Route path="/faq" element={ <FaqSection t={t} currentLang={currentLang} accent={accent} setShowSupport={setShowSupport} /> } />
                         <Route path="/godmode-zefir-777" element={ isLoggedIn && userRole === 'admin' ? <AdminPanel /> : <Navigate to="/" replace /> } />
                         <Route path="/disputes" element={ isLoggedIn ? <DisputesTab userUniqueId={userUniqueId} userRole={userRole} hasDisputeAccess={hasDisputeAccess} accent={accent} t={t} currentLang={currentLang} /> : <Navigate to="/" replace /> } />
                         <Route path="*" element={<Navigate to="/" replace />} />

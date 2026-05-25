@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { 
     User, Plus, ShieldCheck, AlertTriangle, Bell, 
-    UserCircle, LogOut, Settings, Wallet, Crown, MessageCircle, Copy, Lock,
+    LogOut, Settings, Wallet, Crown, MessageCircle, Copy, Lock,
     Trash2, BellOff, CheckCheck
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -230,9 +230,9 @@ const TrustBattery = ({ score, t, currentLang }) => {
     const [isHovered, setIsHovered] = useState(false);
     
     const getColor = (s) => {
-        if (s >= 80) return { main: '#4caf50', bg: 'rgba(76, 175, 80, 0.15)', glow: 'rgba(76, 175, 80, 0.4)' };
-        if (s >= 50) return { main: '#ffc107', bg: 'rgba(255, 193, 7, 0.15)', glow: 'rgba(255, 193, 7, 0.4)' };
-        return { main: '#ff4444', bg: 'rgba(255, 68, 68, 0.15)', glow: 'rgba(255, 68, 68, 0.4)' };
+        if (s >= 80) return { main: '#4caf50', bg: 'rgba(76,175,80,0.15)', glow: 'rgba(76,175,80,0.5)', pill: 'rgba(76,175,80,0.12)' };
+        if (s >= 50) return { main: '#ffc107', bg: 'rgba(255,193,7,0.15)',  glow: 'rgba(255,193,7,0.5)',  pill: 'rgba(255,193,7,0.12)' };
+        return       { main: '#ff4444', bg: 'rgba(255,68,68,0.15)',  glow: 'rgba(255,68,68,0.5)',  pill: 'rgba(255,68,68,0.12)' };
     };
     
     const colors = getColor(score);
@@ -242,31 +242,67 @@ const TrustBattery = ({ score, t, currentLang }) => {
         <div 
             onMouseEnter={() => setIsHovered(true)} 
             onMouseLeave={() => setIsHovered(false)} 
-            style={{ position: 'relative', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '5px' }}
+            style={{ position: 'relative', display: 'flex', alignItems: 'center', cursor: 'pointer' }}
         >
-            <div 
-                style={{ 
-                    position: 'relative', width: '36px', height: '36px', borderRadius: '50%', 
-                    background: '#111', border: `2px solid ${colors.bg}`, display: 'flex', 
-                    alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 15px ${colors.glow}`, 
-                    animation: isPulsing ? 'pulseAlert 1.5s infinite' : 'none', transition: 'all 0.3s ease' 
-                }} 
-                className="menu-hover"
-            >
-                <svg width="32" height="32" viewBox="0 0 36 36" style={{ position: 'absolute', transform: 'rotate(-90deg)' }}>
-                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
-                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={colors.main} strokeWidth="3" strokeDasharray={`${score}, 100`} style={{ transition: 'stroke-dasharray 1s ease-out' }} />
-                </svg>
-                {score >= 50 ? <ShieldCheck size={16} color={colors.main} style={{ zIndex: 2 }} /> : <AlertTriangle size={16} color={colors.main} style={{ zIndex: 2 }} />}
+            {/* Compact pill button — isolation:isolate prevents backdrop-filter blur leak */}
+            <div style={{
+                display: 'flex', alignItems: 'center', gap: '7px',
+                padding: '5px 11px 5px 6px', borderRadius: '11px',
+                background: colors.pill, 
+                border: `1px solid ${colors.main}55`,
+                boxShadow: `0 0 0 1px ${colors.main}11`,
+                animation: isPulsing ? 'pulseAlert 1.5s infinite' : 'none',
+                transition: 'background 0.2s ease, border-color 0.2s ease',
+                isolation: 'isolate',
+                willChange: 'transform',
+            }}>
+                {/* SVG arc — 36×36 matches viewBox exactly to prevent scaling blur */}
+                <div style={{ position: 'relative', width: '28px', height: '28px', flexShrink: 0 }}>
+                    <svg
+                        width="28" height="28" viewBox="0 0 36 36"
+                        style={{ transform: 'rotate(-90deg)', display: 'block', shapeRendering: 'geometricPrecision' }}
+                    >
+                        <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3.5" />
+                        <circle cx="18" cy="18" r="14" fill="none"
+                            stroke={colors.main} strokeWidth="3.5"
+                            strokeDasharray={`${score * 0.879645943}, 100`}
+                            strokeLinecap="round"
+                            style={{ transition: 'stroke-dasharray 1s ease-out' }}
+                        />
+                    </svg>
+                    <div style={{
+                        position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        pointerEvents: 'none',
+                    }}>
+                        {score >= 50
+                            ? <ShieldCheck size={12} color={colors.main} strokeWidth={2.5} style={{ display: 'block' }} />
+                            : <AlertTriangle size={11} color={colors.main} strokeWidth={2.5} style={{ display: 'block' }} />
+                        }
+                    </div>
+                </div>
+                <span style={{
+                    fontSize: '13px', fontWeight: '900', color: colors.main,
+                    letterSpacing: '-0.3px', lineHeight: 1, fontVariantNumeric: 'tabular-nums',
+                }}>{score}%</span>
             </div>
             
+            {/* Tooltip */}
             {isHovered && (
-                <div className="fade-in-up" style={{ position: 'absolute', top: 'calc(100% + 15px)', right: '-10px', background: 'rgba(10, 10, 15, 0.95)', backdropFilter: 'blur(10px)', border: `1px solid ${colors.main}55`, borderRadius: '16px', padding: '20px', width: '220px', zIndex: 10000, boxShadow: `0 15px 40px rgba(0,0,0,0.9), 0 0 20px ${colors.glow}`, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <div style={{ position: 'absolute', top: '-6px', right: '22px', width: '12px', height: '12px', background: 'rgba(10, 10, 15, 0.95)', borderTop: `1px solid ${colors.main}55`, borderLeft: `1px solid ${colors.main}55`, transform: 'rotate(45deg)' }}></div>
-                    <div style={{ fontSize: '12px', color: '#aaa', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>{t[currentLang]?.trustScore || 'Рейтинг Довіри'}</div>
-                    <div style={{ fontSize: '36px', fontWeight: '900', color: colors.main, lineHeight: '1', textShadow: `0 0 15px ${colors.glow}` }}>{score}%</div>
-                    <div style={{ fontSize: '11px', color: '#888', lineHeight: '1.4', marginTop: '5px' }}>{t[currentLang]?.trustSystemDesc || 'Показник вашої надійності на платформі'}</div>
-                    <div style={{ width: '100%', height: '4px', background: '#222', borderRadius: '2px', marginTop: '5px', overflow: 'hidden' }}><div style={{ width: `${score}%`, height: '100%', background: colors.main, transition: 'width 1s ease-out' }}></div></div>
+                <div className="fade-in-up" style={{
+                    position: 'absolute', top: 'calc(100% + 12px)', right: '-8px',
+                    background: 'rgba(8,8,13,0.97)', backdropFilter: 'blur(16px)',
+                    border: `1px solid ${colors.main}44`, borderRadius: '16px',
+                    padding: '18px', width: '200px', zIndex: 10000,
+                    boxShadow: `0 20px 50px rgba(0,0,0,0.95), 0 0 20px ${colors.glow}22`,
+                    textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px'
+                }}>
+                    <div style={{ position: 'absolute', top: '-5px', right: '18px', width: '10px', height: '10px', background: 'rgba(8,8,13,0.97)', borderTop: `1px solid ${colors.main}44`, borderLeft: `1px solid ${colors.main}44`, transform: 'rotate(45deg)' }} />
+                    <div style={{ fontSize: '10px', color: '#666', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: '800' }}>{t[currentLang]?.trustScore || 'Trust Score'}</div>
+                    <div style={{ fontSize: '38px', fontWeight: '900', color: colors.main, lineHeight: '1', textShadow: `0 0 20px ${colors.glow}` }}>{score}<span style={{ fontSize: '18px' }}>%</span></div>
+                    <div style={{ fontSize: '11px', color: '#777', lineHeight: '1.5', marginTop: '2px' }}>{t[currentLang]?.trustSystemDesc || 'Показник надійності'}</div>
+                    <div style={{ width: '100%', height: '5px', background: '#1a1a1a', borderRadius: '3px', marginTop: '4px', overflow: 'hidden' }}>
+                        <div style={{ width: `${score}%`, height: '100%', background: `linear-gradient(90deg, ${colors.main}88, ${colors.main})`, transition: 'width 1s ease-out', borderRadius: '3px', boxShadow: `0 0 8px ${colors.main}` }} />
+                    </div>
                 </div>
             )}
         </div>
@@ -298,21 +334,67 @@ const Header = ({
             
             <div style={{ flex: 1, display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'flex-end', position: 'relative', zIndex: 3001 }}>
                 
-                <div className="hide-mobile-text">
-                    <div className="header-lang-selector" style={{ display: 'flex', gap: '15px', fontSize: '14px', fontWeight: '600', marginRight: '5px' }}>
-                        {['UA', 'EN', 'RU'].map(l => ( <span key={l} onClick={() => setCurrentLang(l)} style={{ cursor: 'pointer', color: currentLang === l ? accent : '#888', transition: 'color 0.2s' }} className="menu-hover">{l}</span> ))}
+                {/* ── LANGUAGE SWITCHER — isolation prevents backdrop-filter blur leak ── */}
+                <div className="hide-mobile-text" style={{ isolation: 'isolate' }}>
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: '2px',
+                        background: 'rgba(20,20,28,0.9)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '12px', padding: '3px', marginRight: '4px',
+                        isolation: 'isolate',
+                    }}>
+                        {['UA', 'EN', 'RU'].map(l => (
+                            <button key={l} onClick={() => setCurrentLang(l)} style={{
+                                cursor: 'pointer', border: 'none', outline: 'none', fontFamily: 'inherit',
+                                padding: '6px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: '900',
+                                letterSpacing: '0.8px', transition: 'background 0.18s ease, color 0.18s ease',
+                                background: currentLang === l ? accent : 'transparent',
+                                color: currentLang === l ? '#fff' : '#666',
+                                boxShadow: currentLang === l ? `0 1px 6px ${accent}44` : 'none',
+                                lineHeight: 1,
+                                textRendering: 'optimizeLegibility',
+                            }}>
+                                {l}
+                            </button>
+                        ))}
                     </div>
                 </div>
-                
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0px' }}>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     {isLoggedIn && <TrustBattery score={trustScore} t={t} currentLang={currentLang} />}
                     
+                    {/* ── BELL ── */}
                     {isLoggedIn && (
                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                            <div style={{ cursor: 'pointer', position: 'relative', padding: '2px' }} onClick={() => { setShowNotifDropdown(!showNotifDropdown); setShowUserDropdown(false); if(unreadNotifs > 0) markNotificationsAsRead(); }}>
-                                <Bell size={24} color={unreadNotifs > 0 ? accent : 'white'} style={{ animation: unreadNotifs > 0 ? 'pulseAlert 2s infinite' : 'none' }} className="menu-hover" />
-                                {unreadNotifs > 0 && <span style={{ position: 'absolute', top: 0, right: 0, background: '#ff4444', color: 'white', fontSize: '10px', fontWeight: 'bold', padding: '2px 5px', borderRadius: '10px', border: '2px solid #050508' }}>{unreadNotifs}</span>}
-                            </div>
+                            <button
+                                onClick={() => { setShowNotifDropdown(!showNotifDropdown); setShowUserDropdown(false); if(unreadNotifs > 0) markNotificationsAsRead(); }}
+                                style={{
+                                    position: 'relative', cursor: 'pointer', border: 'none', outline: 'none',
+                                    width: '38px', height: '38px', borderRadius: '11px', display: 'flex',
+                                    alignItems: 'center', justifyContent: 'center',
+                                    transition: 'background 0.18s, border-color 0.18s',
+                                    background: unreadNotifs > 0 ? `${accent}22` : 'rgba(20,20,28,0.9)',
+                                    borderWidth: '1px', borderStyle: 'solid',
+                                    borderColor: unreadNotifs > 0 ? `${accent}66` : 'rgba(255,255,255,0.1)',
+                                    boxShadow: unreadNotifs > 0 ? `0 0 12px ${accent}44` : 'none',
+                                    isolation: 'isolate',
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.background = unreadNotifs > 0 ? `${accent}33` : 'rgba(35,35,45,0.95)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = unreadNotifs > 0 ? `${accent}22` : 'rgba(20,20,28,0.9)'; }}
+                            >
+                                <Bell size={16} color={unreadNotifs > 0 ? accent : '#888'} strokeWidth={2.2} style={{ display: 'block', animation: unreadNotifs > 0 ? 'pulseAlert 2s infinite' : 'none' }} />
+                                {unreadNotifs > 0 && (
+                                    <span style={{
+                                        position: 'absolute', top: '-5px', right: '-5px',
+                                        background: 'linear-gradient(135deg, #ff3b3b, #ff6060)',
+                                        color: 'white', fontSize: '9px', fontWeight: '900',
+                                        minWidth: '16px', height: '16px', padding: '0 3px',
+                                        borderRadius: '8px', border: '2px solid #050508',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        lineHeight: 1, boxShadow: '0 2px 8px rgba(255,50,50,0.6)',
+                                    }}>{unreadNotifs > 9 ? '9+' : unreadNotifs}</span>
+                                )}
+                            </button>
                             
                             {showNotifDropdown && (
                                 <NotifDropdown
@@ -328,8 +410,26 @@ const Header = ({
                     )}
                 </div>
 
-                <div style={{ position: 'relative', marginLeft: '4px' }}>
-                    <UserCircle size={30} color={isLoggedIn ? accent : 'white'} onClick={() => { isLoggedIn ? setShowUserDropdown(!showUserDropdown) : setShowAuth(true); setShowNotifDropdown(false); }} className="menu-hover mobile-user" style={{ cursor: 'pointer', strokeWidth: '1.5px' }} />
+                {/* ── USER BUTTON ── */}
+                <div style={{ position: 'relative', marginLeft: '2px' }}>
+                    <button
+                        onClick={() => { isLoggedIn ? setShowUserDropdown(!showUserDropdown) : setShowAuth(true); setShowNotifDropdown(false); }}
+                        className="mobile-user"
+                        style={{
+                            cursor: 'pointer', border: 'none', outline: 'none', fontFamily: 'inherit',
+                            width: '38px', height: '38px', borderRadius: '11px', display: 'flex',
+                            alignItems: 'center', justifyContent: 'center',
+                            transition: 'background 0.18s, border-color 0.18s',
+                            background: isLoggedIn ? `${accent}22` : 'rgba(20,20,28,0.9)',
+                            borderWidth: '1px', borderStyle: 'solid',
+                            borderColor: isLoggedIn ? `${accent}66` : 'rgba(255,255,255,0.1)',
+                            boxShadow: isLoggedIn ? `0 0 12px ${accent}33` : 'none',
+                            isolation: 'isolate',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = isLoggedIn ? `${accent}33` : 'rgba(35,35,45,0.95)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = isLoggedIn ? `${accent}22` : 'rgba(20,20,28,0.9)'; }}
+                    >
+                        <User size={16} color={isLoggedIn ? accent : '#888'} strokeWidth={2.2} style={{ display: 'block' }} /></button>
                     
                         {isLoggedIn && showUserDropdown && (
 <div className="fade-in-up custom-scrollbar" style={{ position: 'absolute', top: '55px', right: '-10px', width: '290px', maxHeight: '80vh', overflowY: 'auto', background: 'rgba(5, 5, 8, 0.95)', backdropFilter: 'blur(20px)', border: `1px solid rgba(255,255,255,0.08)`, zIndex: 4000, boxShadow: `0 20px 50px rgba(0,0,0,0.9), 0 5px 15px rgba(233, 30, 99, 0.15)`, borderRadius: '20px', padding: '12px' }}>

@@ -1,11 +1,16 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { X, Camera, Send, MessageSquare, AlertTriangle } from 'lucide-react';
 
-// Шаблони для швидких скарг
+// Шаблони для швидких відповідей (більш корисні для клієнтів)
 const quickReplies = [
-    "🚨 Поскаржитись на шахрайство",
-    "💳 Проблема з оплатою",
-    "❓ Задати питання"
+    { icon: "🚨", text: "Меня обманули / шахрайство", short: "Шахрайство" },
+    { icon: "💳", text: "Проблема з оплатою або поповненням", short: "Оплата" },
+    { icon: "🔒", text: "Мій акаунт заблоковано — чому?", short: "Блокування" },
+    { icon: "👤", text: "Хочу верифікувати профіль", short: "Верифікація" },
+    { icon: "⭐", text: "Як отримати VIP статус?", short: "VIP / Premium" },
+    { icon: "📸", text: "AI заблокував моє фото", short: "Фото заблоковано" },
+    { icon: "💬", text: "Проблема з повідомленнями / чатом", short: "Чат / Повідомлення" },
+    { icon: "❓", text: "Загальне питання до підтримки", short: "Інше питання" },
 ];
 
 const SupportChat = ({
@@ -112,14 +117,40 @@ const SupportChat = ({
                     </div>
                 </div>
 
-                {/* 🚀 ШВИДКІ ВІДПОВІДІ */}
+                {/* 🚀 ШВИДКІ ВІДПОВІДІ — горизонтальний скрол + колесо миші */}
                 {!supportInput && !supportAttachedImg && (
-                    <div style={{ padding: '0 15px', display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '10px' }} className="custom-scrollbar">
-                        {quickReplies.map((reply, i) => (
-                            <button key={i} onClick={() => setSupportInput(reply)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#ccc', padding: '6px 12px', borderRadius: '12px', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap', transition: '0.2s' }} className="menu-hover">
-                                {reply}
-                            </button>
-                        ))}
+                    <div 
+                        style={{ padding: '8px 14px', marginBottom: '4px', position: 'relative' }}
+                        onWheel={e => {
+                            const el = e.currentTarget.querySelector('.quick-scroll-inner');
+                            if (el) { e.preventDefault(); el.scrollLeft += e.deltaY * 1.2; }
+                        }}
+                    >
+                        <div style={{ fontSize: '10px', color: '#555', fontWeight: '700', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '7px', paddingLeft: '2px' }}>Швидкі теми</div>
+                        <div 
+                            className="quick-scroll-inner custom-scrollbar"
+                            style={{ display: 'flex', gap: '7px', overflowX: 'auto', paddingBottom: '4px', scrollBehavior: 'smooth' }}
+                        >
+                            {quickReplies.map((reply, i) => (
+                                <button 
+                                    key={i} 
+                                    onClick={() => setSupportInput(reply.text)}
+                                    style={{ 
+                                        background: 'rgba(255,255,255,0.04)', 
+                                        border: '1px solid rgba(255,255,255,0.09)', 
+                                        color: '#bbb', padding: '7px 12px', borderRadius: '20px', 
+                                        fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap', 
+                                        transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '6px',
+                                        flexShrink: 0, fontFamily: 'inherit', fontWeight: '600',
+                                    }}
+                                    onMouseEnter={e => { e.currentTarget.style.background='rgba(255,255,255,0.09)'; e.currentTarget.style.borderColor='rgba(255,255,255,0.2)'; e.currentTarget.style.color='#fff'; }}
+                                    onMouseLeave={e => { e.currentTarget.style.background='rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor='rgba(255,255,255,0.09)'; e.currentTarget.style.color='#bbb'; }}
+                                >
+                                    <span style={{ fontSize: '14px' }}>{reply.icon}</span>
+                                    <span>{reply.short}</span>
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 )}
 
