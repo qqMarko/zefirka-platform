@@ -1,7 +1,18 @@
 import { create } from 'zustand';
 import io from 'socket.io-client';
 
-export const socket = io("/", { path: "/socket.io" });
+// WebSocket одразу — без polling затримки
+export const socket = io("/", {
+    path: "/socket.io",
+    transports: ['websocket'],
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1000,
+});
+
+socket.on('connect', () => console.log('✅ Socket:', socket.id));
+socket.on('disconnect', (r) => console.warn('❌ Socket disconnect:', r));
+socket.on('connect_error', (e) => console.error('🔥 Socket error:', e.message));
 
 const savedToken = localStorage.getItem('zefirka_token');
 const savedUserId = localStorage.getItem('zefirka_userId');
@@ -13,24 +24,24 @@ const savedEmailNotif = localStorage.getItem('zefirka_emailNotif') !== 'false';
 const BASE_URL = '/api';
 
 const useStore = create((set, get) => ({
-    isLoggedIn: !!savedToken, 
+    isLoggedIn: !!savedToken,
     token: savedToken || null,
-    userUniqueId: savedUserId || '', 
+    userUniqueId: savedUserId || '',
     userRole: savedRole || 'model',
     email: savedEmail || '',
 
     balance: 0,
     isBannedStatus: false,
-    trustScore: 100, 
-    
-    user: { 
-        freeBumps: 0, 
-        twoFactorEnabled: saved2FA, 
+    trustScore: 100,
+
+    user: {
+        freeBumps: 0,
+        twoFactorEnabled: saved2FA,
         emailNotifications: savedEmailNotif,
-        vipPackage: 'none', 
-        vipExpiresAt: null 
-    }, 
-    
+        vipPackage: 'none',
+        vipExpiresAt: null
+    },
+
     notifications: [],
     unreadNotifs: 0,
     pushEnabled: true,
@@ -40,13 +51,12 @@ const useStore = create((set, get) => ({
 
     hasDisputeAccess: () => {
         const { user } = get();
-        // Додаємо сюди всі пакети, які мають доступ до арбітражу
         const allowedPackages = ['premium', 'diamond', 'premium_client', 'priority_chat', 'concierge'];
         return allowedPackages.includes(user.vipPackage?.toLowerCase());
     },
 
     setBalance: (amount) => set({ balance: amount }),
-    setUser: (userData) => set({ user: { ...get().user, ...userData } }), 
+    setUser: (userData) => set({ user: { ...get().user, ...userData } }),
 
     loadBalance: async (userId) => {
         if (!userId) return;
@@ -56,24 +66,22 @@ const useStore = create((set, get) => ({
             if (data.success) {
                 let parsedTrust = parseInt(data.trustScore);
                 if (isNaN(parsedTrust)) parsedTrust = 100;
-
-                set({ 
-                    balance: data.balance || 0, 
+                set({
+                    balance: data.balance || 0,
                     isBannedStatus: !!data.isBanned,
                     trustScore: parsedTrust,
-                    user: { 
-                        ...get().user, 
+                    user: {
+                        ...get().user,
                         freeBumps: data.freeBumps || 0,
                         vipPackage: data.vipPackage || 'none',
                         vipExpiresAt: data.vipExpiresAt || null
-                    } 
+                    }
                 });
-
                 if (data.isBanned) localStorage.setItem('zefirka_banned_device', 'true');
                 else localStorage.removeItem('zefirka_banned_device');
             }
-        } catch (err) { 
-            console.error("Помилка балансу", err); 
+        } catch (err) {
+            console.error("Помилка балансу", err);
         }
     },
 
@@ -83,7 +91,7 @@ const useStore = create((set, get) => ({
             const res = await fetch(`${BASE_URL}/notifications/${userId}?t=${Date.now()}`);
             const data = await res.json();
             if (data.success) {
-                set({ 
+                set({
                     notifications: data.data,
                     unreadNotifs: data.data.filter(n => !n.isRead).length,
                     pushEnabled: data.pushEnabled !== false
@@ -112,9 +120,7 @@ const useStore = create((set, get) => ({
         const userId = get().userUniqueId;
         const currentStatus = get().pushEnabled;
         const newStatus = !currentStatus;
-        
         set({ pushEnabled: newStatus });
-        
         if (userId) {
             try {
                 await fetch(`${BASE_URL}/notifications/settings/${userId}`, {
@@ -139,59 +145,47 @@ const useStore = create((set, get) => ({
 
         socket.off('global_sync');
         socket.on('global_sync', (data) => {
-            if (data.action === 'reload_catalog') {
-                get().loadCatalog(); 
-            }
+            if (data.action === 'reload_catalog') get().loadCatalog();
         });
 
-        if (!userId) return; 
+        if (!userId) return;
 
-        // 🚀 СЛУХАЧ МИТТЄВОГО ЗАВЕРШЕННЯ ВСІХ ІНШИХ СЕАНСІВ
         socket.off(`force_logout_${userId}`);
         socket.on(`force_logout_${userId}`, (data) => {
             const currentMyToken = get().token || localStorage.getItem('zefirka_token');
             if (currentMyToken !== data.keepToken) {
-                console.log("🚨 Усі інші сеанси завершено!");
-                get().logout(); 
-                window.location.href = '/'; 
+                get().logout();
+                window.location.href = '/';
             }
         });
 
-        // 🔴 СЛУХАЧ МИТТЄВОГО ЗАВЕРШЕННЯ ОДНОГО КОНКРЕТНОГО СЕАНСУ
         socket.off(`kill_session_${userId}`);
         socket.on(`kill_session_${userId}`, (data) => {
             const currentMyToken = get().token || localStorage.getItem('zefirka_token');
-            // Якщо мій поточний токен — це саме той, який щойно вбили кнопкою "Вийти"
             if (currentMyToken === data.removedToken) {
-                console.log("🚨 Цей сеанс було примусово завершено з іншого пристрою!");
-                get().logout(); 
-                window.location.href = '/'; 
+                get().logout();
+                window.location.href = '/';
             }
         });
 
         socket.emit('user_connected', userId);
+        console.log('📡 user_connected надіслано для userId:', userId);
 
-        
         socket.off('sync_online_users');
-socket.on('sync_online_users', (onlineIds) => {
-    set((state) => {
-        const updatedUsers = { ...state.onlineUsers };
-        
-        // Переводимо в 'offline' всіх, кого немає в новому списку від сервера
-        Object.keys(updatedUsers).forEach(id => {
-            if (!onlineIds.includes(id) && updatedUsers[id]?.status === 'online') {
-                updatedUsers[id] = { status: 'offline', lastSeen: new Date() };
-            }
+        socket.on('sync_online_users', (onlineIds) => {
+            set((state) => {
+                const updatedUsers = { ...state.onlineUsers };
+                Object.keys(updatedUsers).forEach(id => {
+                    if (!onlineIds.includes(id) && updatedUsers[id]?.status === 'online') {
+                        updatedUsers[id] = { status: 'offline', lastSeen: new Date() };
+                    }
+                });
+                onlineIds.forEach(id => {
+                    updatedUsers[id] = { status: 'online' };
+                });
+                return { onlineUsers: updatedUsers };
+            });
         });
-
-        // Додаємо актуальних користувачів, які зараз дійсно онлайн
-        onlineIds.forEach(id => {
-            updatedUsers[id] = { status: 'online' };
-        });
-
-        return { onlineUsers: updatedUsers };
-    });
-});
 
         socket.off('connect');
         socket.on('connect', () => {
@@ -208,15 +202,32 @@ socket.on('sync_online_users', (onlineIds) => {
 
         socket.off(`receive_direct_message_${userId}`);
         socket.on(`receive_direct_message_${userId}`, (data) => {
-            set((state) => {
-                const chatExists = state.myChats.find(c => c.id === data.roomId);
-                if (chatExists) {
-                    return { myChats: state.myChats.map(c => c.id === data.roomId ? { ...c, messages: [...c.messages, data.message] } : c) };
-                } else {
-                    get().loadChats(userId);
-                    return state;
-                }
-            });
+            // Звук сповіщення для вхідних повідомлень
+            if (String(data.message?.senderId) !== String(userId)) {
+                try { new Audio('/sounds/ah.mp3').play().catch(() => {}); } catch (e) {}
+            }
+
+            const normalizedMsg = {
+                id: data.message._id || Date.now() + Math.random(),
+                text: data.message.text,
+                time: data.message.time,
+                type: data.message.type || 'text',
+                mediaUrl: data.message.mediaUrl || null,
+                sender: String(data.message.senderId) === String(userId) ? 'me' : 'partner',
+            };
+
+            const chatExists = get().myChats.find(c => c.id === data.roomId);
+            if (chatExists) {
+                set(state => ({
+                    myChats: state.myChats.map(c =>
+                        c.id === data.roomId
+                            ? { ...c, messages: [...c.messages, normalizedMsg] }
+                            : c
+                    )
+                }));
+            } else {
+                get().loadChats(userId);
+            }
         });
 
         socket.off('user_status_change');
@@ -238,25 +249,29 @@ socket.on('sync_online_users', (onlineIds) => {
         });
     },
 
-    login: (id, role, userEmail, token, twoFactorEnabled = false, emailNotifications = true) => { 
+    login: (id, role, userEmail, token, twoFactorEnabled = false, emailNotifications = true) => {
         localStorage.setItem('zefirka_token', token);
         localStorage.setItem('zefirka_userId', id);
         localStorage.setItem('zefirka_role', role);
         localStorage.setItem('zefirka_email', userEmail);
-        localStorage.setItem('zefirka_2fa', twoFactorEnabled); 
+        localStorage.setItem('zefirka_2fa', twoFactorEnabled);
         localStorage.setItem('zefirka_emailNotif', emailNotifications);
-        
-        set((state) => ({ 
-            isLoggedIn: true, 
-            userUniqueId: id, 
-            userRole: role, 
-            email: userEmail, 
-            token: token, 
-            showAuth: false, 
-            user: { ...state.user, twoFactorEnabled, emailNotifications } 
+
+        set((state) => ({
+            isLoggedIn: true,
+            userUniqueId: id,
+            userRole: role,
+            email: userEmail,
+            token: token,
+            showAuth: false,
+            user: { ...state.user, twoFactorEnabled, emailNotifications }
         }));
 
-        get().setupGlobalSocket(); 
+        if (socket.connected) {
+            get().setupGlobalSocket();
+        } else {
+            socket.once('connect', () => get().setupGlobalSocket());
+        }
         get().loadChats(id);
     },
 
@@ -265,17 +280,17 @@ socket.on('sync_online_users', (onlineIds) => {
         localStorage.removeItem('zefirka_userId');
         localStorage.removeItem('zefirka_role');
         localStorage.removeItem('zefirka_email');
-        localStorage.removeItem('zefirka_banned_device'); 
+        localStorage.removeItem('zefirka_banned_device');
         localStorage.removeItem('zefirka_2fa');
         localStorage.removeItem('zefirka_emailNotif');
-        
-        set({ 
-            isLoggedIn: false, userUniqueId: '', userRole: 'model', email: '', token: null, 
-            myChats: [], activeChatId: null, balance: 0, isBannedStatus: false, trustScore: 100, 
-            notifications: [], unreadNotifs: 0, user: { freeBumps: 0, vipPackage: 'none', vipExpiresAt: null } 
+
+        set({
+            isLoggedIn: false, userUniqueId: '', userRole: 'model', email: '', token: null,
+            myChats: [], activeChatId: null, balance: 0, isBannedStatus: false, trustScore: 100,
+            notifications: [], unreadNotifs: 0, user: { freeBumps: 0, vipPackage: 'none', vipExpiresAt: null }
         });
     },
-    
+
     setRole: (role) => set({ userRole: role }),
     currentLang: 'UA',
     setLang: (lang) => set({ currentLang: lang }),
@@ -285,18 +300,18 @@ socket.on('sync_online_users', (onlineIds) => {
     showWalletModal: false, setShowWalletModal: (show) => set({ showWalletModal: show }),
     showVipModal: false, setShowVipModal: (show) => set({ showVipModal: show }),
 
-    models: [], 
-    myModels: [], 
-    totalPages: 1, 
-    totalItems: 0, 
-    isLoading: true, 
+    models: [],
+    myModels: [],
+    totalPages: 1,
+    totalItems: 0,
+    isLoading: true,
     editingModel: null,
-    
+
     setModels: (newModels) => set({ models: newModels }),
     setMyModels: (newMyModels) => set({ myModels: newMyModels }),
 
     loadCatalog: async (filters = {}, page = 1) => {
-        set({ isLoading: true }); 
+        set({ isLoading: true });
         try {
             const queryParams = new URLSearchParams({ page, limit: 12 });
             if (filters.maxAge) queryParams.append('maxAge', filters.maxAge);
@@ -308,26 +323,37 @@ socket.on('sync_online_users', (onlineIds) => {
 
             const response = await fetch(`${BASE_URL}/profiles?${queryParams.toString()}`);
             const result = await response.json();
-            
+
             if (result.success) {
-                const myId = String(get().userUniqueId); 
-                const formattedModels = result.data.map(profile => ({
-                    ...profile, 
-                    id: profile._id, 
-                    priceFrom: profile.priceFrom || 500, 
-                    vLevel: profile.vLevel || 0, 
-                    trustScore: profile.trustScore || 100, 
-                    isApproved: profile.isApproved || false, 
-                    isMine: String(profile.userId) === myId 
-                }));
-                set({ 
-                    models: formattedModels, 
-                    totalPages: result.totalPages, 
-                    totalItems: result.totalItems 
-                }); 
+                const myId = String(get().userUniqueId);
+                const formattedModels = result.data.map(profile => {
+                    // userId може бути populated об'єктом {_id, trustScore, lastActive}
+                    const userIdObj = profile.userId;
+                    const userIdStr = String(userIdObj?._id || userIdObj || '');
+                    // trustScore береться з populated userId де реальне значення
+                    const trustScore = Number(userIdObj?.trustScore || userIdObj?.trustPercentage || profile.trustScore) || 100;
+                    return {
+                        ...profile,
+                        id: profile._id,
+                        userId: userIdStr,
+                        priceFrom: profile.priceFrom || 500,
+                        vLevel: profile.vLevel || 0,
+                        trustScore,
+                        isApproved: profile.isApproved || false,
+                        isMine: userIdStr === myId,
+                    };
+                });
+                set({
+                    models: formattedModels,
+                    totalPages: result.totalPages,
+                    totalItems: result.totalItems
+                });
             }
-        } catch (error) { console.error("❌ Помилка завантаження каталогу:", error); } 
-        finally { set({ isLoading: false }); }
+        } catch (error) {
+            console.error("❌ Помилка завантаження каталогу:", error);
+        } finally {
+            set({ isLoading: false });
+        }
     },
 
     loadMyModels: async (userId) => {
@@ -336,43 +362,45 @@ socket.on('sync_online_users', (onlineIds) => {
             const response = await fetch(`${BASE_URL}/profiles?userId=${userId}&fetchAll=true&t=${Date.now()}`);
             const result = await response.json();
             if (result.success) {
-                const formattedModels = result.data.map(profile => ({ 
-                    ...profile, 
-                    id: profile._id, 
-                    priceFrom: profile.priceFrom || 500, 
-                    vLevel: profile.vLevel || 0, 
-                    trustScore: profile.trustScore || 100, 
-                    isApproved: profile.isApproved || false, 
-                    isMine: true 
+                const formattedModels = result.data.map(profile => ({
+                    ...profile,
+                    id: profile._id,
+                    priceFrom: profile.priceFrom || 500,
+                    vLevel: profile.vLevel || 0,
+                    trustScore: profile.trustScore || 100,
+                    isApproved: profile.isApproved || false,
+                    isMine: true
                 }));
                 set({ myModels: formattedModels });
             }
-        } catch (error) { console.error("❌ Помилка завантаження власних анкет:", error); }
+        } catch (error) {
+            console.error("❌ Помилка завантаження власних анкет:", error);
+        }
     },
 
-    addModel: (newModel) => set((state) => ({ 
-        models: [newModel, ...state.models], 
-        myModels: [newModel, ...state.myModels] 
+    addModel: (newModel) => set((state) => ({
+        models: [newModel, ...state.models],
+        myModels: [newModel, ...state.myModels]
     })),
-    
-    updateModel: (updatedModel) => set((state) => ({ 
-        models: state.models.map(m => m.id === updatedModel.id ? updatedModel : m), 
-        myModels: state.myModels.map(m => m.id === updatedModel.id ? updatedModel : m) 
+
+    updateModel: (updatedModel) => set((state) => ({
+        models: state.models.map(m => m.id === updatedModel.id ? updatedModel : m),
+        myModels: state.myModels.map(m => m.id === updatedModel.id ? updatedModel : m)
     })),
-    
+
     openCreate: () => set({ showCreateModal: true, editingModel: null }),
     openEdit: (model) => set({ showCreateModal: true, editingModel: model }),
 
-    myChats: [], 
-    activeChatId: null, 
-    onlineUsers: {}, 
-    
+    myChats: [],
+    activeChatId: null,
+    onlineUsers: {},
+
     setOnlineUser: (userId, statusData) => set((state) => ({
         onlineUsers: { ...state.onlineUsers, [userId]: statusData }
     })),
 
     setActiveChatId: (id) => set({ activeChatId: id }),
-    
+
     loadChats: async (userId) => {
         if (!userId) return;
         try {
@@ -387,15 +415,17 @@ socket.on('sync_online_users', (onlineIds) => {
             if (result.success) {
                 const loadedChats = result.data.map(chat => {
                     const realPartnerId = chat.participants.find(p => String(p) !== String(userId));
-                    return { 
-                        id: chat.roomId, 
-                        model: chat.modelProfile || {}, 
-                        partnerId: realPartnerId, 
-                        messages: chat.messages.map(m => ({ 
-                            id: m._id || Date.now() + Math.random(), 
-                            text: m.text, 
-                            time: m.time, 
-                            sender: String(m.senderId) === String(userId) ? 'me' : 'partner' 
+                    return {
+                        id: chat.roomId,
+                        model: chat.modelProfile || {},
+                        partnerId: realPartnerId,
+                        messages: chat.messages.map(m => ({
+                            id: m._id || Date.now() + Math.random(),
+                            text: m.text,
+                            time: m.time,
+                            type: m.type || 'text',
+                            mediaUrl: m.mediaUrl || null,
+                            sender: String(m.senderId) === String(userId) ? 'me' : 'partner'
                         })),
                         mutedBy: chat.mutedBy || []
                     };
@@ -412,30 +442,36 @@ socket.on('sync_online_users', (onlineIds) => {
             console.error("❌ Помилка завантаження чатів:", error);
         }
     },
-    
+
     startPrivateChat: (model) => set((state) => {
         const myId = String(get().userUniqueId);
-        const partnerUserId = String(model.userId); 
+        // userId може бути об'єктом через populate — беремо _id
+        const partnerUserId = String(model.userId?._id || model.userId);
 
         if (!myId) return { showAuth: true };
         const roomId = [myId, partnerUserId].sort().join('_');
         const exists = state.myChats.find(c => c.id === roomId);
-        
-        if (!exists) { 
-            const newChat = { 
-                id: roomId, 
-                model: model, 
-                partnerId: partnerUserId, 
+
+        if (!exists) {
+            const newChat = {
+                id: roomId,
+                model: model,
+                partnerId: partnerUserId,
                 messages: [],
                 mutedBy: []
-            }; 
-            return { myChats: [newChat, ...state.myChats], activeChatId: roomId }; 
+            };
+            return { myChats: [newChat, ...state.myChats], activeChatId: roomId };
         }
         return { activeChatId: roomId };
     }),
 }));
 
-useStore.getState().setupGlobalSocket();
+// Запускаємо після підключення сокету
+if (socket.connected) {
+    useStore.getState().setupGlobalSocket();
+} else {
+    socket.once('connect', () => useStore.getState().setupGlobalSocket());
+}
 
 if (savedUserId) {
     useStore.getState().loadChats(savedUserId);

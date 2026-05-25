@@ -22,14 +22,17 @@ export const initSockets = (io) => {
     ioInstance = io; // 🚀 Зберігаємо io при старті сервера
 
     io.on('connection', (socket) => {
+        console.log(`🔌 Новий сокет: ${socket.id}`);
         
         // Як тільки хтось заходить на сайт - відправляємо йому поточну знижку
         socket.emit('global_promo', activePromo);
 
         socket.on('user_connected', async (userId) => {
             const idStr = String(userId);
+            console.log(`✅ user_connected отримано: userId=${idStr}, socket=${socket.id}`);
             onlineUsers.set(idStr, socket.id);
             io.emit('user_status_change', { userId: idStr, status: 'online' });
+            console.log(`📡 user_status_change відправлено для: ${idStr}`);
             socket.emit('sync_online_users', Array.from(onlineUsers.keys()));
 
             // 🟢 Фіксуємо вхід у базу даних
@@ -75,6 +78,7 @@ export const initSockets = (io) => {
         
         socket.on('send_message', async (data) => {
             try {
+                console.log(`💬 send_message: roomId=${data.roomId}, from=${data.senderId}, to=${data.partnerId}`);
                 let chat = await Chat.findOne({ roomId: data.roomId });
                 if (!chat) { chat = new Chat({ roomId: data.roomId, participants: [data.senderId, data.partnerId], modelProfile: data.modelProfile, messages: [] }); }
                 const newMsg = { senderId: data.senderId, text: data.text, time: data.time, type: data.type || 'text', mediaUrl: data.mediaUrl || null};
@@ -87,6 +91,7 @@ export const initSockets = (io) => {
                 const isMuted = chat.mutedBy && chat.mutedBy.includes(partnerIdStr);
                 
                 if (!isMuted) {
+                    console.log(`📨 emit receive_direct_message_${partnerIdStr}`);
                     io.emit(`receive_direct_message_${partnerIdStr}`, { roomId: data.roomId, message: newMsg });
                     
                     const isOnline = onlineUsers.has(partnerIdStr);

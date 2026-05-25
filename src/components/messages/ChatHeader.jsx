@@ -20,17 +20,21 @@ const ChatHeader = ({ activeChat, activeChatId, userUniqueId, onlineUsers, accen
         <div style={{ padding: '15px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: '#000', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 <div onClick={() => setActiveChatId(null)} className="mobile-back-btn" style={{ cursor: 'pointer', padding: '5px', marginRight: '10px' }}><ArrowLeft size={24} color="#888" /></div>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', cursor: !pInfo.isClient ? 'pointer' : 'default', background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onClick={() => { if(!pInfo.isClient) { setSelectedModel(activeChat.model); setCurrentPage('catalog'); } }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', cursor: !pInfo.isClient ? 'pointer' : 'default', background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onClick={() => { if(!pInfo.isClient) setSelectedModel(activeChat.model); }}>
                     {pInfo.avatar ? <img src={pInfo.avatar} style={{width:'100%', height:'100%', objectFit:'cover'}} alt="avatar"/> : <User size={20} color="#888" />}
                 </div>
-                <div style={{ cursor: !pInfo.isClient ? 'pointer' : 'default' }} onClick={() => { if(!pInfo.isClient) { setSelectedModel(activeChat.model); setCurrentPage('catalog'); } }}>
+                <div style={{ cursor: !pInfo.isClient ? 'pointer' : 'default' }} onClick={() => { if(!pInfo.isClient) setSelectedModel(activeChat.model); }}>
                     <div style={{ fontWeight: 'bold', color: 'white', fontSize: '16px' }}>{pInfo.name}</div>
                     {getPartnerStatus()}
                 </div>
             </div>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                {!pInfo.isClient && <div onClick={() => {setSelectedModel(activeChat.model); setCurrentPage('catalog');}} style={{ color: accent, fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' }} className="menu-hover hide-mobile-text">{t[currentLang]?.viewProfile || 'Профіль'}</div>}
+                {!pInfo.isClient && (
+                    <div onClick={() => setSelectedModel(activeChat.model)} style={{ color: accent, fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' }} className="menu-hover hide-mobile-text">
+                        {t[currentLang]?.viewProfile || 'Профіль'}
+                    </div>
+                )}
                 
                 <div style={{ position: 'relative' }}>
                     <div onClick={() => setShowMenu(!showMenu)} style={{ padding: '5px', cursor: 'pointer', color: '#888', transition: '0.2s' }} className="menu-hover">
