@@ -78,6 +78,24 @@ const AdminBroadcast = () => {
         }
     };
 
+    // 🔥 Окремий хендлер для перемикача — зберігає ТІЛЬКИ isActive без повторної розсилки
+    const handleToggleActive = async () => {
+        const newValue = !isActive;
+        setIsActive(newValue);
+        try {
+            await axios.post(`${BACKEND_URL}/api/admin/megaphone/toggle`, 
+                { isActive: newValue }, 
+                { headers: getAuthHeaders() }
+            );
+            toast.success(newValue ? '✅ Акцію увімкнено' : '🔕 Акцію вимкнено', {
+                style: { background: '#111', color: '#fff', border: `1px solid ${accent}` }
+            });
+        } catch (error) {
+            setIsActive(!newValue); // відкат
+            toast.error('Помилка збереження стану акції');
+        }
+    };
+
     return (
         // 🔥 ФІКСАЦІЯ КОНТЕЙНЕРА НА 100% ВИСОТИ МІНУС ВІДСТУПИ 🔥
         <div className="fade-in-up" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)', maxWidth: '850px', margin: '0 auto', color: 'white' }}>
@@ -103,7 +121,7 @@ const AdminBroadcast = () => {
                     {/* ГОЛОВНИЙ ПЕРЕМИКАЧ */}
                     <div 
                         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 25px', background: isActive ? 'linear-gradient(90deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05))' : 'linear-gradient(90deg, rgba(255, 68, 68, 0.15), rgba(255, 68, 68, 0.05))', border: `1px solid ${isActive ? '#4caf50' : '#ff4444'}`, borderRadius: '16px', marginBottom: '30px', cursor: 'pointer', transition: 'all 0.3s ease', boxShadow: isActive ? '0 0 20px rgba(76, 175, 80, 0.1)' : '0 0 20px rgba(255, 68, 68, 0.1)' }} 
-                        onClick={() => setIsActive(!isActive)}
+                        onClick={handleToggleActive}
                     >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                             <div style={{ background: isActive ? '#4caf50' : '#ff4444', padding: '10px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

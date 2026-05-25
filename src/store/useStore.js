@@ -74,7 +74,8 @@ const useStore = create((set, get) => ({
                         ...get().user,
                         freeBumps: data.freeBumps || 0,
                         vipPackage: data.vipPackage || 'none',
-                        vipExpiresAt: data.vipExpiresAt || null
+                        vipExpiresAt: data.vipExpiresAt || null,
+                        upgradeDiscount: data.upgradeDiscount || null
                     }
                 });
                 if (data.isBanned) localStorage.setItem('zefirka_banned_device', 'true');

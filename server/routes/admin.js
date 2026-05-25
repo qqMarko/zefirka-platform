@@ -279,21 +279,32 @@ export default (sendNotification) => {
         }
     });
 
-    router.post('/broadcast', adminMiddleware, async (req, res) => {
+    // Підтримка старого URL для зворотної сумісності
+    router.post('/broadcast', adminMiddleware, async (req, res, next) => {
+        req.url = '/megaphone/broadcast';
+        next('route');
+    });
+
+    router.post('/megaphone/broadcast', adminMiddleware, async (req, res) => {
         try {
-            const { text, target, vipDiscountPercent = 0, bumpDiscountPercent = 0, isActive = true } = req.body;
-            if (!text) return res.status(400).json({ success: false, message: 'Порожній текст' });
+            const { 
+                message, text, target, 
+                vipDiscountPercent = 0, bumpDiscountPercent = 0, 
+                activeVipPackages = [], isActive = true 
+            } = req.body;
+            const broadcastText = message || text || '';
+            if (!broadcastText && isActive) return res.status(400).json({ success: false, message: 'Порожній текст' });
 
             const settings = await Megaphone.findOneAndUpdate(
                 {}, 
-                { message: text, vipDiscountPercent, bumpDiscountPercent, isActive },
+                { message: broadcastText, vipDiscountPercent, bumpDiscountPercent, activeVipPackages, isActive },
                 { new: true, upsert: true }
             );
 
             const io = getIO();
             if (io) io.emit('megaphone_update', settings);
 
-            setActivePromo({ text, discount: vipDiscountPercent });
+            setActivePromo({ text: broadcastText, discount: vipDiscountPercent });
 
             let query = {};
             if (target === 'model' || target === 'client') query.role = target;
@@ -302,7 +313,7 @@ export default (sendNotification) => {
             let sentCount = 0;
             for (const user of users) {
                 if (!user.isBanned && sendNotification) {
-                    sendNotification(user._id, `📢 ${text}`);
+                    sendNotification(user._id, `📢 ${broadcastText}`);
                     sentCount++;
                 }
             }
@@ -310,6 +321,23 @@ export default (sendNotification) => {
             res.json({ success: true, count: sentCount, settings });
         } catch (error) { 
             res.status(500).json({ success: false }); 
+        }
+    });
+
+    router.post('/megaphone/toggle', adminMiddleware, async (req, res) => {
+        try {
+            const { isActive } = req.body;
+            const settings = await Megaphone.findOneAndUpdate(
+                {},
+                { isActive: !!isActive },
+                { new: true, upsert: true }
+            );
+            const io = getIO();
+            if (io) io.emit('megaphone_update', settings);
+            if (!isActive) setActivePromo({ text: '', discount: 0 });
+            res.json({ success: true, isActive: settings.isActive });
+        } catch (error) {
+            res.status(500).json({ success: false, message: 'Помилка сервера' });
         }
     });
 

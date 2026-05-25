@@ -1,46 +1,57 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import io from 'socket.io-client';
-import axios from 'axios';
+import { socket } from '../store/useStore';
 
 const MegaphoneContext = createContext();
 
 export const MegaphoneProvider = ({ children }) => {
-  const [megaphone, setMegaphone] = useState({
-    message: '',
-    vipDiscountPercent: 0,
-    bumpDiscountPercent: 0,
-    activeVipPackages: [], // 🔥 Додано масив для зберігання обраних пакетів
-    isActive: false
-  });
-
-  useEffect(() => {
-    // Динамічний URL як у решті проєкту
-    let BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    if (BACKEND_URL.endsWith('/api')) BACKEND_URL = BACKEND_URL.slice(0, -4);
-
-    // 1. Отримуємо початковий стан при завантаженні сайту
-    axios.get(`${BACKEND_URL}/api/admin/megaphone/status`, { withCredentials: true })
-      .then(res => {
-        if (res.data.success && res.data.settings) {
-          setMegaphone(res.data.settings);
-        }
-      })
-      .catch(err => console.error("Помилка MegaphoneContext", err));
-
-    // 2. Слухаємо оновлення по сокетах у реальному часі
-    const socket = io(BACKEND_URL);
-    socket.on('megaphone_update', (newSettings) => {
-      setMegaphone(newSettings);
+    const [megaphone, setMegaphone] = useState({
+        message: '',
+        vipDiscountPercent: 0,
+        bumpDiscountPercent: 0,
+        activeVipPackages: [],
+        isActive: false
     });
 
-    return () => socket.disconnect();
-  }, []);
+    // Персональна знижка для конкретного юзера (маркетинг-апгрейд)
+    const [personalPromo, setPersonalPromo] = useState(null);
 
-  return (
-    <MegaphoneContext.Provider value={megaphone}>
-      {children}
-    </MegaphoneContext.Provider>
-  );
+    useEffect(() => {
+        // Завантажуємо початковий стан
+        fetch('/api/admin/megaphone/status')
+            .then(r => r.json())
+            .then(res => {
+                if (res.success && res.settings) setMegaphone(res.settings);
+            })
+            .catch(err => console.error('Megaphone fetch error:', err));
+
+        // Слухаємо оновлення через ІСНУЮЧИЙ сокет (не створюємо новий)
+        const handleUpdate = (newSettings) => setMegaphone(newSettings);
+        socket.on('megaphone_update', handleUpdate);
+
+        return () => socket.off('megaphone_update', handleUpdate);
+    }, []);
+
+    // Персональна знижка від маркетинг-логіки
+    useEffect(() => {
+        const userId = localStorage.getItem('zefirka_userId');
+        if (!userId) return;
+
+        const handlePersonalPromo = (data) => {
+            setPersonalPromo(data);
+            // Автовидалення після закінчення
+            const msLeft = new Date(data.expiresAt) - Date.now();
+            if (msLeft > 0) setTimeout(() => setPersonalPromo(null), msLeft);
+        };
+
+        socket.on(`personal_promo_${userId}`, handlePersonalPromo);
+        return () => socket.off(`personal_promo_${userId}`, handlePersonalPromo);
+    }, []);
+
+    return (
+        <MegaphoneContext.Provider value={{ ...megaphone, personalPromo }}>
+            {children}
+        </MegaphoneContext.Provider>
+    );
 };
 
 export const useMegaphone = () => useContext(MegaphoneContext);

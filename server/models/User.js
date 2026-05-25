@@ -37,6 +37,14 @@ const userSchema = new mongoose.Schema({
     // 💎 ВІДСТЕЖЕННЯ VIP СТАТУСУ (ДОДАНО ДЛЯ ФРОНТЕНДУ ТА ТАЙМЕРА)
     vipPackage: { type: String, default: 'none' }, // 'start', 'premium', 'diamond' тощо
     vipExpiresAt: { type: Date, default: null },
+    vipPurchasedAt: { type: Date, default: null }, // 📅 дата купівлі поточного VIP
+
+    // 🎯 ПЕРСОНАЛЬНА МАРКЕТИНГОВА ЗНИЖКА НА АПГРЕЙД
+    upgradeDiscount: {
+        forPackage: { type: String, default: null },    // 'premium' або 'diamond'
+        discountPercent: { type: Number, default: 0 },
+        expiresAt: { type: Date, default: null }
+    },
 
     // 📱 ВІДСТЕЖЕННЯ СЕАНСІВ ТА ПРИСТРОЇВ
     sessions: [{

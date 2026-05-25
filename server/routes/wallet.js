@@ -44,7 +44,12 @@ export default (io, bot, sendNotification) => {
                 trustScore: tScore, 
                 freeBumps: user.freeBumps || 0,
                 vipPackage: user.vipPackage || 'none',      
-                vipExpiresAt: user.vipExpiresAt || null     
+                vipExpiresAt: user.vipExpiresAt || null,
+                upgradeDiscount: user.upgradeDiscount?.forPackage ? {
+                    forPackage: user.upgradeDiscount.forPackage,
+                    discountPercent: user.upgradeDiscount.discountPercent,
+                    expiresAt: user.upgradeDiscount.expiresAt
+                } : null
             });
         } catch (error) { res.status(500).json({ success: false }); }
     });
@@ -80,7 +85,10 @@ export default (io, bot, sendNotification) => {
                     
                     user.vipPackage = packageId;
                     user.vipExpiresAt = vipExpire;
+                    user.vipPurchasedAt = now; // 📅 фіксуємо дату купівлі
                     user.freeBumps = (user.freeBumps || 0) + bonusBumps;
+                    // 🎯 очищаємо персональну знижку на апгрейд (вже використана)
+                    user.upgradeDiscount = { forPackage: null, discountPercent: 0, expiresAt: null };
                     
                     notifText = `💎 Ви придбали статус "${vipName}"! Вам нараховано ${bonusBumps} безкоштовних ручних підняттів.`;
                     emailText = `Дякуємо за покупку! 🎉<br><br>Ви успішно придбали VIP-статус <b>"${vipName}"</b> на 30 днів за ${amount} UAH.<br>Вам також нараховано <b>${bonusBumps}</b> безкоштовних ручних підняттів у подарунок!`;
@@ -94,6 +102,8 @@ export default (io, bot, sendNotification) => {
 
                 user.vipPackage = packageId;
                 user.vipExpiresAt = vipExpire;
+                user.vipPurchasedAt = now; // 📅 фіксуємо дату купівлі
+                user.upgradeDiscount = { forPackage: null, discountPercent: 0, expiresAt: null };
 
                 notifText = `🛡 Ви успішно активували статус "${vipName}" на 30 днів!`;
                 emailText = `Дякуємо за покупку! 🎉<br><br>Ви успішно придбали клієнтський статус <b>"${vipName}"</b> на 30 днів за ${amount} UAH. Насолоджуйтесь преміальними можливостями платформи!`;

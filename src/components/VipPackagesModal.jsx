@@ -13,6 +13,13 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
     const promoText = megaphone.isActive ? megaphone.message : null;
     const activePackagesForDiscount = megaphone.isActive ? (megaphone.activeVipPackages || []) : [];
 
+    // 🎯 Персональна знижка на апгрейд (з маркетинг-логіки)
+    const personalUpgradeDiscount = user?.upgradeDiscount?.forPackage && 
+        user.upgradeDiscount.expiresAt && 
+        new Date(user.upgradeDiscount.expiresAt) > new Date()
+            ? user.upgradeDiscount 
+            : null;
+
     const [isProcessing, setIsProcessing] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
     
@@ -208,7 +215,13 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
                         const isActiveStatus = activePkgId === pkg.id && timeLeft !== null;
                         
                         const pkgDiscount = activePackagesForDiscount.includes(pkg.id) ? globalDiscountPercent : 0;
-                        const currentPrice = calculatePrice(pkg.price, pkgDiscount);
+                        // 🎯 Персональна знижка має пріоритет над глобальною
+                        const personalDiscount = (!isActiveStatus && personalUpgradeDiscount?.forPackage === pkg.id) 
+                            ? personalUpgradeDiscount.discountPercent 
+                            : 0;
+                        const effectiveDiscount = Math.max(pkgDiscount, personalDiscount);
+                        const currentPrice = calculatePrice(pkg.price, effectiveDiscount);
+                        const isPersonalOffer = personalDiscount > 0 && personalDiscount >= pkgDiscount;
 
                         return (
                             <div 
@@ -252,25 +265,34 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
                                 
                                 {/* 🔥 КРАСИВИЙ БЛОК ЗІ ЗНИЖКОЮ */}
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '30px', minHeight: '65px', justifyContent: 'center' }}>
-                                    {pkgDiscount > 0 && !isActiveStatus ? (
+                                    {effectiveDiscount > 0 && !isActiveStatus ? (
                                         <>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                                                 <span style={{ 
-                                                    background: 'linear-gradient(90deg, #ff007f, #ff4444)', 
+                                                    background: isPersonalOffer 
+                                                        ? 'linear-gradient(90deg, #7c3aed, #a855f7)' 
+                                                        : 'linear-gradient(90deg, #ff007f, #ff4444)', 
                                                     color: 'white', 
                                                     padding: '4px 10px', 
                                                     borderRadius: '8px', 
                                                     fontSize: '12px', 
                                                     fontWeight: '900', 
-                                                    boxShadow: '0 4px 15px rgba(255,0,127,0.4)', 
+                                                    boxShadow: isPersonalOffer 
+                                                        ? '0 4px 15px rgba(124,58,237,0.5)' 
+                                                        : '0 4px 15px rgba(255,0,127,0.4)', 
                                                     letterSpacing: '1px' 
                                                 }}>
-                                                    ЗНИЖКА -{pkgDiscount}%
+                                                    {isPersonalOffer ? `🎁 ВАША ЗНИЖКА -${effectiveDiscount}%` : `ЗНИЖКА -${effectiveDiscount}%`}
                                                 </span>
                                                 <s style={{ color: '#888', fontSize: '15px', fontWeight: '600' }}>
                                                     {pkg.price} ₴
                                                 </s>
                                             </div>
+                                            {isPersonalOffer && (
+                                                <div style={{ fontSize: '11px', color: '#a855f7', marginBottom: '6px', fontWeight: '700' }}>
+                                                    До {new Date(personalUpgradeDiscount.expiresAt).toLocaleDateString('uk-UA')}
+                                                </div>
+                                            )}
                                             <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
                                                 <span style={{ fontSize: '42px', fontWeight: '900', color: pkg.color, lineHeight: '1', letterSpacing: '-1px', textShadow: `0 0 25px ${pkg.color}66` }}>
                                                     {currentPrice}

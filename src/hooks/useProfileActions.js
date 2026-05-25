@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { accent } from '../styles/theme';
 import useStore from '../store/useStore'; 
+import { useMegaphone } from '../context/MegaphoneContext';
 
 export const useProfileActions = ({ 
     userUniqueId, balance, user, loadBalance, loadMyModels, loadCatalog, models, setModels, myModels, setMyModels 
@@ -10,11 +11,21 @@ export const useProfileActions = ({
     const [showWalletModal, setShowWalletModal] = useState(false);
     const [walletInitialAmount, setWalletInitialAmount] = useState('500');
 
+    const megaphone = useMegaphone();
+    const BUMP_BASE_PRICE = 150;
+    // Знижка на підняття з рупора (якщо акція активна)
+    const bumpDiscountPct = megaphone.isActive ? (megaphone.bumpDiscountPercent || 0) : 0;
+    const bumpPrice = bumpDiscountPct > 0 
+        ? Math.floor(BUMP_BASE_PRICE - (BUMP_BASE_PRICE * bumpDiscountPct / 100)) 
+        : BUMP_BASE_PRICE;
+
     const promptBump = (id) => {
         if (user?.freeBumps > 0) {
             setConfirmModal({ isOpen: true, type: 'free_bump', modelId: id, title: '🚀 Використати підняття?', text: `Залишилось ще ${user.freeBumps} безкоштовних підняттів. Використати одне зараз, щоб підняти анкету в ТОП?` });
+        } else if (bumpDiscountPct > 0) {
+            setConfirmModal({ isOpen: true, type: 'bump', modelId: id, title: '🚀 Підняти анкету?', text: `🔥 Акція! Підняти анкету в ТОП на 24 години за ${bumpPrice} ₴ (знижка -${bumpDiscountPct}%)?` });
         } else {
-            setConfirmModal({ isOpen: true, type: 'bump', modelId: id, title: 'Підняти анкету?', text: 'Ви дійсно хочете підняти анкету в ТОП на 24 години за 150 ₴?' });
+            setConfirmModal({ isOpen: true, type: 'bump', modelId: id, title: 'Підняти анкету?', text: `Ви дійсно хочете підняти анкету в ТОП на 24 години за ${BUMP_BASE_PRICE} ₴?` });
         }
     };
 
@@ -22,9 +33,9 @@ export const useProfileActions = ({
 
     const executeBump = async (id) => {
         setConfirmModal({ isOpen: false });
-        if (balance < 150) {
-            toast.error('Недостатньо коштів для підйому. Поповніть баланс на 150 ₴');
-            setWalletInitialAmount('150');
+        if (balance < bumpPrice) {
+            toast.error(`Недостатньо коштів для підйому. Поповніть ще на ${bumpPrice - balance} ₴`);
+            setWalletInitialAmount(String(bumpPrice));
             setShowWalletModal(true);
             return;
         }
@@ -32,11 +43,14 @@ export const useProfileActions = ({
             const BASE_URL = import.meta.env.VITE_API_URL || 'http://192.168.0.102:5000/api'; 
             const response = await fetch(`${BASE_URL}/wallet/buy-vip`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: userUniqueId, amount: 150, packageId: 'bump' })
+                body: JSON.stringify({ userId: userUniqueId, amount: bumpPrice, packageId: 'bump' })
             });
             const result = await response.json();
             if (result.success) {
-                toast.success('🚀 Анкету успішно піднято в ТОП!', { style: { background: '#111', color: '#fff', border: `1px solid ${accent}` } });
+                const msg = bumpDiscountPct > 0 
+                    ? `🚀 Анкету піднято в ТОП за ${bumpPrice} ₴ (знижка -${bumpDiscountPct}%)!`
+                    : '🚀 Анкету успішно піднято в ТОП!';
+                toast.success(msg, { style: { background: '#111', color: '#fff', border: `1px solid ${accent}` } });
                 loadBalance(userUniqueId); loadMyModels(userUniqueId); loadCatalog(); 
             } else toast.error(result.message || 'Помилка при підйомі.');
         } catch (error) { toast.error('Помилка з\'єднання з сервером.'); }

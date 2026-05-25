@@ -4,6 +4,7 @@ import {
     Rocket, Gem, Crown, AlertCircle, CheckCircle2, Trash2, Edit3, Heart 
 } from 'lucide-react';
 import CatalogGrid from '../components/CatalogGrid'; // Перевірте, чи правильний шлях до компонента
+import { useMegaphone } from '../context/MegaphoneContext';
 
 const CabinetPage = ({
     userRole, balance, userUniqueId, myModels, favorites, myChats, user,
@@ -12,6 +13,17 @@ const CabinetPage = ({
     setSelectedModel, setContactSelectionModel, handleToggleFavorite,
     t, currentLang, accent
 }) => {
+    const megaphone = useMegaphone();
+    const BUMP_BASE_PRICE = 150;
+    const bumpDiscountPct = megaphone.isActive ? (megaphone.bumpDiscountPercent || 0) : 0;
+    const bumpPrice = bumpDiscountPct > 0 
+        ? Math.floor(BUMP_BASE_PRICE - (BUMP_BASE_PRICE * bumpDiscountPct / 100)) 
+        : BUMP_BASE_PRICE;
+    const bumpLabel = user?.freeBumps > 0 
+        ? 'Підняти анкету' 
+        : bumpDiscountPct > 0 
+            ? `🔥 Підняти (${bumpPrice}₴ -${bumpDiscountPct}%)` 
+            : `Підняти (${BUMP_BASE_PRICE}₴)`;
     return (
         <main className="fade-in-up">
             <div style={{ borderBottom: `2px solid ${accent}`, paddingBottom: '20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -103,7 +115,7 @@ const CabinetPage = ({
                                                 style={{ flex: 1.5, padding: '10px', background: 'rgba(255, 152, 0, 0.1)', border: `1px solid ${!m.isApproved ? '#555' : '#ff9800'}`, color: !m.isApproved ? '#555' : '#ff9800', fontWeight: 'bold', cursor: !m.isApproved ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontSize: '11px', fontFamily: 'inherit', borderRadius: '8px', transition: '0.2s' }} 
                                                 className={!m.isApproved ? "" : "menu-hover"}
                                             >
-                                                <Rocket size={14}/> {user?.freeBumps > 0 ? 'Підняти анкету' : 'Підняти (150₴)'}
+                                                <Rocket size={14}/> {bumpLabel}
                                             </button>
 
                                             <button onClick={(e) => { e.stopPropagation(); openEdit(m); }} style={{ flex: 1, padding: '10px', background: '#111', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontSize: '11px', fontFamily: 'inherit', borderRadius: '8px', transition: '0.2s' }} className="menu-hover">
