@@ -117,6 +117,31 @@ const useStore = create((set, get) => ({
         }
     },
 
+    deleteNotification: async (notifId) => {
+        const userId = get().userUniqueId;
+        if (!userId) return;
+        try {
+            await fetch(`${BASE_URL}/notifications/${userId}/${notifId}`, { method: 'DELETE' });
+            set((state) => {
+                const updated = state.notifications.filter(n => (n._id || n.id) !== notifId);
+                return { notifications: updated, unreadNotifs: updated.filter(n => !n.isRead).length };
+            });
+        } catch (err) {
+            console.error("Помилка видалення сповіщення", err);
+        }
+    },
+
+    clearAllNotifications: async () => {
+        const userId = get().userUniqueId;
+        if (!userId) return;
+        try {
+            await fetch(`${BASE_URL}/notifications/${userId}`, { method: 'DELETE' });
+            set({ notifications: [], unreadNotifs: 0 });
+        } catch (err) {
+            console.error("Помилка очищення сповіщень", err);
+        }
+    },
+
     togglePushEnabled: async () => {
         const userId = get().userUniqueId;
         const currentStatus = get().pushEnabled;

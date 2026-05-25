@@ -1,10 +1,229 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
     User, Plus, ShieldCheck, AlertTriangle, Bell, 
-    UserCircle, LogOut, Settings, Wallet, Crown, MessageCircle, Copy, Lock 
+    UserCircle, LogOut, Settings, Wallet, Crown, MessageCircle, Copy, Lock,
+    Trash2, BellOff, CheckCheck
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import useStore from '../store/useStore'; // 🔥 ДОДАНО: Підключаємо глобальний стан для перевірки VIP
+import useStore from '../store/useStore';
+
+// ── Утиліта: відносний час ───────────────────────────────────────
+function timeAgo(dateStr) {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1)  return 'щойно';
+    if (m < 60) return `${m} хв тому`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h} год тому`;
+    const d = Math.floor(h / 24);
+    if (d < 7)  return `${d} дн тому`;
+    return new Date(dateStr).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+}
+
+// ── Тип сповіщення → колір + іконка ────────────────────────────
+function getNotifStyle(text = '') {
+    const t = text.toLowerCase();
+    if (t.includes('💎') || t.includes('diamond'))                        return { color: '#00ffff', bg: 'rgba(0,255,255,0.07)',   icon: '💎' };
+    if (t.includes('👑') || t.includes('premium'))                        return { color: '#ffd700', bg: 'rgba(255,215,0,0.07)',   icon: '👑' };
+    if (t.includes('⭐') || t.includes('start'))                          return { color: '#ff69b4', bg: 'rgba(255,0,127,0.07)',   icon: '⭐' };
+    if (t.includes('🎁') || t.includes('знижк'))                          return { color: '#a855f7', bg: 'rgba(168,85,247,0.07)',  icon: '🎁' };
+    if (t.includes('🚀') || t.includes('підня'))                          return { color: '#ff9800', bg: 'rgba(255,152,0,0.07)',   icon: '🚀' };
+    if (t.includes('💳') || t.includes('балан') || t.includes('поповн')) return { color: '#4caf50', bg: 'rgba(76,175,80,0.07)',   icon: '💳' };
+    if (t.includes('✅') || t.includes('схвал') || t.includes('опублік')) return { color: '#4caf50', bg: 'rgba(76,175,80,0.07)',   icon: '✅' };
+    if (t.includes('🛑') || t.includes('блок') || t.includes('бан'))      return { color: '#ff4444', bg: 'rgba(255,68,68,0.07)',   icon: '🛑' };
+    if (t.includes('⚠️') || t.includes('закінч') || t.includes('термін')) return { color: '#ffb300', bg: 'rgba(255,179,0,0.07)',   icon: '⚠️' };
+    if (t.includes('💸') || t.includes('штраф'))                          return { color: '#ff4444', bg: 'rgba(255,68,68,0.07)',   icon: '💸' };
+    if (t.includes('📢'))                                                  return { color: '#e91e63', bg: 'rgba(233,30,99,0.07)',   icon: '📢' };
+    return { color: '#888', bg: 'rgba(255,255,255,0.04)', icon: '🔔' };
+}
+
+// ── Компонент дропдауну сповіщень ───────────────────────────────
+const NotifDropdown = ({ notifications, accent, onDelete, onClearAll }) => {
+    const [hoveredId, setHoveredId] = useState(null);
+
+    return (
+        <div
+            className="fade-in-up"
+            style={{
+                position: 'absolute', top: '55px', right: '-40px',
+                width: '340px', zIndex: 4000,
+                background: 'rgba(5,5,10,0.97)',
+                backdropFilter: 'blur(24px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '20px',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.95), 0 0 0 0.5px rgba(255,255,255,0.04)',
+                overflow: 'hidden',
+            }}
+        >
+            {/* Шапка */}
+            <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '16px 18px 12px',
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Bell size={16} color={accent} />
+                    <span style={{ color: '#fff', fontSize: 14, fontWeight: 800, letterSpacing: '0.3px' }}>
+                        Сповіщення
+                    </span>
+                    {notifications.length > 0 && (
+                        <span style={{
+                            background: `${accent}22`, color: accent,
+                            fontSize: 11, fontWeight: 700,
+                            padding: '2px 8px', borderRadius: 20,
+                            border: `1px solid ${accent}33`,
+                        }}>
+                            {notifications.length}
+                        </span>
+                    )}
+                </div>
+                {notifications.length > 0 && (
+                    <button
+                        onClick={onClearAll}
+                        title="Очистити всі"
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: 5,
+                            background: 'rgba(255,68,68,0.08)',
+                            border: '1px solid rgba(255,68,68,0.2)',
+                            color: '#ff6666', fontSize: 11, fontWeight: 700,
+                            padding: '5px 10px', borderRadius: 8, cursor: 'pointer',
+                            transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background='rgba(255,68,68,0.18)'; e.currentTarget.style.color='#ff4444'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background='rgba(255,68,68,0.08)'; e.currentTarget.style.color='#ff6666'; }}
+                    >
+                        <Trash2 size={11} /> Очистити
+                    </button>
+                )}
+            </div>
+
+            {/* Список */}
+            <div
+                style={{
+                    maxHeight: 380,
+                    overflowY: 'auto',
+                    WebkitOverflowScrolling: 'touch',
+                    scrollBehavior: 'smooth',
+                    padding: '8px 10px',
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: `${accent}44 transparent`,
+                }}
+                className="notif-scroll-list"
+                onWheel={e => e.stopPropagation()}
+            >
+                <style>{`
+                    .notif-scroll-list::-webkit-scrollbar { width: 4px; }
+                    .notif-scroll-list::-webkit-scrollbar-track { background: transparent; }
+                    .notif-scroll-list::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; transition: background 0.3s; }
+                    .notif-scroll-list:hover::-webkit-scrollbar-thumb { background: ${accent}55; }
+                    .notif-scroll-list::-webkit-scrollbar-thumb:hover { background: ${accent}99 !important; }
+                    .notif-item-row { transition: background 0.15s, transform 0.15s; }
+                    .notif-item-row:hover { transform: translateX(2px); }
+                    .notif-del-btn { opacity: 0; transition: opacity 0.15s; }
+                    .notif-item-row:hover .notif-del-btn { opacity: 1; }
+                `}</style>
+
+                {notifications.length === 0 ? (
+                    <div style={{ padding: '36px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                        <BellOff size={34} color="#2a2a2a" />
+                        <span style={{ color: '#444', fontSize: 13, fontWeight: 600 }}>Сповіщень поки немає</span>
+                    </div>
+                ) : (
+                    notifications.map((n) => {
+                        const id = n._id || n.id;
+                        const ns = getNotifStyle(n.text);
+                        return (
+                            <div
+                                key={id}
+                                className="notif-item-row"
+                                style={{
+                                    display: 'flex', alignItems: 'flex-start', gap: 10,
+                                    padding: '10px 10px',
+                                    marginBottom: 4,
+                                    borderRadius: 12,
+                                    background: n.isRead ? 'transparent' : ns.bg,
+                                    border: n.isRead ? '1px solid transparent' : `1px solid ${ns.color}22`,
+                                    position: 'relative',
+                                }}
+                                onMouseEnter={() => setHoveredId(id)}
+                                onMouseLeave={() => setHoveredId(null)}
+                            >
+                                {/* Кольорова ліва смужка (непрочитане) */}
+                                {!n.isRead && (
+                                    <div style={{
+                                        position: 'absolute', left: 0, top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        width: 3, height: '60%',
+                                        background: ns.color,
+                                        borderRadius: '0 3px 3px 0',
+                                        boxShadow: `0 0 6px ${ns.color}88`,
+                                    }} />
+                                )}
+
+                                {/* Іконка */}
+                                <div style={{
+                                    flexShrink: 0, width: 34, height: 34, borderRadius: '50%',
+                                    background: ns.bg, border: `1px solid ${ns.color}33`,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: 15, marginLeft: n.isRead ? 0 : 6,
+                                }}>
+                                    {ns.icon}
+                                </div>
+
+                                {/* Текст */}
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{
+                                        fontSize: 12.5, lineHeight: 1.45, wordBreak: 'break-word',
+                                        color: n.isRead ? '#888' : '#ddd',
+                                        fontWeight: n.isRead ? 400 : 600,
+                                    }}>
+                                        {n.text}
+                                    </div>
+                                    <div style={{ fontSize: 10.5, color: '#555', marginTop: 4, fontWeight: 500 }}>
+                                        {timeAgo(n.date)}
+                                    </div>
+                                </div>
+
+                                {/* Кнопка видалення (з'являється при hover) */}
+                                <button
+                                    className="notif-del-btn"
+                                    onClick={() => onDelete(id)}
+                                    title="Видалити"
+                                    style={{
+                                        flexShrink: 0,
+                                        background: 'rgba(255,68,68,0.1)', border: '1px solid rgba(255,68,68,0.2)',
+                                        borderRadius: 7, padding: '5px 6px', cursor: 'pointer', color: '#ff6666',
+                                        display: 'flex', alignItems: 'center', transition: 'all 0.15s',
+                                    }}
+                                    onMouseEnter={e => { e.currentTarget.style.background='rgba(255,68,68,0.25)'; e.currentTarget.style.color='#ff4444'; }}
+                                    onMouseLeave={e => { e.currentTarget.style.background='rgba(255,68,68,0.1)';  e.currentTarget.style.color='#ff6666'; }}
+                                >
+                                    <Trash2 size={12} />
+                                </button>
+                            </div>
+                        );
+                    })
+                )}
+            </div>
+
+            {/* Футер */}
+            {notifications.length > 0 && (
+                <div style={{
+                    padding: '10px 18px',
+                    borderTop: '1px solid rgba(255,255,255,0.05)',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                }}>
+                    <CheckCheck size={13} color="#555" />
+                    <span style={{ fontSize: 11, color: '#555' }}>
+                        {notifications.filter(n => !n.isRead).length > 0
+                            ? `${notifications.filter(n => !n.isRead).length} непрочитаних`
+                            : 'Всі прочитані'}
+                    </span>
+                </div>
+            )}
+        </div>
+    );
+};
 
 // --- КОМПОНЕНТ БАТАРЕЇ ДОВІРИ ---
 const TrustBattery = ({ score, t, currentLang }) => {
@@ -63,7 +282,7 @@ const Header = ({
     setHasActiveDisputeAlert, setShowSupport, handleLogout, user, hasDisputeAccess
 }) => {
 
-    // hasDisputeAccess приходить як пропс з ZefirLanding — вже boolean
+    const { deleteNotification, clearAllNotifications } = useStore();
 
     return (
         <header className="main-header" style={{ flexShrink: 0, position: 'sticky', top: '15px', zIndex: 3000, width: '100%', maxWidth: '1600px', margin: '0 auto 50px auto', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 clamp(10px, 3vw, 30px)', boxSizing: 'border-box', background: 'rgba(5, 5, 8, 0.95)', backdropFilter: 'blur(12px)', border: `1px solid rgba(233, 30, 99, 0.2)`, borderRadius: '20px', boxShadow: `0 10px 30px -5px rgba(233, 30, 99, 0.25)` }}>
@@ -96,19 +315,12 @@ const Header = ({
                             </div>
                             
                             {showNotifDropdown && (
-                                <div className="fade-in-up custom-scrollbar" style={{ position: 'absolute', top: '55px', right: '-40px', width: '320px', maxHeight: '400px', overflowY: 'auto', background: 'rgba(5, 5, 8, 0.98)', backdropFilter: 'blur(20px)', border: `1px solid rgba(255,255,255,0.1)`, zIndex: 4000, boxShadow: `0 15px 40px rgba(0,0,0,0.9)`, borderRadius: '16px', padding: '10px' }}>
-                                    <h3 style={{ margin: '0 0 10px 0', padding: '10px', color: 'white', fontSize: '14px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>Сповіщення</h3>
-                                    {notifications.length === 0 ? (
-                                        <div style={{ padding: '20px', textAlign: 'center', color: '#666', fontSize: '13px' }}>Немає нових сповіщень</div>
-                                    ) : (
-                                        notifications.map((n, i) => (
-                                            <div key={i} style={{ padding: '12px', marginBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '13px', color: '#ccc', lineHeight: '1.4', background: n.isRead ? 'transparent' : `${accent}22`, borderRadius: '8px' }}>
-                                                {n.text}
-                                                <div style={{ fontSize: '10px', color: '#666', marginTop: '5px' }}>{new Date(n.date).toLocaleString()}</div>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
+                                <NotifDropdown
+                                    notifications={notifications}
+                                    accent={accent}
+                                    onDelete={deleteNotification}
+                                    onClearAll={clearAllNotifications}
+                                />
                             )}
                         </div>
                     )}

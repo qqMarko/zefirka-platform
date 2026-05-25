@@ -29,6 +29,30 @@ router.post('/:userId/read', async (req, res) => {
     }
 });
 
+router.delete('/:userId/:notifId', async (req, res) => {
+    try {
+        await User.updateOne(
+            { _id: req.params.userId },
+            { $pull: { notifications: { _id: req.params.notifId } } }
+        );
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
+router.delete('/:userId', async (req, res) => {
+    try {
+        await User.updateOne(
+            { _id: req.params.userId },
+            { $set: { notifications: [] } }
+        );
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
 router.post('/settings/:userId', async (req, res) => {
     try {
         const { pushEnabled } = req.body;
