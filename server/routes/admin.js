@@ -367,7 +367,15 @@ export default (sendNotification) => {
 
             user.vipPackage = 'none';
             user.vipExpiresAt = null;
+            user.vipPurchasedAt = null;
+            user.upgradeDiscount = { forPackage: null, discountPercent: 0, expiresAt: null };
             await user.save();
+
+            // 🔥 СКИДАЄМО vLevel НА ВСІХ АНКЕТАХ ЮЗЕРА
+            await Profile.updateMany(
+                { userId: user._id },
+                { $set: { vLevel: 0, vipExpiresAt: null } }
+            );
 
             const io = getIO();
             if (io) {
