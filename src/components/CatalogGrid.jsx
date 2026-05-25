@@ -103,7 +103,7 @@ const VIP_STYLES = `
 /* ─────────────────────────────────────────────────────────────────
    Конфіг рамки / бейджа для кожного статусу
 ───────────────────────────────────────────────────────────────── */
-function getCardConfig(m) {
+function getCardConfig(m, bumpBadgeLabel = 'В ТОПІ') {
     const now = Date.now();
     const isBumped = m.bumpedAt && m.bumpExpiresAt && new Date(m.bumpExpiresAt) > now;
 
@@ -178,7 +178,7 @@ function getCardConfig(m) {
                 color: '#ff9800',
                 boxShadow: '0 2px 14px rgba(255,120,0,.5), inset 0 1px 0 rgba(255,200,0,.2)',
             }}>
-                <Rocket size={13} /> В ТОПІ
+                <Rocket size={13} /> {bumpBadgeLabel || 'В ТОПІ'}
             </div>
         ),
     };
@@ -242,7 +242,7 @@ const CatalogGrid = ({
                     const isFav    = favorites?.some(fav => fav.id === m.id);
                     const ownerId  = m.userId?._id ? String(m.userId._id) : String(m.userId);
                     const isOwner  = Boolean(myId && ownerId && String(myId) === ownerId);
-                    const cfg      = getCardConfig(m);
+                    const cfg      = getCardConfig(m, t[currentLang]?.bumpBadge || 'В ТОПІ');
                     const tc       = getTierColors(m);
 
                     /* ── Онлайн-статус ─────────────────────────── */
@@ -408,7 +408,7 @@ const CatalogGrid = ({
                                             borderRadius: 12,
                                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                                         }}>
-                                            <ShieldCheck size={16} /> Ваша анкета
+                                            <ShieldCheck size={16} /> {t[currentLang]?.yourCard || 'Ваша анкета'}
                                         </div>
                                     ) : (
                                         <button

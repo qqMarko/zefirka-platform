@@ -233,7 +233,51 @@ const ZefirkaPlatform = () => {
     return (
         <div style={{ position: 'relative', height: '100dvh', width: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <Background currentPage={currentPage} />
-            <Toaster position="bottom-right" reverseOrder={false} toastOptions={{ duration: 4000 }} />
+            <Toaster
+                position="top-center"
+                reverseOrder={false}
+                gutter={12}
+                toastOptions={{
+                    duration: 4000,
+                    style: {
+                        background: 'rgba(10, 10, 18, 0.97)',
+                        color: '#fff',
+                        border: '1px solid rgba(255,255,255,0.10)',
+                        borderRadius: '16px',
+                        padding: '14px 20px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        backdropFilter: 'blur(20px)',
+                        boxShadow: '0 8px 32px rgba(0,0,0,0.7), 0 0 0 0.5px rgba(255,255,255,0.05)',
+                        maxWidth: '420px',
+                        lineHeight: '1.45',
+                    },
+                    success: {
+                        iconTheme: { primary: '#4caf50', secondary: '#fff' },
+                        style: {
+                            background: 'rgba(10, 10, 18, 0.97)',
+                            border: '1px solid rgba(76,175,80,0.35)',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.7), 0 0 20px rgba(76,175,80,0.15)',
+                        },
+                    },
+                    error: {
+                        iconTheme: { primary: '#ff4444', secondary: '#fff' },
+                        style: {
+                            background: 'rgba(10, 10, 18, 0.97)',
+                            border: '1px solid rgba(255,68,68,0.35)',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.7), 0 0 20px rgba(255,68,68,0.15)',
+                        },
+                    },
+                    loading: {
+                        iconTheme: { primary: accent, secondary: '#fff' },
+                        style: {
+                            background: 'rgba(10, 10, 18, 0.97)',
+                            border: `1px solid ${accent}55`,
+                            boxShadow: `0 8px 32px rgba(0,0,0,0.7), 0 0 20px ${accent}22`,
+                        },
+                    },
+                }}
+            />
             <audio id="chat-alert-sound" src="/sounds/ah.mp3" preload="auto" style={{ display: 'none' }}> </audio>
 
             <div className={`mobile-lang-pill ${isAnyModalOpen ? 'hidden' : ''}`}>

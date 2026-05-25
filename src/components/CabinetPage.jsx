@@ -20,10 +20,10 @@ const CabinetPage = ({
         ? Math.floor(BUMP_BASE_PRICE - (BUMP_BASE_PRICE * bumpDiscountPct / 100)) 
         : BUMP_BASE_PRICE;
     const bumpLabel = user?.freeBumps > 0 
-        ? 'Підняти анкету' 
+        ? (t[currentLang]?.bumpBtn || 'Підняти анкету')
         : bumpDiscountPct > 0 
-            ? `🔥 Підняти (${bumpPrice}₴ -${bumpDiscountPct}%)` 
-            : `Підняти (${BUMP_BASE_PRICE}₴)`;
+            ? `🔥 ${t[currentLang]?.bumpBtnWithPrice || 'Підняти'} (${bumpPrice}₴ -${bumpDiscountPct}%)` 
+            : `${t[currentLang]?.bumpBtnWithPrice || 'Підняти'} (${BUMP_BASE_PRICE}₴)`;
     return (
         <main className="fade-in-up">
             <div style={{ borderBottom: `2px solid ${accent}`, paddingBottom: '20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

@@ -38,7 +38,7 @@ function getNotifStyle(text = '') {
 }
 
 // ── Компонент дропдауну сповіщень ───────────────────────────────
-const NotifDropdown = ({ notifications, accent, onDelete, onClearAll }) => {
+const NotifDropdown = ({ notifications, accent, onDelete, onClearAll, t, currentLang }) => {
     const [hoveredId, setHoveredId] = useState(null);
 
     return (
@@ -64,7 +64,7 @@ const NotifDropdown = ({ notifications, accent, onDelete, onClearAll }) => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <Bell size={16} color={accent} />
                     <span style={{ color: '#fff', fontSize: 14, fontWeight: 800, letterSpacing: '0.3px' }}>
-                        Сповіщення
+                        {t?.[currentLang]?.notifTitle || 'Сповіщення'}
                     </span>
                     {notifications.length > 0 && (
                         <span style={{
@@ -80,7 +80,7 @@ const NotifDropdown = ({ notifications, accent, onDelete, onClearAll }) => {
                 {notifications.length > 0 && (
                     <button
                         onClick={onClearAll}
-                        title="Очистити всі"
+                        {...{title: t?.[currentLang]?.notifClear || "Очистити"}}
                         style={{
                             display: 'flex', alignItems: 'center', gap: 5,
                             background: 'rgba(255,68,68,0.08)',
@@ -92,7 +92,7 @@ const NotifDropdown = ({ notifications, accent, onDelete, onClearAll }) => {
                         onMouseEnter={e => { e.currentTarget.style.background='rgba(255,68,68,0.18)'; e.currentTarget.style.color='#ff4444'; }}
                         onMouseLeave={e => { e.currentTarget.style.background='rgba(255,68,68,0.08)'; e.currentTarget.style.color='#ff6666'; }}
                     >
-                        <Trash2 size={11} /> Очистити
+                        <Trash2 size={11} /> {t?.[currentLang]?.notifClear || "Очистити"}
                     </button>
                 )}
             </div>
@@ -126,7 +126,7 @@ const NotifDropdown = ({ notifications, accent, onDelete, onClearAll }) => {
                 {notifications.length === 0 ? (
                     <div style={{ padding: '36px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
                         <BellOff size={34} color="#2a2a2a" />
-                        <span style={{ color: '#444', fontSize: 13, fontWeight: 600 }}>Сповіщень поки немає</span>
+                        <span style={{ color: '#444', fontSize: 13, fontWeight: 600 }}>{t?.[currentLang]?.notifEmpty || 'Сповіщень поки немає'}</span>
                     </div>
                 ) : (
                     notifications.map((n) => {
@@ -188,7 +188,7 @@ const NotifDropdown = ({ notifications, accent, onDelete, onClearAll }) => {
                                 <button
                                     className="notif-del-btn"
                                     onClick={() => onDelete(id)}
-                                    title="Видалити"
+                                    title={t?.[currentLang]?.notifDelete || "Видалити"}
                                     style={{
                                         flexShrink: 0,
                                         background: 'rgba(255,68,68,0.1)', border: '1px solid rgba(255,68,68,0.2)',
@@ -216,8 +216,8 @@ const NotifDropdown = ({ notifications, accent, onDelete, onClearAll }) => {
                     <CheckCheck size={13} color="#555" />
                     <span style={{ fontSize: 11, color: '#555' }}>
                         {notifications.filter(n => !n.isRead).length > 0
-                            ? `${notifications.filter(n => !n.isRead).length} непрочитаних`
-                            : 'Всі прочитані'}
+                            ? `${notifications.filter(n => !n.isRead).length} ${t?.[currentLang]?.notifUnread || 'непрочитаних'}`
+                            : (t?.[currentLang]?.notifAllRead || 'Всі прочитані')}
                     </span>
                 </div>
             )}
@@ -320,6 +320,8 @@ const Header = ({
                                     accent={accent}
                                     onDelete={deleteNotification}
                                     onClearAll={clearAllNotifications}
+                                    t={t}
+                                    currentLang={currentLang}
                                 />
                             )}
                         </div>

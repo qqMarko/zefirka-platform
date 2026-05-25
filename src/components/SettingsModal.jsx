@@ -56,7 +56,7 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
             const data = await res.json();
 
             if (data.success) {
-                toast.success(`2FA ${newStatus ? 'увімкнено' : 'вимкнено'}!`, { id: loadingToast });
+                toast.success(`2FA ${newStatus ? (t[currentLang]?.enabled || 'увімкнено') : (t[currentLang]?.disabled || 'вимкнено')}!`, { id: loadingToast });
                 useStore.getState().setUser({ twoFactorEnabled: newStatus });
                 localStorage.setItem('zefirka_2fa', newStatus);
             } else {
@@ -84,7 +84,7 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
             const data = await res.json();
 
             if (data.success) {
-                toast.success(`Розсилку ${newStatus ? 'увімкнено' : 'вимкнено'}!`, { id: loadingToast });
+                toast.success(`${t[currentLang]?.emailNotif || 'Email'} ${newStatus ? (t[currentLang]?.enabled || 'увімкнено') : (t[currentLang]?.disabled || 'вимкнено')}!`, { id: loadingToast });
                 useStore.getState().setUser({ emailNotifications: newStatus });
                 localStorage.setItem('zefirka_emailNotif', newStatus);
             } else {
@@ -260,40 +260,40 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
     const renderSecurity = () => (
         <div className="fade-in-up">
             <div style={{ marginBottom: '20px', background: '#111', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h3 style={{ color: 'white', margin: '0 0 15px 0', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}><Lock size={16} color={accent}/> Зміна пароля</h3>
+                <h3 style={{ color: 'white', margin: '0 0 15px 0', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}><Lock size={16} color={accent}/> {t[currentLang]?.changePassword || "Зміна пароля"}</h3>
                 
                 <form onSubmit={handlePasswordChange}>
                     <div style={{ position: 'relative', marginBottom: '10px' }}>
-                        <input required type={showOld ? "text" : "password"} value={oldPassword} onChange={e => setOldPassword(e.target.value)} placeholder="Поточний пароль" style={{ width: '100%', padding: '12px 40px 12px 12px', background: '#050508', border: '1px solid #222', color: 'white', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                        <input required type={showOld ? "text" : "password"} value={oldPassword} onChange={e => setOldPassword(e.target.value)} placeholder={t[currentLang]?.currentPassword || "Поточний пароль"} style={{ width: '100%', padding: '12px 40px 12px 12px', background: '#050508', border: '1px solid #222', color: 'white', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
                         <div onClick={() => setShowOld(!showOld)} style={{ position: 'absolute', right: '12px', top: '12px', cursor: 'pointer', color: '#888' }} className="menu-hover">
                             {showOld ? <EyeOff size={18} /> : <Eye size={18} />}
                         </div>
                     </div>
 
                     <div style={{ position: 'relative', marginBottom: '10px' }}>
-                        <input required type={showNew ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Новий пароль" style={{ width: '100%', padding: '12px 40px 12px 12px', background: '#050508', border: '1px solid #222', color: 'white', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                        <input required type={showNew ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder={t[currentLang]?.newPassword || "Новий пароль"} style={{ width: '100%', padding: '12px 40px 12px 12px', background: '#050508', border: '1px solid #222', color: 'white', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
                         <div onClick={() => setShowNew(!showNew)} style={{ position: 'absolute', right: '12px', top: '12px', cursor: 'pointer', color: '#888' }} className="menu-hover">
                             {showNew ? <EyeOff size={18} /> : <Eye size={18} />}
                         </div>
                     </div>
 
                     <div style={{ position: 'relative', marginBottom: '15px' }}>
-                        <input required type={showConfirm ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Повторіть новий пароль" style={{ width: '100%', padding: '12px 40px 12px 12px', background: '#050508', border: '1px solid #222', color: 'white', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                        <input required type={showConfirm ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder={t[currentLang]?.confirmPassword || "Повторіть новий пароль"} style={{ width: '100%', padding: '12px 40px 12px 12px', background: '#050508', border: '1px solid #222', color: 'white', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
                         <div onClick={() => setShowConfirm(!showConfirm)} style={{ position: 'absolute', right: '12px', top: '12px', cursor: 'pointer', color: '#888' }} className="menu-hover">
                             {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
                         </div>
                     </div>
                     
                     <button type="submit" disabled={isSaving} style={{ width: '100%', padding: '12px', background: accent, border: 'none', color: '#000', fontWeight: 'bold', borderRadius: '8px', cursor: isSaving ? 'not-allowed' : 'pointer' }} className="menu-hover">
-                        {isSaving ? 'ЗБЕРЕЖЕННЯ...' : 'Зберегти пароль'}
+                        {isSaving ? (t[currentLang]?.savingPassword || 'ЗБЕРЕЖЕННЯ...') : (t[currentLang]?.savePassword || 'Зберегти пароль')}
                     </button>
                 </form>
             </div>
             
             <div style={{ background: '#111', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <div style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px' }}>Двофакторна автентифікація (2FA)</div>
-                    <div style={{ color: '#888', fontSize: '12px' }}>Додатковий захист вашого акаунту</div>
+                    <div style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px' }}>{t[currentLang]?.twoFactor || "Двофакторна автентифікація (2FA)"}</div>
+                    <div style={{ color: '#888', fontSize: '12px' }}>{t[currentLang]?.twoFactorDesc || "Додатковий захист вашого акаунту"}</div>
                 </div>
                 <div onClick={handleToggle2FA} style={{ width: '44px', height: '24px', background: twoFactor ? accent : '#333', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: '0.3s' }}>
                     <div style={{ position: 'absolute', top: '4px', left: twoFactor ? '24px' : '4px', width: '16px', height: '16px', background: 'white', borderRadius: '50%', transition: '0.3s' }}></div>
@@ -306,8 +306,8 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
         <div className="fade-in-up" style={{ display: 'grid', gap: '15px' }}>
             <div style={{ background: '#111', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <div style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '8px' }}><Mail size={16} color="#ffc107"/> Email сповіщення</div>
-                    <div style={{ color: '#888', fontSize: '12px' }}>Отримувати листи про нові повідомлення</div>
+                    <div style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '8px' }}><Mail size={16} color="#ffc107"/> {t[currentLang]?.emailNotif || "Email сповіщення"}</div>
+                    <div style={{ color: '#888', fontSize: '12px' }}>{t[currentLang]?.emailNotifDesc || "Отримувати листи про нові повідомлення"}</div>
                 </div>
                 <div onClick={handleToggleEmail} style={{ width: '44px', height: '24px', background: emailNotif ? '#ffc107' : '#333', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: '0.3s' }}>
                     <div style={{ position: 'absolute', top: '4px', left: emailNotif ? '24px' : '4px', width: '16px', height: '16px', background: 'white', borderRadius: '50%', transition: '0.3s' }}></div>
@@ -316,8 +316,8 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
             
             <div style={{ background: '#111', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <div style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '8px' }}><Bell size={16} color="#ffc107"/> Push-сповіщення</div>
-                    <div style={{ color: '#888', fontSize: '12px' }}>Сповіщення в браузері та дзвіночок</div>
+                    <div style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '8px' }}><Bell size={16} color="#ffc107"/> {t[currentLang]?.pushNotif || "Push-сповіщення"}</div>
+                    <div style={{ color: '#888', fontSize: '12px' }}>{t[currentLang]?.pushNotifDesc || "Сповіщення в браузері та дзвіночок"}</div>
                 </div>
                 <div onClick={togglePushEnabled} style={{ width: '44px', height: '24px', background: pushEnabled ? '#ffc107' : '#333', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: '0.3s' }}>
                     <div style={{ position: 'absolute', top: '4px', left: pushEnabled ? '24px' : '4px', width: '16px', height: '16px', background: 'white', borderRadius: '50%', transition: '0.3s' }}></div>
@@ -332,7 +332,7 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
         return (
             <div className="fade-in-up">
                 {loadingSessions ? (
-                    <div style={{ color: '#888', textAlign: 'center', padding: '20px' }}>Завантаження пристроїв...</div>
+                    <div style={{ color: '#888', textAlign: 'center', padding: '20px' }}>{t[currentLang]?.loadingDevices || "Завантаження пристроїв..."}</div>
                 ) : sessions.length > 0 ? (
                     sessions.map((session) => {
                         const isCurrent = session.token === currentToken;
@@ -346,34 +346,34 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
                                         {isMobile ? <Smartphone size={28} color={isCurrent ? "#00ffff" : "#888"} /> : <Monitor size={28} color={isCurrent ? "#00ffff" : "#888"} />}
                                         <div>
                                             <div style={{ color: isCurrent ? 'white' : '#ccc', fontWeight: 'bold', fontSize: '14px' }}>{session.device}</div>
-                                            <div style={{ color: '#888', fontSize: '12px', marginTop: '4px' }}>IP: {session.ip || 'Невідомо'}</div>
+                                            <div style={{ color: '#888', fontSize: '12px', marginTop: '4px' }}>IP: {session.ip || t[currentLang]?.unknownIp || 'Невідомо'}</div>
                                         </div>
                                     </div>
 
                                     {/* 🔴 ТУТ ЗМІНА: КНОПКА ВИЙТИ ДЛЯ ІНШИХ СЕАНСІВ */}
                                     <div style={{ display: 'flex', alignItems: 'center' }}>
                                         {isCurrent ? (
-                                            <div style={{ color: '#00ffff', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold', background: 'rgba(0, 255, 255, 0.1)', padding: '4px 8px', borderRadius: '4px' }}>Поточна</div>
+                                            <div style={{ color: '#00ffff', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold', background: 'rgba(0, 255, 255, 0.1)', padding: '4px 8px', borderRadius: '4px' }}>{t[currentLang]?.currentSession || "Поточна"}</div>
                                         ) : (
                                             <button 
                                                 onClick={() => handleLogoutSingleSession(session.token)}
                                                 style={{ background: 'rgba(255,68,68,0.1)', border: '1px solid rgba(255,68,68,0.3)', color: '#ff4444', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: '0.3s' }}
                                                 className="menu-hover"
                                             >
-                                                <LogOut size={14} /> Вийти
+                                                <LogOut size={14} /> {t[currentLang]?.logoutSession || "Вийти"}
                                             </button>
                                         )}
                                     </div>
                                     
                                 </div>
                                 <div style={{ color: '#666', fontSize: '11px', marginTop: '15px' }}>
-                                    {isCurrent ? 'Активно зараз' : `Остання активність: ${new Date(session.lastActive || session.createdAt).toLocaleString('uk-UA')}`}
+                                    {isCurrent ? t[currentLang]?.activeNow || 'Активно зараз' : `${t[currentLang]?.lastActive || 'Остання активність:'} ${new Date(session.lastActive || session.createdAt).toLocaleString('uk-UA')}`}
                                 </div>
                             </div>
                         );
                     })
                 ) : (
-                    <div style={{ color: '#888', textAlign: 'center', padding: '20px' }}>Немає даних про сесії</div>
+                    <div style={{ color: '#888', textAlign: 'center', padding: '20px' }}>{t[currentLang]?.noSessionData || "Немає даних про сесії"}</div>
                 )}
 
                 {sessions.length > 1 && (
@@ -382,7 +382,7 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
                         style={{ width: '100%', padding: '15px', background: 'rgba(255,68,68,0.1)', border: '1px solid rgba(255,68,68,0.3)', color: '#ff4444', fontWeight: 'bold', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer', transition: '0.3s' }} 
                         className="menu-hover"
                     >
-                        <AlertTriangle size={18} /> Завершити всі інші сеанси
+                        <AlertTriangle size={18} /> {t[currentLang]?.logoutAllSessions || "Завершити всі інші сеанси"}
                     </button>
                 )}
             </div>

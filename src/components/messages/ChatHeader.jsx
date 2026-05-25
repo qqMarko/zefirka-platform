@@ -8,12 +8,12 @@ const ChatHeader = ({ activeChat, activeChatId, userUniqueId, onlineUsers, accen
     const getPartnerStatus = () => {
         if (!activeChat) return null;
         const statusData = onlineUsers[activeChat.partnerId];
-        if (statusData?.status === 'online') return <div style={{ fontSize: '11px', color: '#4caf50', fontWeight: 'bold' }}>• Онлайн</div>;
+        if (statusData?.status === 'online') return <div style={{ fontSize: '11px', color: '#4caf50', fontWeight: 'bold' }}>• {t[currentLang]?.onlineStatus || 'Онлайн'}</div>;
         if (statusData?.lastSeen) {
             const timeString = new Date(statusData.lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            return <div style={{ fontSize: '11px', color: '#888', fontWeight: '500' }}>Був(-ла) о {timeString}</div>;
+            return <div style={{ fontSize: '11px', color: '#888', fontWeight: '500' }}>{t[currentLang]?.seenAt || 'Був(-ла) о'} {timeString}</div>;
         }
-        return <div style={{ fontSize: '11px', color: '#888', fontWeight: '500' }}>Офлайн</div>;
+        return <div style={{ fontSize: '11px', color: '#888', fontWeight: '500' }}>{t[currentLang]?.offlineStatus || 'Офлайн'}</div>;
     };
 
     return (
@@ -46,14 +46,16 @@ const ChatHeader = ({ activeChat, activeChatId, userUniqueId, onlineUsers, accen
                             <div onClick={() => setShowMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'transparent' }} />
                             <div className="fade-in-up" style={{ position: 'absolute', top: '100%', right: '0', marginTop: '10px', background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '8px', zIndex: 100, minWidth: '220px', boxShadow: '0 10px 30px rgba(0,0,0,0.8)' }}>
                                 <div onClick={handleToggleMute} style={{ padding: '12px 15px', color: '#ccc', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', borderRadius: '8px', fontWeight: 'bold' }} className="dropdown-item-hover">
-                                    {Array.isArray(activeChat?.mutedBy) && activeChat.mutedBy.includes(userUniqueId) ? <><Bell size={16} color={accent}/> Увімкнути звук</> : <><BellOff size={16} color="#888"/> Вимкнути сповіщення</>}
+                                    {Array.isArray(activeChat?.mutedBy) && activeChat.mutedBy.includes(userUniqueId)
+                                        ? <><Bell size={16} color={accent}/> {t[currentLang]?.chatUnmute || 'Увімкнути звук'}</>
+                                        : <><BellOff size={16} color="#888"/> {t[currentLang]?.chatMute || 'Вимкнути сповіщення'}</>}
                                 </div>
                                 <div onClick={handleClearHistory} style={{ padding: '12px 15px', color: '#ccc', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', borderRadius: '8px', fontWeight: 'bold' }} className="dropdown-item-hover">
-                                    <Eraser size={16} color="#ffc107" /> Очистити історію
+                                    <Eraser size={16} color="#ffc107" /> {t[currentLang]?.chatClearHistory || 'Очистити історію'}
                                 </div>
                                 <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '5px 0' }}></div>
                                 <div onClick={handleDeleteChat} style={{ padding: '12px 15px', color: '#ff4444', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', borderRadius: '8px', fontWeight: 'bold' }} className="dropdown-item-hover-red">
-                                    <Trash2 size={16} /> Видалити переписку
+                                    <Trash2 size={16} /> {t[currentLang]?.chatDeleteConversation || 'Видалити переписку'}
                                 </div>
                             </div>
                         </>

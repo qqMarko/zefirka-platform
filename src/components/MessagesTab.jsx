@@ -114,7 +114,7 @@ const MessagesTab = ({ setCurrentPage, setSelectedModel }) => {
     };
 
     const handleClearHistory = async () => {
-        if (!window.confirm("Очистити історію повідомлень? Сама переписка залишиться у списку.")) return;
+        if (!window.confirm(t[currentLang]?.chatClearConfirm || "Очистити історію повідомлень? Сама переписка залишиться у списку.")) return;
         setShowMenu(false);
         try {
             const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;

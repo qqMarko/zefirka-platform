@@ -146,8 +146,15 @@ const CreateProfileModal = () => {
                     img.src = URL.createObjectURL(file);
                     await new Promise(resolve => { img.onload = resolve; });
                     const predictions = await nsfwModel.classify(img);
-                    const isPorn = predictions.some(p => (p.className === 'Porn' || p.className === 'Hentai' || p.className === 'Sexy') && p.probability > 0.65);
-                    if (isPorn) { toast.error(`🔞 Фото відхилено ШІ (NSFW)!`, { duration: 5000 }); continue; }
+                    // Porn/Hentai — блокуємо; Sexy (нижня білизна) — дозволяємо
+                    const getScore = (name) => predictions.find(p => p.className === name)?.probability || 0;
+                    const pornScore   = getScore('Porn');
+                    const hentaiScore = getScore('Hentai');
+                    const isExplicit  = pornScore > 0.35 || hentaiScore > 0.50;
+                    if (isExplicit) {
+                        toast.error(`🔞 Фото відхилено ШІ (${Math.round(Math.max(pornScore, hentaiScore) * 100)}%)`, { duration: 5000 });
+                        continue;
+                    }
                 }
                 const compressedBlob = await imageCompression(file, options);
                 const properFile = new File([compressedBlob], file.name || `photo_${Date.now()}.jpg`, { type: compressedBlob.type || 'image/jpeg', lastModified: Date.now() });
