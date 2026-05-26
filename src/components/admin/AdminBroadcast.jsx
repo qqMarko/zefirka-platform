@@ -21,7 +21,7 @@ const AdminBroadcast = () => {
     const [isActive, setIsActive] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    let BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    let BACKEND_URL = import.meta.env.VITE_API_URL || '';
     if (BACKEND_URL.endsWith('/api')) BACKEND_URL = BACKEND_URL.slice(0, -4);
 
     const getAuthHeaders = () => ({

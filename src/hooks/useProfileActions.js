@@ -81,7 +81,7 @@ export const useProfileActions = ({
     const executeDelete = async (id) => {
         setConfirmModal({ isOpen: false });
         try {
-            const BASE_URL = import.meta.env.VITE_API_URL || 'http://192.168.0.102:5000/api'; 
+            const BASE_URL = import.meta.env.VITE_API_URL || '/api';
             // Підстраховка: беремо токен і зі Store, і з localStorage
             const token = useStore.getState().token || localStorage.getItem('zefirka_token') || localStorage.getItem('token'); 
 
