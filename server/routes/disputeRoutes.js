@@ -62,7 +62,8 @@ export default (io, sendNotification) => {
             const priorityMap = { 'diamond': 3, 'concierge': 3, 'premium': 2, 'priority': 2, 'guest': 1, 'start': 1, 'basic': 0 };
 
             const disputesWithPriority = await Promise.all(disputes.map(async (d) => {
-                const initiator = await User.findOne({ userId: d.initiatorId });
+                // Виправлено: шукаємо по _id, не по userId (такого поля немає в схемі)
+                const initiator = await User.findById(d.initiatorId).catch(() => null);
                 const pkg = (initiator?.vipPackage || 'basic').toLowerCase();
                 return { ...d, initiatorPackage: pkg, priority: priorityMap[pkg] || 0 };
             }));

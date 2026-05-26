@@ -341,8 +341,9 @@ const useStore = create((set, get) => ({
         set({ isLoading: true });
         try {
             const queryParams = new URLSearchParams({ page, limit: 12 });
-            if (filters.maxAge) queryParams.append('maxAge', filters.maxAge);
-            if (filters.maxPrice) queryParams.append('maxPrice', filters.maxPrice);
+            // Відправляємо фільтр тільки якщо він не є дефолтним значенням
+            if (filters.maxAge && filters.maxAge < 60) queryParams.append('maxAge', filters.maxAge);
+            if (filters.maxPrice && filters.maxPrice < 20000) queryParams.append('maxPrice', filters.maxPrice);
             if (filters.fetishes?.length) queryParams.append('fetishes', filters.fetishes.join(','));
             if (filters.hair?.length) queryParams.append('hair', filters.hair.join(','));
             if (filters.body?.length) queryParams.append('body', filters.body.join(','));
@@ -425,9 +426,13 @@ const useStore = create((set, get) => ({
         if (!userId || !profile) return { added: false };
         try {
             const profileId = profile.id || profile._id;
+            const token = localStorage.getItem('zefirka_token');
             const res = await fetch(`${BASE_URL}/profiles/favorites/${userId}/${profileId}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
             });
             const data = await res.json();
             if (data.success) {

@@ -273,7 +273,7 @@ router.get('/favorites/:userId', async (req, res) => {
 });
 
 // Додати / прибрати з вибраних
-router.post('/favorites/:userId/:profileId', async (req, res) => {
+router.post('/favorites/:userId/:profileId', authMiddleware, async (req, res) => {
     try {
         const { userId, profileId } = req.params;
         const user = await User.findById(userId);

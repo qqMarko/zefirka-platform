@@ -59,8 +59,19 @@ export default (sendNotification) => {
             const modelProfile = await Profile.findById(profileId);
             if (!modelProfile) return res.status(404).json({ success: false, message: 'Анкету не знайдено' });
 
-            const alreadyReviewed = modelProfile.reviews.find(r => String(r.clientId) === String(clientId));
+            // Захист від дублювання — порівнюємо як рядки щоб уникнути ObjectId vs String
+            const alreadyReviewed = modelProfile.reviews.some(
+                r => String(r.clientId) === String(clientId)
+            );
             if (alreadyReviewed) return res.status(400).json({ success: false, message: 'Ви вже залишали відгук цій моделі!' });
+
+            // Захист від накрутки — один клієнт не може залишати >10 відгуків всього по платформі за добу
+            const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            const allProfiles = await Profile.find({ 'reviews.clientId': clientId, 'reviews.date': { $gte: oneDayAgo } });
+            const reviewsToday = allProfiles.reduce((count, p) => {
+                return count + p.reviews.filter(r => String(r.clientId) === String(clientId) && new Date(r.date) >= oneDayAgo).length;
+            }, 0);
+            if (reviewsToday >= 5) return res.status(429).json({ success: false, message: 'Ліміт відгуків на сьогодні вичерпано (5 на добу)' });
 
            // 🟢 ПЕРЕВІРКА АКТИВНОГО VIP-СТАТУСУ МОДЕЛІ ДЛЯ МОДЕРАЦІЇ ВІДГУКУ
             let isReviewApproved = true; 
