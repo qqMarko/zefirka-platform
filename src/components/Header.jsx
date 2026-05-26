@@ -321,15 +321,38 @@ const Header = ({
     const { deleteNotification, clearAllNotifications } = useStore();
 
     return (
-        <header className="main-header" style={{ flexShrink: 0, position: 'sticky', top: '15px', zIndex: 3000, width: '100%', maxWidth: '1600px', margin: '0 auto 50px auto', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 clamp(10px, 3vw, 30px)', boxSizing: 'border-box', background: 'rgba(5, 5, 8, 0.95)', backdropFilter: 'blur(12px)', border: `1px solid rgba(233, 30, 99, 0.2)`, borderRadius: '20px', boxShadow: `0 10px 30px -5px rgba(233, 30, 99, 0.25)` }}>
+        <header className="main-header" style={{ flexShrink: 0, position: 'sticky', top: '15px', zIndex: 3000, width: '100%', maxWidth: '1600px', margin: '0 auto 50px auto', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 clamp(10px, 3vw, 30px)', boxSizing: 'border-box', background: 'rgba(10, 10, 20, 0.97)', backdropFilter: 'blur(20px)', border: `1px solid rgba(255,255,255,0.08)`, borderRadius: '20px', boxShadow: `0 8px 32px rgba(0,0,0,0.6)` }}>
                     
             <div style={{ flex: 1, display: 'flex', gap: 'clamp(8px, 2vw, 20px)', alignItems: 'center', position: 'relative', zIndex: 3001 }}>
                 <div className="premium-burger-wrapper" onClick={() => setIsMenuOpen(true)} style={{ '--burger-accent': accent }}><div className="premium-burger"><div className="line"></div><div className="line"></div><div className="line"></div></div></div>
                 {(!isLoggedIn || userRole === 'model') && (<button className="premium-create-btn" onClick={() => isLoggedIn ? openCreate() : setShowAuth(true)}> <Plus size={18} strokeWidth={3} /> <span className="hide-mobile-text">{t[currentLang]?.create}</span></button>)}
             </div>
             
-            <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', fontSize: 'clamp(20px, 4.5vw, 32px)', cursor: 'pointer', zIndex: 3005, whiteSpace: 'nowrap', fontFamily: "inherit", fontStyle: 'italic', fontWeight: '900', letterSpacing: 'clamp(1px, 1vw, 4px)', color: '#fff', textTransform: 'uppercase' }} onClick={() => {navigate('/'); setCatalogPage(1);}} className="logo-glow mobile-logo"> 
-                <span style={{ color: accent }}>Z</span>EFIRKA 
+            <div
+                style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', zIndex: 3005, cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}
+                onClick={() => { navigate('/'); setCatalogPage(1); }}
+            >
+                <span style={{
+                    fontSize: 'clamp(18px, 4vw, 28px)',
+                    fontWeight: '900',
+                    fontStyle: 'italic',
+                    letterSpacing: 'clamp(2px, 1vw, 6px)',
+                    textTransform: 'uppercase',
+                    fontFamily: 'inherit',
+                    background: 'linear-gradient(135deg, #ffffff 0%, #ccccdd 60%, #9999bb 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.15))',
+                    transition: 'filter 0.25s ease',
+                    display: 'inline-block',
+                    className: 'mobile-logo',
+                }}
+                onMouseEnter={e => e.currentTarget.style.filter = 'drop-shadow(0 0 14px rgba(255,255,255,0.3))'}
+                onMouseLeave={e => e.currentTarget.style.filter = 'drop-shadow(0 0 8px rgba(255,255,255,0.15))'}
+                >
+                    <span style={{ WebkitTextFillColor: accent, filter: `drop-shadow(0 0 6px ${accent}88)` }}>Z</span>EFIRKA
+                </span>
             </div>
             
             <div style={{ flex: 1, display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'flex-end', position: 'relative', zIndex: 3001 }}>
@@ -432,7 +455,7 @@ const Header = ({
                         <User size={16} color={isLoggedIn ? accent : '#888'} strokeWidth={2.2} style={{ display: 'block' }} /></button>
                     
                         {isLoggedIn && showUserDropdown && (
-<div className="fade-in-up custom-scrollbar" style={{ position: 'absolute', top: '55px', right: '-10px', width: '290px', maxHeight: '80vh', overflowY: 'auto', background: 'rgba(5, 5, 8, 0.95)', backdropFilter: 'blur(20px)', border: `1px solid rgba(255,255,255,0.08)`, zIndex: 4000, boxShadow: `0 20px 50px rgba(0,0,0,0.9), 0 5px 15px rgba(233, 30, 99, 0.15)`, borderRadius: '20px', padding: '12px' }}>
+<div className="fade-in-up custom-scrollbar" style={{ position: 'absolute', top: '55px', right: '-10px', width: '290px', maxHeight: '80vh', overflowY: 'auto', background: '#0e0e18', backdropFilter: 'blur(20px)', border: `1px solid rgba(255,255,255,0.08)`, zIndex: 4000, boxShadow: `0 20px 50px rgba(0,0,0,0.9)`, borderRadius: '20px', padding: '12px' }}>
     
     {/* ВЕРХНІЙ БЛОК ПРОФІЛЮ */}
     <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '12px', marginBottom: '12px' }}>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Wallet, CreditCard, Bitcoin, MessageCircle, Copy, Check, DollarSign, UploadCloud, Loader } from 'lucide-react';
 import useStore from '../store/useStore';
+import { C, R, overlay, modalBox, closeBtn, section, btnPrimary, btnGhost, input, label } from '../styles/ds';
 
 const WalletModal = ({ setShowWalletModal, t, currentLang, accent, openSupport, initialAmount = '500' }) => {
   const [selectedMethod, setSelectedMethod] = useState('crypto');
@@ -68,7 +69,7 @@ const WalletModal = ({ setShowWalletModal, t, currentLang, accent, openSupport, 
       const methodData = selectedMethod === 'card' ? selectedCardSystem : (selectedMethod === 'crypto' ? selectedCrypto : 'paypal');
       
       try {
-          const BASE_URL = 'http://192.168.0.102:5000/api';
+          const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
           
           await fetch(`${BASE_URL}/wallet/topup-request`, {
               method: 'POST',
@@ -93,23 +94,23 @@ const WalletModal = ({ setShowWalletModal, t, currentLang, accent, openSupport, 
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 7000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => setShowWalletModal(false)} className="fade-in-up custom-scrollbar">
-        <div className="modal-pop" style={{ width: '100%', maxWidth: '700px', background: '#0a0a0f', border: `1px solid ${accent}44`, borderRadius: '20px', padding: '30px', boxShadow: `0 20px 60px rgba(0,0,0,0.9), 0 0 30px ${accent}11`, position: 'relative', maxHeight: '95vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-            <X onClick={() => setShowWalletModal(false)} className="close-btn-mobile menu-hover" style={{ position: 'absolute', top: 20, right: 20, cursor: 'pointer', color: '#888', transition: '0.2s' }} />
+    <div style={{ ...overlay, zIndex: 7000 }} onClick={() => setShowWalletModal(false)}>
+        <div className="modal-pop custom-scrollbar" style={{ ...modalBox('700px', { padding: '28px', maxHeight: '92vh', overflowY: 'auto' }) }} onClick={e => e.stopPropagation()}>
+            <button onClick={() => setShowWalletModal(false)} style={closeBtn}><X size={16} /></button>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px' }}>
-                <div style={{ background: `${accent}22`, padding: '12px', borderRadius: '12px' }}><Wallet size={28} color={accent} /></div>
-                <div><h2 style={{ margin: 0, color: 'white', fontSize: '20px', letterSpacing: '1px' }}>{t[currentLang]?.walletTitle || 'Гаманець'}</h2><div style={{ color: '#888', fontSize: '12px' }}>{t[currentLang]?.walletSub || 'Поповнення балансу'}</div></div>
+                <div style={{ width: '40px', height: '40px', background: `${C.accent}18`, border: `1px solid ${C.accent}33`, borderRadius: R.sm, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Wallet size={20} color={C.accent} /></div>
+                <div><div style={{ fontSize: '18px', fontWeight: '900', color: C.text }}>{t[currentLang]?.walletTitle || 'Гаманець'}</div><div style={{ color: C.textSub, fontSize: '12px', marginTop: '2px' }}>{t[currentLang]?.walletSub || 'Поповнення балансу'}</div></div>
             </div>
 
             {step === 1 && (
                 <>
-                    <div style={{ background: 'linear-gradient(135deg, #111, #050508)', border: '1px solid #222', borderRadius: '16px', padding: '20px', textAlign: 'center', marginBottom: '25px' }}>
-                        <div style={{ fontSize: '11px', color: '#aaa', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '5px' }}>{t[currentLang]?.currentBalance || 'Поточний баланс'}</div>
+                    <div style={{ ...section(), textAlign: 'center', marginBottom: '20px' }}>
+                        <div style={{ fontSize: '11px', fontWeight: '800', color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.9px', marginBottom: '6px' }}>{t[currentLang]?.currentBalance || 'Поточний баланс'}</div>
                         <div style={{ fontSize: '36px', fontWeight: '900', color: 'white' }}>0.00 <span style={{fontSize: '18px', color: accent}}>UAH</span></div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '10px', marginBottom: '25px', background: '#111', padding: '5px', borderRadius: '12px', border: '1px solid #222' }}>
+                    <div style={{ display: 'flex', gap: '6px', marginBottom: '20px', background: C.surface2, padding: '4px', borderRadius: R.sm, border: `1px solid ${C.border}` }}>
                         <button onClick={() => setSelectedMethod('crypto')} className="wallet-method-btn" style={{ flex: 1, padding: '12px 10px', background: selectedMethod === 'crypto' ? '#222' : 'transparent', border: 'none', borderRadius: '8px', color: selectedMethod === 'crypto' ? accent : '#888', fontWeight: 'bold', cursor: 'pointer', transition: '0.3s', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontSize: '14px' }}><Bitcoin size={18} /> {t[currentLang]?.cryptoBtn || 'Крипта'}</button>
                         <button onClick={() => setSelectedMethod('card')} className="wallet-method-btn" style={{ flex: 1, padding: '12px 10px', background: selectedMethod === 'card' ? '#222' : 'transparent', border: 'none', borderRadius: '8px', color: selectedMethod === 'card' ? accent : '#888', fontWeight: 'bold', cursor: 'pointer', transition: '0.3s', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontSize: '14px' }}><CreditCard size={18} /> {t[currentLang]?.cardBtn || 'Карта'}</button>
                         <button onClick={() => setSelectedMethod('paypal')} className="wallet-method-btn" style={{ flex: 1, padding: '12px 10px', background: selectedMethod === 'paypal' ? '#222' : 'transparent', border: 'none', borderRadius: '8px', color: selectedMethod === 'paypal' ? accent : '#888', fontWeight: 'bold', cursor: 'pointer', transition: '0.3s', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontSize: '14px' }}><DollarSign size={18} /> {t[currentLang]?.paypalBtn || 'PayPal'}</button>
@@ -122,7 +123,7 @@ const WalletModal = ({ setShowWalletModal, t, currentLang, accent, openSupport, 
                             <div className="fade-in-up wallet-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '25px' }}>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', color: '#888', marginBottom: '8px', fontWeight: 'bold' }}>{t[currentLang]?.selectCryptoNetwork || 'Виберіть мережу'}</label>
-                                    <select value={selectedCrypto} onChange={(e) => setSelectedCrypto(e.target.value)} style={{ width: '100%', padding: '15px', background: '#111', border: '1px solid #333', color: 'white', borderRadius: '10px', fontSize: '14px', outline: 'none', cursor: 'pointer', marginBottom: '20px' }}>
+                                    <select value={selectedCrypto} onChange={(e) => setSelectedCrypto(e.target.value)} style={{ ...input(), cursor: 'pointer', marginBottom: '16px' }}>
                                         <option value="usdt_trc20">USDT — Tron (TRC20)</option>
                                         <option value="usdt_erc20">USDT — Ethereum (ERC20)</option>
                                         <option value="usdt_sol">USDT — Solana</option>
@@ -132,7 +133,7 @@ const WalletModal = ({ setShowWalletModal, t, currentLang, accent, openSupport, 
                                     </select>
                                     
                                     <label style={{ display: 'block', fontSize: '12px', color: '#888', marginBottom: '8px', fontWeight: 'bold' }}>{t[currentLang]?.topUpAmount || 'Сума поповнення'}</label>
-                                    <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', padding: '15px', background: '#000', border: `1px solid ${isAmountValid ? accent : '#ff4444'}`, color: 'white', fontSize: '20px', fontWeight: 'bold', borderRadius: '10px', outline: 'none', marginBottom: '5px' }} />
+                                    <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} style={{ ...input(), fontSize: '22px', fontWeight: '900', textAlign: 'center', borderColor: isAmountValid ? C.border : C.danger, marginBottom: '8px' }} />
                                     
                                     {!isAmountValid ? (
                                         <div style={{ color: '#ff4444', fontSize: '12px', fontWeight: 'bold' }}>{t[currentLang]?.minAmountText || 'Мін. сума:'} {MIN_AMOUNT} ₴</div>
@@ -153,7 +154,7 @@ const WalletModal = ({ setShowWalletModal, t, currentLang, accent, openSupport, 
                                         {t[currentLang]?.step3Crypto || '3. Надішліть скріншот у Підтримку.'}
                                     </div>
 
-                                    <button disabled={!isAmountValid} onClick={() => setStep(2)} style={{ width: '100%', marginTop: '15px', padding: '15px', background: isAmountValid ? accent : '#333', border: 'none', borderRadius: '10px', color: isAmountValid ? 'white' : '#888', fontSize: '14px', fontWeight: '900', cursor: isAmountValid ? 'pointer' : 'not-allowed', transition: '0.3s', boxShadow: isAmountValid ? `0 10px 25px ${accent}44` : 'none' }} className={isAmountValid ? "menu-hover" : ""}>
+                                    <button disabled={!isAmountValid} onClick={() => setStep(2)} style={{ ...btnPrimary(), width: '100%', marginTop: '12px', opacity: isAmountValid ? 1 : 0.4, cursor: isAmountValid ? 'pointer' : 'not-allowed' }}>
                                         {t[currentLang]?.confirmPaymentBtn || 'Підтвердити оплату'}
                                     </button>
                                 </div>
@@ -162,7 +163,7 @@ const WalletModal = ({ setShowWalletModal, t, currentLang, accent, openSupport, 
                                     <div style={{ background: '#fff', padding: '10px', borderRadius: '12px', border: `2px solid ${accent}`, marginBottom: '20px', width: '160px', height: '160px' }}>
                                         <img src={`/qrcodes/${cryptoWallets[selectedCrypto].qr}`} alt="Crypto QR" style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }} onError={(e) => {e.target.src = 'https://via.placeholder.com/160?text=NO+QR+IMAGE'}} />
                                     </div>
-                                    <div style={{ background: '#050508', border: `1px solid #222`, padding: '15px', borderRadius: '12px', width: '100%', boxSizing: 'border-box' }}>
+                                    <div style={{ ...section(), width: '100%', boxSizing: 'border-box' }}>
                                         <div style={{ fontSize: '11px', color: '#aaa', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', textAlign: 'center' }}>{t[currentLang]?.walletAddress || 'Адреса гаманця'}</div>
                                         <div 
                                             onClick={() => handleCopy(cryptoWallets[selectedCrypto].address)}
@@ -173,7 +174,7 @@ const WalletModal = ({ setShowWalletModal, t, currentLang, accent, openSupport, 
                                             {cryptoWallets[selectedCrypto].address}
                                         </div>
                                         
-                                        <button onClick={() => handleCopy(cryptoWallets[selectedCrypto].address)} style={{ width: '100%', padding: '12px', background: copied ? '#4caf50' : '#222', border: copied ? '1px solid #4caf50' : '1px solid #444', color: 'white', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', transition: 'all 0.3s ease' }}>
+                                        <button onClick={() => handleCopy(cryptoWallets[selectedCrypto].address)} style={{ ...btnGhost({ borderColor: copied ? C.success : C.border }), width: '100%', padding: '11px', color: copied ? C.success : C.textSub }}>
                                             {copied ? <><Check size={16} /> {t[currentLang]?.copied || 'Скопійовано!'}</> : <><Copy size={16} /> {t[currentLang]?.copyAddress || 'Копіювати адресу'}</>}
                                         </button>
                                     </div>
@@ -285,8 +286,8 @@ const WalletModal = ({ setShowWalletModal, t, currentLang, accent, openSupport, 
                     </div>
 
                     <div style={{ display: 'flex', gap: '15px', marginTop: '25px' }}>
-                        <button onClick={() => setStep(1)} style={{ flex: 1, padding: '16px', background: 'transparent', border: '1px solid #444', color: 'white', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }} className="menu-hover">Назад</button>
-                        <button onClick={submitReceipt} disabled={!receiptImage || isSubmitting} style={{ flex: 2, padding: '16px', background: receiptImage ? '#4caf50' : '#333', border: 'none', color: receiptImage ? 'white' : '#888', borderRadius: '10px', fontWeight: 'bold', cursor: receiptImage ? 'pointer' : 'not-allowed', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', transition: '0.3s' }}>
+                        <button onClick={() => setStep(1)} style={{ ...btnGhost(), flex: 1, padding: '14px' }}>Назад</button>
+                        <button onClick={submitReceipt} disabled={!receiptImage || isSubmitting} style={{ ...btnPrimary({ background: 'linear-gradient(135deg, #4caf50, #388e3c)', boxShadow: '0 4px 16px rgba(76,175,80,0.3)' }), flex: 2, padding: '14px', opacity: receiptImage ? 1 : 0.4, cursor: receiptImage ? 'pointer' : 'not-allowed' }}>
                             {isSubmitting ? <Loader size={18} className="spin" /> : <><Check size={18} /> Надіслати адміністратору</>}
                         </button>
                     </div>
@@ -301,12 +302,12 @@ const WalletModal = ({ setShowWalletModal, t, currentLang, accent, openSupport, 
                     </div>
                     <h2 style={{ color: 'white', marginBottom: '15px', fontSize: '24px' }}>Чек успішно надіслано!</h2>
                     <p style={{ color: '#aaa', fontSize: '15px', lineHeight: '1.6', maxWidth: '400px', margin: '0 auto' }}>Адміністратор перевірить оплату і баланс буде автоматично поповнено протягом 5-15 хвилин. Ви отримаєте сповіщення.</p>
-                    <button onClick={() => setShowWalletModal(false)} style={{ marginTop: '35px', padding: '15px 40px', background: '#222', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px', transition: '0.2s' }} className="menu-hover">Закрити гаманець</button>
+                    <button onClick={() => setShowWalletModal(false)} style={{ ...btnGhost(), margin: '32px auto 0', padding: '13px 36px' }}>Закрити гаманець</button>
                 </div>
             )}
 
-            <div style={{ textAlign: 'center', marginTop: '25px', paddingTop: '20px', borderTop: '1px solid #222' }}>
-                <button onClick={() => { setShowWalletModal(false); openSupport(); }} style={{ background: 'none', border: 'none', color: '#888', fontSize: '13px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px', transition: '0.2s' }} className="menu-hover">
+            <div style={{ textAlign: 'center', marginTop: '20px', paddingTop: '18px', borderTop: `1px solid ${C.border}` }}>
+                <button onClick={() => { setShowWalletModal(false); openSupport(); }} style={{ background: 'none', border: 'none', color: C.textSub, fontSize: '13px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px', fontFamily: 'inherit' }}>
                     <MessageCircle size={16} /> {t[currentLang]?.walletSupportBtn || 'Проблеми з оплатою? Написати у підтримку'}
                 </button>
             </div>

@@ -370,30 +370,6 @@ const SidebarFilters = ({
 
                 </div>
 
-                {/* STICKY APPLY BUTTON */}
-                {activeCount > 0 && (
-                    <div style={{ 
-                        position: 'sticky', bottom: 0, background: 'rgba(255,255,255,0.06)', 
-                        backdropFilter: 'blur(30px) brightness(1.1)', padding: '14px 22px',
-                        borderTop: `1px solid ${accent}22`,
-                    }}>
-                        <button 
-                            onClick={closeMenu}
-                            style={{
-                                width: '100%', padding: '14px', borderRadius: '12px',
-                                background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
-                                color: 'white', fontWeight: '900', fontSize: '14px',
-                                border: 'none', outline: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                                boxShadow: `0 4px 20px ${accent}44`,
-                                letterSpacing: '0.5px', transition: 'all 0.2s',
-                            }}
-                            onMouseEnter={e => { e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow=`0 8px 28px ${accent}55`; }}
-                            onMouseLeave={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow=`0 4px 20px ${accent}44`; }}
-                        >
-                            Застосувати фільтри ({activeCount})
-                        </button>
-                    </div>
-                )}
             </div>
         </div>
     );

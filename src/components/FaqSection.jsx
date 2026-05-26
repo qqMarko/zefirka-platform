@@ -153,60 +153,67 @@ const FaqSection = ({ t, currentLang, accent, setShowSupport }) => {
         : FAQ_DATA;
 
     return (
-        <main className="fade-in-up" style={{ maxWidth: '860px', margin: '0 auto', padding: '0 0 60px 0', position: 'relative', zIndex: 1 }}>
+        <div className="faq-bg fade-in-up" style={{ maxWidth: '900px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+        <main style={{ padding: '0 0 24px 0' }}>
             <style>{`
+                /* FAQ glass — backdrop-filter works over faq-bg container */
+                .faq-bg {
+                    background: rgba(255,255,255,0.04);
+                    backdrop-filter: blur(40px) brightness(1.1);
+                    -webkit-backdrop-filter: blur(40px) brightness(1.1);
+                    border-radius: 20px;
+                    padding: 24px;
+                }
                 .glass-card {
-                    background: rgba(255, 255, 255, 0.04) !important;
-                    backdrop-filter: blur(28px) brightness(1.08) !important;
-                    -webkit-backdrop-filter: blur(28px) brightness(1.08) !important;
-                    border-color: rgba(255,255,255,0.10) !important;
-                    box-shadow: 0 2px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.10) !important;
+                    background: rgba(255,255,255,0.03) !important;
+                    backdrop-filter: blur(20px) brightness(1.08) !important;
+                    -webkit-backdrop-filter: blur(20px) brightness(1.08) !important;
+                    border-color: rgba(255,255,255,0.09) !important;
+                    box-shadow: 0 2px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+                    transition: border-color 0.2s, background 0.2s !important;
+                }
+                .glass-card:hover {
+                    border-color: rgba(255,255,255,0.18) !important;
+                    background: rgba(255,255,255,0.055) !important;
                 }
                 .glass-card-open {
-                    background: rgba(255, 255, 255, 0.07) !important;
-                    backdrop-filter: blur(32px) brightness(1.12) !important;
-                    -webkit-backdrop-filter: blur(32px) brightness(1.12) !important;
-                    border-color: rgba(255,255,255,0.16) !important;
-                    box-shadow: 0 4px 28px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.14) !important;
+                    background: rgba(255,255,255,0.055) !important;
+                    backdrop-filter: blur(24px) brightness(1.10) !important;
+                    -webkit-backdrop-filter: blur(24px) brightness(1.10) !important;
+                    border-color: rgba(255,255,255,0.14) !important;
+                    box-shadow: 0 4px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08) !important;
                 }
                 .glass-stats {
-                    background: rgba(255, 255, 255, 0.03) !important;
-                    backdrop-filter: blur(22px) brightness(1.06) !important;
-                    -webkit-backdrop-filter: blur(22px) brightness(1.06) !important;
+                    background: rgba(255,255,255,0.03) !important;
+                    backdrop-filter: blur(20px) brightness(1.08) !important;
+                    -webkit-backdrop-filter: blur(20px) brightness(1.08) !important;
                     border: 1px solid rgba(255,255,255,0.09) !important;
-                    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08) !important;
+                    box-shadow: 0 2px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06) !important;
                 }
                 .glass-cta {
-                    background: rgba(255, 255, 255, 0.04) !important;
-                    backdrop-filter: blur(36px) brightness(1.1) !important;
-                    -webkit-backdrop-filter: blur(36px) brightness(1.1) !important;
-                    border: 1px solid rgba(255,255,255,0.11) !important;
-                    box-shadow: 0 4px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12) !important;
+                    background: rgba(255,255,255,0.03) !important;
+                    backdrop-filter: blur(20px) brightness(1.08) !important;
+                    -webkit-backdrop-filter: blur(20px) brightness(1.08) !important;
+                    border: 1px solid rgba(255,255,255,0.09) !important;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06) !important;
                 }
                 .glass-pill {
-                    background: rgba(255,255,255,0.05) !important;
-                    backdrop-filter: blur(24px) brightness(1.1) !important;
-                    -webkit-backdrop-filter: blur(24px) brightness(1.1) !important;
-                    border: 1px solid rgba(255,255,255,0.10) !important;
-                    box-shadow: inset 0 1px 0 rgba(255,255,255,0.10) !important;
+                    background: rgba(255,255,255,0.04) !important;
+                    backdrop-filter: blur(16px) brightness(1.06) !important;
+                    -webkit-backdrop-filter: blur(16px) brightness(1.06) !important;
+                    border: 1px solid rgba(255,255,255,0.09) !important;
+                    transition: background 0.18s, border-color 0.18s !important;
                 }
                 .glass-pill:hover {
-                    background: rgba(255,255,255,0.10) !important;
-                    border-color: rgba(255,255,255,0.20) !important;
+                    background: rgba(255,255,255,0.08) !important;
+                    border-color: rgba(255,255,255,0.18) !important;
                 }
                 .glass-pill-active {
-                    background: rgba(255,255,255,0.14) !important;
-                    backdrop-filter: blur(24px) brightness(1.15) !important;
-                    -webkit-backdrop-filter: blur(24px) brightness(1.15) !important;
-                    box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 0 0 1px rgba(255,255,255,0.15) !important;
-                }
-                .glass-card {
-                    backdrop-filter: blur(36px) brightness(1.10) !important;
-                    -webkit-backdrop-filter: blur(36px) brightness(1.10) !important;
-                }
-                .glass-card-open {
-                    backdrop-filter: blur(40px) brightness(1.14) !important;
-                    -webkit-backdrop-filter: blur(40px) brightness(1.14) !important;
+                    background: rgba(255,255,255,0.11) !important;
+                    backdrop-filter: blur(16px) brightness(1.1) !important;
+                    -webkit-backdrop-filter: blur(16px) brightness(1.1) !important;
+                    border: 1px solid rgba(255,255,255,0.2) !important;
+                    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12) !important;
                 }
             `}</style>
             
@@ -363,6 +370,7 @@ const FaqSection = ({ t, currentLang, accent, setShowSupport }) => {
                 </button>
             </div>
         </main>
+        </div>
     );
 };
 

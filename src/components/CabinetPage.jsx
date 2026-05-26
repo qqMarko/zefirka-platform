@@ -1,128 +1,118 @@
 import React from 'react';
-import { 
-    BarChart2, ShieldCheck, Wallet, MessageCircle, Plus, 
-    Rocket, Gem, Crown, AlertCircle, CheckCircle2, Trash2, Edit3, Heart 
-} from 'lucide-react';
-import CatalogGrid from '../components/CatalogGrid'; // Перевірте, чи правильний шлях до компонента
+import { BarChart2, ShieldCheck, Wallet, MessageCircle, Plus, Rocket, Gem, Crown, AlertCircle, CheckCircle2, Trash2, Edit3, Heart } from 'lucide-react';
+import CatalogGrid from '../components/CatalogGrid';
 import { useMegaphone } from '../context/MegaphoneContext';
+import { C, R, section, btnPrimary, btnGhost } from '../styles/ds';
 
-const CabinetPage = ({
-    userRole, balance, userUniqueId, myModels, favorites, myChats, user,
-    setShowStats, setShowVerifyPromo, setShowWalletModal, 
-    setPreviousPage, navigate, openCreate, openEdit, promptDelete, promptBump,
-    setSelectedModel, setContactSelectionModel, handleToggleFavorite,
-    t, currentLang, accent
-}) => {
-    const megaphone = useMegaphone();
-    const BUMP_BASE_PRICE = 150;
-    const bumpDiscountPct = megaphone.isActive ? (megaphone.bumpDiscountPercent || 0) : 0;
-    const bumpPrice = bumpDiscountPct > 0 
-        ? Math.floor(BUMP_BASE_PRICE - (BUMP_BASE_PRICE * bumpDiscountPct / 100)) 
-        : BUMP_BASE_PRICE;
-    const bumpLabel = user?.freeBumps > 0 
-        ? (t[currentLang]?.bumpBtn || 'Підняти анкету')
-        : bumpDiscountPct > 0 
-            ? `🔥 ${t[currentLang]?.bumpBtnWithPrice || 'Підняти'} (${bumpPrice}₴ -${bumpDiscountPct}%)` 
-            : `${t[currentLang]?.bumpBtnWithPrice || 'Підняти'} (${BUMP_BASE_PRICE}₴)`;
+const BUMP_BASE = 150;
+const TIER = {
+    3: { label: 'DIAMOND', color: '#00ffff', border: '2px solid #00ffff44' },
+    2: { label: 'PREMIUM', color: '#ffd700', border: '2px solid #ffd70044' },
+    1: { label: 'START',   color: '#aaaaaa', border: '1px solid #aaaaaa44' },
+    0: { label: '',        color: '',        border: `1px solid ${C.border}` },
+};
+
+const CabinetPage = ({ userRole, balance, userUniqueId, myModels, favorites, myChats, user, setShowStats, setShowVerifyPromo, setShowWalletModal, setPreviousPage, navigate, openCreate, openEdit, promptDelete, promptBump, setSelectedModel, setContactSelectionModel, handleToggleFavorite, t, currentLang, accent }) => {
+    const meg = useMegaphone();
+    const discPct = meg.isActive ? (meg.bumpDiscountPercent || 0) : 0;
+    const bumpPrice = discPct > 0 ? Math.floor(BUMP_BASE - BUMP_BASE * discPct / 100) : BUMP_BASE;
+    const bumpLabel = user?.freeBumps > 0 ? 'Підняти (безкоштовно)' : discPct > 0 ? `Підняти (${bumpPrice}₴ -${discPct}%)` : `Підняти (${BUMP_BASE}₴)`;
+
     return (
         <main className="fade-in-up">
-            <div style={{ borderBottom: `2px solid ${accent}`, paddingBottom: '20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h1 style={{ fontSize: '42px', margin: 0, letterSpacing: '2px', fontWeight: '900' }}>{t[currentLang]?.cabinet}</h1>
+            {/* ── HEADER ── */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingBottom: '20px', borderBottom: `1px solid ${C.border}` }}>
+                <h1 style={{ fontSize: '32px', fontWeight: '900', color: C.text, margin: 0, letterSpacing: '-0.5px' }}>{t[currentLang]?.cabinet || 'Кабінет'}</h1>
                 {userRole === 'model' && (
-                    <div style={{ display: 'flex', gap: '15px' }}>
-                        <button onClick={() => setShowStats(true)} style={{ background: 'none', border: `1px solid ${accent}`, color: accent, padding: '10px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 'bold', fontFamily: 'inherit', borderRadius: '8px', transition: '0.2s' }} className="menu-hover">
-                            <BarChart2 size={18}/> <span className="hide-mobile-text">{t[currentLang]?.stats}</span>
+                    <button onClick={() => setShowStats(true)} style={{ ...btnGhost(), fontSize: '13px', padding: '10px 16px' }}>
+                        <BarChart2 size={15} color={C.accent} />
+                        <span className="hide-mobile-text">{t[currentLang]?.stats || 'Аналітика'}</span>
+                    </button>
+                )}
+            </div>
+
+            {/* ── STATS STRIP ── */}
+            <div className="cabinet-stats-container" style={{ ...section(), display: 'flex', gap: '16px', marginBottom: '28px', alignItems: 'center', flexWrap: 'wrap', padding: '20px 24px' }}>
+                <div style={{ flex: 1, minWidth: '180px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: '800', color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '6px' }}>{t[currentLang]?.balanceText || 'Баланс'}</div>
+                    <div style={{ fontSize: '28px', fontWeight: '900', color: C.accent }}>{(balance || 0).toFixed(2)} <span style={{ fontSize: '14px', color: C.textSub, fontWeight: '500' }}>UAH</span></div>
+                    <div style={{ marginTop: '6px', fontSize: '12px', color: C.textMuted }}>{t[currentLang]?.yourId || 'Ваш ID'}: <span style={{ color: C.text, fontWeight: '700' }}>ID{userUniqueId}</span></div>
+                </div>
+
+                {userRole === 'model' && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.2)', padding: '14px 16px', borderRadius: R.sm }}>
+                        <div>
+                            <div style={{ fontSize: '10px', color: C.textMuted, textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.6px' }}>{t[currentLang]?.accStatus || 'Статус'}</div>
+                            <div style={{ fontSize: '13px', color: C.danger, fontWeight: '800', marginTop: '2px' }}>{t[currentLang]?.unverified || 'Не верифіковано'}</div>
+                        </div>
+                        <button onClick={e => { e.preventDefault(); e.stopPropagation(); setShowVerifyPromo(true); }} style={{ ...btnPrimary({ background: 'linear-gradient(135deg, #ff4444, #cc2222)', boxShadow: '0 4px 14px rgba(255,68,68,0.3)', padding: '10px 16px', fontSize: '13px' }) }}>
+                            <ShieldCheck size={15} /> {t[currentLang]?.verifyNowBtn || 'Верифікувати'}
                         </button>
                     </div>
                 )}
-            </div>
-            
-            <div className="cabinet-stats-container" style={{ display: 'flex', gap: '20px', marginBottom: '40px', background: '#0a0a0f', padding: '25px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', alignItems: 'center', flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, minWidth: '200px' }}>
-                    <div style={{ fontSize: '12px', color: '#888', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '5px', fontWeight: 'bold' }}>{t[currentLang]?.balanceText}</div>
-                    <div style={{ fontSize: '32px', fontWeight: '900', color: accent }}>{balance ? balance.toFixed(2) : '0.00'} <span style={{fontSize: '16px', color: '#fff', fontWeight: '500'}}>UAH</span></div>
-                    <div style={{ marginTop: '10px', fontSize: '12px', color: '#aaa', fontWeight: '500' }}>{t[currentLang]?.yourId}: <span style={{color: 'white', fontWeight: 'bold'}}>ID{userUniqueId}</span></div>
-                </div>
-                
-                {userRole === 'model' && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', background: '#111', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', position: 'relative', zIndex: 10 }}>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}><span style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', fontWeight: 'bold' }}>{t[currentLang]?.accStatus}</span><span style={{ fontSize: '14px', color: '#ff4444', fontWeight: 'bold' }}>{t[currentLang]?.unverified}</span></div>
-                        <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowVerifyPromo(true); }} style={{ background: accent, border: 'none', color: 'white', padding: '12px 20px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: `0 4px 15px ${accent}44` }} className="menu-hover"><ShieldCheck size={18} /> {t[currentLang]?.verifyNowBtn}</button>
-                    </div>
-                )}
-                
-                <div style={{ display: 'flex', gap: '15px' }}>
-                    <button onClick={() => setShowWalletModal(true)} style={{ padding: '15px 25px', background: accent, border: 'none', color: 'white', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: `0 5px 15px ${accent}44` }} className="menu-hover cabinet-action-btn"><Wallet size={18} /> {t[currentLang]?.topUpBtn}</button>
-                    <button onClick={() => { setPreviousPage(location.pathname); navigate('/messages'); }} style={{ padding: '15px 25px', background: '#111', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }} className="menu-hover cabinet-action-btn"><MessageCircle size={18} color={accent} /> <span className="hide-mobile-text">{t[currentLang]?.myMessagesBtn}</span>{myChats.length > 0 && <span style={{ background: accent, color: 'white', fontSize: '10px', padding: '2px 6px', borderRadius: '10px', marginLeft: '5px' }}>{myChats.length}</span>}</button>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button onClick={() => setShowWalletModal(true)} style={{ ...btnPrimary(), padding: '12px 20px', fontSize: '13px' }} className="cabinet-action-btn">
+                        <Wallet size={16} /> {t[currentLang]?.topUpBtn || 'Поповнити'}
+                    </button>
+                    <button onClick={() => { setPreviousPage(location.pathname); navigate('/messages'); }} style={{ ...btnGhost(), padding: '12px 20px', fontSize: '13px' }} className="cabinet-action-btn">
+                        <MessageCircle size={16} color={C.accent} />
+                        <span className="hide-mobile-text">{t[currentLang]?.myMessagesBtn || 'Повідомлення'}</span>
+                        {myChats.length > 0 && <span style={{ background: C.accent, color: '#fff', fontSize: '10px', padding: '2px 7px', borderRadius: '10px' }}>{myChats.length}</span>}
+                    </button>
                 </div>
             </div>
-            
+
+            {/* ── CONTENT ── */}
             {userRole === 'model' ? (
                 myModels.length === 0 ? (
-                    <div style={{ padding: '100px 50px', background: 'rgba(0,0,0,0.8)', border: '1px dashed rgba(255,255,255,0.1)', textAlign: 'center', borderRadius: '16px' }}>
-                        <p style={{ color: '#aaa', letterSpacing: '2px', marginBottom: '30px', fontWeight: '500' }}>{t[currentLang]?.noAds}</p>
-                        <button onClick={openCreate} style={{ background: accent, padding: '15px 40px', border: 'none', color: 'white', fontWeight: 'bold', cursor: 'pointer', fontFamily: 'inherit', borderRadius: '8px', boxShadow: `0 4px 15px ${accent}44` }}>{t[currentLang]?.createFirst}</button>
+                    <div style={{ ...section(), textAlign: 'center', padding: '80px 24px', border: `1px dashed ${C.border}` }}>
+                        <div style={{ color: C.textSub, letterSpacing: '1px', marginBottom: '20px' }}>{t[currentLang]?.noAds || 'У вас ще немає анкет'}</div>
+                        <button onClick={openCreate} style={{ ...btnPrimary(), margin: '0 auto' }}>{t[currentLang]?.createFirst || 'Створити анкету'}</button>
                     </div>
                 ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-                        <div onClick={openCreate} style={{ height: '560px', border: '2px dashed rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#666', transition: '0.3s', borderRadius: '16px' }} className="menu-hover">
-                            <Plus size={40} style={{ marginBottom: '15px' }} />
-                            <span style={{ fontWeight: 'bold', letterSpacing: '1px' }}>{t[currentLang]?.create}</span>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+                        {/* Add card */}
+                        <div onClick={openCreate} style={{ height: '520px', border: `1px dashed ${C.border}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: C.textMuted, transition: '0.2s', borderRadius: R.md }}
+                            onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textMuted; }}>
+                            <Plus size={32} style={{ marginBottom: '10px' }} />
+                            <span style={{ fontWeight: '700', fontSize: '13px' }}>{t[currentLang]?.create || 'Нова анкета'}</span>
                         </div>
+
                         {myModels.map(m => {
-                            let cardStyle = { border: '1px solid rgba(255,255,255,0.05)', shadow: 'none' };
-                            if (m.vLevel === 3) cardStyle = { border: '2px solid #00ffff', shadow: '0 0 20px rgba(0, 255, 255, 0.2)' };
-                            else if (m.vLevel === 2) cardStyle = { border: '2px solid #ffd700', shadow: '0 0 20px rgba(255, 215, 0, 0.15)' };
-                            else if (m.vLevel === 1) cardStyle = { border: '1px solid #aaa', shadow: '0 0 15px rgba(170, 170, 170, 0.1)' };
-                            else if (m.bumpedAt) cardStyle = { border: '1px solid #ff9800', shadow: '0 0 15px rgba(255, 152, 0, 0.2)' };
-
+                            const tier = TIER[m.vLevel] || TIER[0];
                             return (
-                                <div key={m.id} style={{ backgroundColor: 'rgba(0,0,0,0.8)', border: cardStyle.border, boxShadow: cardStyle.shadow, position: 'relative', backdropFilter: 'blur(5px)', display: 'flex', flexDirection: 'column', borderRadius: '16px', overflow: 'hidden', transition: '0.3s', opacity: m.isApproved ? 1 : 0.6 }}>
-                                    
-                                    {m.bumpedAt && !m.vLevel && (
-                                        <div style={{ position: 'absolute', top: '12px', left: '12px', background: '#ff9800', color: '#000', padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: '900', zIndex: 10, display: 'flex', alignItems: 'center', gap: '5px', letterSpacing: '0.5px', boxShadow: '0 4px 10px rgba(255, 152, 0, 0.4)' }}>
-                                            <Rocket size={14} /> В ТОПІ
-                                        </div>
-                                    )}
+                                <div key={m.id} style={{ background: C.surface, border: m.bumpedAt ? '1px solid rgba(255,152,0,0.4)' : tier.border, borderRadius: R.md, overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: '0.2s', opacity: m.isApproved ? 1 : 0.65, position: 'relative' }}>
+                                    {/* Badges */}
+                                    {m.bumpedAt && !m.vLevel && <div style={{ position: 'absolute', top: '10px', left: '10px', background: '#ff9800', color: '#000', padding: '4px 10px', borderRadius: R.xs, fontSize: '10px', fontWeight: '900', zIndex: 10, display: 'flex', alignItems: 'center', gap: '4px' }}><Rocket size={11} /> В ТОПІ</div>}
+                                    {m.vLevel === 3 && <div style={{ position: 'absolute', top: '10px', left: '10px', background: '#00ffff', color: '#000', padding: '4px 10px', borderRadius: R.xs, fontSize: '10px', fontWeight: '900', zIndex: 10, display: 'flex', alignItems: 'center', gap: '4px' }}><Gem size={11} /> DIAMOND</div>}
+                                    {m.vLevel === 2 && <div style={{ position: 'absolute', top: '10px', left: '10px', background: '#ffd700', color: '#000', padding: '4px 10px', borderRadius: R.xs, fontSize: '10px', fontWeight: '900', zIndex: 10, display: 'flex', alignItems: 'center', gap: '4px' }}><Crown size={11} /> PREMIUM</div>}
+                                    {!m.isApproved && <div style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(255,68,68,0.85)', color: '#fff', padding: '4px 10px', borderRadius: R.xs, fontSize: '10px', fontWeight: '700', zIndex: 10, display: 'flex', alignItems: 'center', gap: '4px', backdropFilter: 'blur(6px)' }}><AlertCircle size={11} /> Модерація</div>}
 
-                                    {m.vLevel === 3 && <div style={{ position: 'absolute', top: '12px', left: '12px', background: '#00ffff', color: '#000', padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: '900', zIndex: 10, display: 'flex', alignItems: 'center', gap: '5px', letterSpacing: '0.5px', boxShadow: '0 4px 10px rgba(0, 255, 255, 0.4)' }}><Gem size={14} /> ДІАМАНТ</div>}
-                                    {m.vLevel === 2 && <div style={{ position: 'absolute', top: '12px', left: '12px', background: '#ffd700', color: '#000', padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: '900', zIndex: 10, display: 'flex', alignItems: 'center', gap: '5px', letterSpacing: '0.5px', boxShadow: '0 4px 10px rgba(255, 215, 0, 0.4)' }}><Crown size={14} /> ЗОЛОТО</div>}
-
-                                    {!m.isApproved && (
-                                        <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(255, 68, 68, 0.9)', color: '#fff', padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', zIndex: 10, display: 'flex', alignItems: 'center', gap: '5px', backdropFilter: 'blur(5px)' }}>
-                                            <AlertCircle size={14} /> На модерації
-                                        </div>
-                                    )}
-
-                                    <div style={{ height: '350px', backgroundColor: '#050508', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
-                                        {m.photos && m.photos.length > 0 ? <img src={m.photos[0]} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 15%' }} alt="Model"/> : <span style={{color:'#1a1a1a', fontSize: '10px'}}>NO_IMAGE_DATA</span>}
+                                    {/* Photo */}
+                                    <div style={{ height: '320px', background: C.surface2, overflow: 'hidden', flexShrink: 0 }}>
+                                        {m.photos?.[0] ? <img src={m.photos[0]} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 15%' }} alt="" /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.textMuted, fontSize: '12px' }}>Немає фото</div>}
                                     </div>
 
-                                    <div style={{ padding: '15px 20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><div style={{ fontSize: '20px', fontWeight: 'bold', color: accent }}>{m.title || m.name}</div>{m.vLevel > 0 && <CheckCircle2 size={16} color={m.vLevel === 3 ? '#00ffff' : (m.vLevel === 2 ? '#ffd700' : '#aaa')} />}</div>
-                                        <div style={{ color: '#aaa', fontSize: '12px', margin: '10px 0 20px', fontWeight: '500' }}>📍 {t[currentLang]?.onlineOnly} // {m.priceFrom} UAH // {m.age}</div>
+                                    {/* Info */}
+                                    <div style={{ padding: '14px 16px', flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span style={{ fontSize: '16px', fontWeight: '800', color: C.text }}>{m.title || m.name}</span>
+                                            {m.vLevel > 0 && <CheckCircle2 size={14} color={tier.color} />}
+                                        </div>
+                                        <div style={{ color: C.textSub, fontSize: '12px' }}>📍 {t[currentLang]?.onlineOnly || 'Онлайн'} · {m.priceFrom} UAH · {m.age}р.</div>
 
-                                        <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
-                                            <button 
-                                                onClick={(e) => { 
-                                                    e.stopPropagation(); 
-                                                    if (!m.isApproved) {
-                                                        alert('Анкета ще на модерації!'); // Або можна передати toast через пропси
-                                                        return;
-                                                    }
-                                                    promptBump(m.id); 
-                                                }} 
-                                                style={{ flex: 1.5, padding: '10px', background: 'rgba(255, 152, 0, 0.1)', border: `1px solid ${!m.isApproved ? '#555' : '#ff9800'}`, color: !m.isApproved ? '#555' : '#ff9800', fontWeight: 'bold', cursor: !m.isApproved ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontSize: '11px', fontFamily: 'inherit', borderRadius: '8px', transition: '0.2s' }} 
-                                                className={!m.isApproved ? "" : "menu-hover"}
-                                            >
-                                                <Rocket size={14}/> {bumpLabel}
+                                        {/* Actions */}
+                                        <div style={{ display: 'flex', gap: '6px', marginTop: 'auto' }}>
+                                            <button onClick={e => { e.stopPropagation(); if (!m.isApproved) return; promptBump(m.id); }} style={{ flex: 2, padding: '9px', background: 'rgba(255,152,0,0.1)', border: `1px solid ${m.isApproved ? 'rgba(255,152,0,0.4)' : C.border}`, color: m.isApproved ? '#ff9800' : C.textMuted, fontWeight: '700', cursor: m.isApproved ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontSize: '11px', fontFamily: 'inherit', borderRadius: R.xs, transition: '0.18s' }}>
+                                                <Rocket size={12} /> {bumpLabel}
                                             </button>
-
-                                            <button onClick={(e) => { e.stopPropagation(); openEdit(m); }} style={{ flex: 1, padding: '10px', background: '#111', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontSize: '11px', fontFamily: 'inherit', borderRadius: '8px', transition: '0.2s' }} className="menu-hover">
-                                                <Edit3 size={14}/> Редаг.
+                                            <button onClick={e => { e.stopPropagation(); openEdit(m); }} style={{ flex: 1, padding: '9px', background: C.surface2, border: `1px solid ${C.border}`, color: C.textSub, fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontSize: '11px', fontFamily: 'inherit', borderRadius: R.xs, transition: '0.18s' }}>
+                                                <Edit3 size={12} /> Редаг.
                                             </button>
-                                            <button onClick={(e) => { e.stopPropagation(); promptDelete(m.id); }} style={{ padding: '10px 15px', background: 'rgba(255,0,0,0.1)', border: '1px solid rgba(255,0,0,0.2)', color: '#ff4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', transition: '0.2s' }} className="menu-hover">
-                                                <Trash2 size={16}/>
+                                            <button onClick={e => { e.stopPropagation(); promptDelete(m.id); }} style={{ padding: '9px 12px', background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.2)', color: C.danger, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit', borderRadius: R.xs, transition: '0.18s' }}>
+                                                <Trash2 size={13} />
                                             </button>
                                         </div>
                                     </div>
@@ -133,23 +123,18 @@ const CabinetPage = ({
                 )
             ) : (
                 favorites.length === 0 ? (
-                    <div style={{ padding: '100px 50px', background: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', borderRadius: '16px' }}>
-                        <Heart size={48} color="#333" style={{marginBottom: '20px'}} />
-                        <p style={{ color: '#aaa', letterSpacing: '2px', fontWeight: '500', marginBottom: '20px' }}>{t[currentLang]?.noFavs}</p>
-                        <button onClick={() => navigate('/')} style={{ background: accent, padding: '12px 30px', border: 'none', color: 'white', fontWeight: 'bold', cursor: 'pointer', borderRadius: '8px', transition: '0.3s' }} className="menu-hover">{t[currentLang]?.goToCatalog}</button>
+                    <div style={{ ...section(), textAlign: 'center', padding: '80px 24px', border: `1px dashed ${C.border}` }}>
+                        <Heart size={40} color={C.textMuted} style={{ marginBottom: '14px' }} />
+                        <div style={{ color: C.textSub, marginBottom: '16px' }}>{t[currentLang]?.noFavs || 'Список вибраних порожній'}</div>
+                        <button onClick={() => navigate('/')} style={{ ...btnPrimary(), margin: '0 auto' }}>{t[currentLang]?.goToCatalog || 'До каталогу'}</button>
                     </div>
                 ) : (
-                    <div>
-                        <h2 style={{color: 'white', marginBottom: '30px', fontSize: '24px', letterSpacing: '1px', fontWeight: 'bold'}}>
-                            <Heart size={20} color={accent} fill={accent} style={{marginRight:'10px', verticalAlign:'text-bottom'}}/> {t[currentLang]?.yourFavorites}
+                    <>
+                        <h2 style={{ fontSize: '20px', fontWeight: '800', color: C.text, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Heart size={18} color={C.accent} fill={C.accent} /> {t[currentLang]?.yourFavorites || 'Вибрані'}
                         </h2>
-                        <CatalogGrid 
-                            currentModels={favorites} setSelectedModel={setSelectedModel} 
-                            setContactSelectionModel={setContactSelectionModel} t={t} 
-                            currentLang={currentLang} accent={accent} favorites={favorites} 
-                            handleToggleFavorite={handleToggleFavorite} 
-                        />
-                    </div>
+                        <CatalogGrid currentModels={favorites} setSelectedModel={setSelectedModel} setContactSelectionModel={setContactSelectionModel} t={t} currentLang={currentLang} accent={accent} favorites={favorites} handleToggleFavorite={handleToggleFavorite} />
+                    </>
                 )
             )}
         </main>

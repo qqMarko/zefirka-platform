@@ -8,20 +8,20 @@ const DisputeSidebar = ({ disputes, activeDispute, setActiveDispute, setIsCreati
     const filteredDisputes = disputes.filter(d => viewMode === 'active' ? d.status === 'open' : d.status === 'closed');
 
     return (
-        <div style={{ width: '300px', borderRight: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', background: '#0a0a0f', flexShrink: 0 }}>
+        <div style={{ width: '300px', borderRight: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', background: '#0b0b15', flexShrink: 0 }}>
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ display: 'flex', background: '#111', borderRadius: '10px', padding: '4px' }}>
-                    <button onClick={() => setViewMode('active')} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', background: viewMode === 'active' ? accent : 'transparent', color: viewMode === 'active' ? '#000' : '#888', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                <div style={{ display: 'flex', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '4px' }}>
+                    <button onClick={() => setViewMode('active')} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', background: viewMode === 'active' ? accent : 'transparent', color: viewMode === 'active' ? '#fff' : '#666', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
                         <MessageSquare size={16}/> Активні
                     </button>
-                    <button onClick={() => setViewMode('archive')} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', background: viewMode === 'archive' ? accent : 'transparent', color: viewMode === 'archive' ? '#000' : '#888', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                    <button onClick={() => setViewMode('archive')} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', background: viewMode === 'archive' ? accent : 'transparent', color: viewMode === 'archive' ? '#fff' : '#666', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
                         <History size={16}/> Архів
                     </button>
                 </div>
                 
                 {/* Кнопка створення спору показується тільки якщо це не адмін */}
                 {userRole !== 'admin' && (
-                    <button onClick={() => { setActiveDispute(null); setIsCreatingDispute(true); }} style={{ width: '100%', padding: '10px', background: 'transparent', border: `1px dashed ${accent}`, color: accent, borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }} className="menu-hover">
+                    <button onClick={() => { setActiveDispute(null); setIsCreatingDispute(true); }} style={{ width: '100%', padding: '10px', background: `${accent}10`, border: `1px dashed ${accent}55`, color: accent, borderRadius: '10px', fontWeight: '700', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.18s' }}>
                         <Plus size={18} /> Відкрити спір
                     </button>
                 )}
@@ -44,7 +44,7 @@ const DisputeSidebar = ({ disputes, activeDispute, setActiveDispute, setIsCreati
                                 padding: '15px', 
                                 borderBottom: '1px solid rgba(255,255,255,0.05)', 
                                 cursor: 'pointer', 
-                                background: activeDispute?._id === d._id ? `${accent}15` : 'transparent', 
+                                background: activeDispute?._id === d._id ? `${accent}12` : 'transparent', 
                                 borderLeft: activeDispute?._id === d._id ? `3px solid ${accent}` : '3px solid transparent',
                                 display: 'flex', // Додано для вирівнювання іконки смітника
                                 justifyContent: 'space-between', 

@@ -160,8 +160,8 @@ input, textarea, select {
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 .modal-pop { animation: modalPop 0.4s cubic-bezier(0.22, 1, 0.36, 1); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
 @keyframes modalPop { from { opacity: 0; transform: scale(0.95) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-.logo-glow { text-shadow: 0 0 15px rgba(255, 255, 255, 0.5); transition: all 0.3s ease; }
-.logo-glow:hover { text-shadow: 0 0 25px #e91e63, 0 0 50px #e91e63; transform: translateX(-50%) scale(1.05) !important; }
+.logo-glow { transition: filter 0.25s ease; }
+.logo-glow:hover { filter: drop-shadow(0 0 14px rgba(255,255,255,0.3)); }
 .menu-hover { transition: all 0.2s ease; }
 .menu-hover:hover { filter: brightness(1.3); }
 .hover-scale { transition: transform 0.2s ease; }
@@ -242,4 +242,39 @@ input, textarea, select {
     .messages-sidebar { width: 100% !important; border-right: none !important; box-sizing: border-box !important; }
     .messages-chat-area { width: 100% !important; box-sizing: border-box !important; }
     .hide-on-mobile { display: none !important; }
+}
+/* ========================================= */
+/* 10. DESIGN SYSTEM — UNIFIED STYLES        */
+/* ========================================= */
+
+/* DS input focus */
+input:focus, textarea:focus, select:focus {
+    border-color: rgba(233,30,99,0.6) !important;
+    box-shadow: 0 0 0 3px rgba(233,30,99,0.12) !important;
+}
+
+/* DS button hover states */
+button[class=""]:hover, button:not([class]):hover {
+    opacity: 0.88;
+}
+
+/* Pulse animation for bell */
+@keyframes pulseAlert {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* ── USER DROPDOWN ITEMS ─────────────────────────────────────────── */
+.dropdown-item-hover {
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.dropdown-item-hover:hover {
+    background: rgba(255,255,255,0.06) !important;
+    color: #fff !important;
+}
+.dropdown-item-hover-red {
+    transition: background 0.15s ease;
+}
+.dropdown-item-hover-red:hover {
+    background: rgba(255,68,68,0.10) !important;
 }

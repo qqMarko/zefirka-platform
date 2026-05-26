@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import useStore from '../store/useStore';
 import { t } from '../data/translations';
 import { accent } from '../styles/theme';
+import { C, R, closeBtn, section, btnPrimary, btnGhost, input, label } from '../styles/ds';
 import imageCompression from 'browser-image-compression'; 
 import * as nsfwjs from 'nsfwjs'; 
 import useSmoothScroll from '../hooks/useSmoothScroll';
@@ -242,7 +243,7 @@ const CreateProfileModal = () => {
     const inputClass = {
         width: '100%', padding: '16px 22px', backgroundColor: 'rgba(255, 255, 255, 0.02)',
         boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 4px 20px rgba(0,0,0,0.2)', 
-        borderRadius: '16px', color: '#fff', fontSize: '15px', outline: 'none', 
+        borderRadius: R.md, color: '#fff', fontSize: '15px', outline: 'none', 
         transition: 'all 0.3s cubic-bezier(0.25, 1, 0.5, 1)',
         appearance: 'none', WebkitAppearance: 'none', backdropFilter: 'blur(12px)', WebkitFontSmoothing: 'antialiased',
         fontFamily: 'inherit'
@@ -252,7 +253,7 @@ const CreateProfileModal = () => {
 
     const renderPill = (active, label, onClick, key) => (
         <div key={key} onClick={onClick} style={{ 
-            padding: '12px 22px', borderRadius: '14px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', 
+            padding: '12px 22px', borderRadius: R.md, fontSize: '14px', fontWeight: '700', cursor: 'pointer', 
             transition: 'all 0.3s cubic-bezier(0.25, 1, 0.5, 1)', background: active ? `linear-gradient(135deg, ${accent}, #ff4081)` : 'rgba(255,255,255,0.04)', 
             color: active ? 'white' : '#888', boxShadow: active ? `0 8px 25px ${accent}55, inset 0 0 0 1px rgba(255,255,255,0.2)` : 'inset 0 0 0 1px rgba(255,255,255,0.05)'
         }}>
@@ -415,11 +416,11 @@ const CreateProfileModal = () => {
                                                 </div>
                                                 <div>
                                                     <label style={labelStyle}>Особистий зв'язок (Можна кілька)</label>
-                                                    <div style={{ background: 'rgba(0,0,0,0.3)', padding: '6px', borderRadius: '20px', display: 'flex', gap: '6px', marginBottom: '15px', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.05)' }}>
+                                                    <div style={{ background: 'rgba(0,0,0,0.3)', padding: '6px', borderRadius: R.xl, display: 'flex', gap: '6px', marginBottom: '15px', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.05)' }}>
                                                         {contactNetworks.map(net => {
                                                             const isActive = formData.contactTypes.includes(net.id);
                                                             return (
-                                                                <button key={net.id} onClick={(e) => { e.preventDefault(); toggleContactType(net.id); }} style={{ flex: 1, padding: '12px 6px', background: isActive ? net.color : 'transparent', color: isActive ? 'white' : '#888', border: 'none', borderRadius: '14px', fontWeight: '800', fontSize: '12px', cursor: 'pointer', transition: 'all 0.3s', boxShadow: isActive ? `0 8px 20px ${net.color}66` : 'none' }}>
+                                                                <button key={net.id} onClick={(e) => { e.preventDefault(); toggleContactType(net.id); }} style={{ flex: 1, padding: '12px 6px', background: isActive ? net.color : 'transparent', color: isActive ? 'white' : '#888', border: 'none', borderRadius: R.md, fontWeight: '800', fontSize: '12px', cursor: 'pointer', transition: 'all 0.3s', boxShadow: isActive ? `0 8px 20px ${net.color}66` : 'none' }}>
                                                                     {net.id}
                                                                 </button>
                                                             )
@@ -433,14 +434,14 @@ const CreateProfileModal = () => {
 
                                     {step === 3 && (
                                         <div className="step-animated" style={{ display: 'grid', gap: '30px' }}>
-                                            <div style={{ background: 'rgba(0,0,0,0.2)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.05)', borderRadius: '24px', padding: '30px', textAlign: 'center' }}>
+                                            <div style={{ background: 'rgba(0,0,0,0.2)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.05)', borderRadius: R.xl, padding: '30px', textAlign: 'center' }}>
                                                 <Image color={accent} size={36} style={{ margin: '0 auto 10px' }}/>
                                                 <div style={{ color: 'white', fontSize: '20px', fontWeight: '900', marginBottom: '8px' }}>Фотографії ({photos.length}/{MAX_PHOTOS})</div>
                                                 <div style={{ color: '#888', fontSize: '13px', marginBottom: '25px', lineHeight: '1.5' }}>Додайте до {MAX_PHOTOS} найкращих фото. NSFW матеріали відхиляються ШІ.</div>
                                                 
                                                 <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
                                                     {photos.map((p, i) => ( 
-                                                        <div key={i} style={{ width: '80px', height: '110px', borderRadius: '14px', position: 'relative', overflow: 'hidden', boxShadow: `0 10px 25px rgba(0,0,0,0.5), inset 0 0 0 2px ${accent}` }}>
+                                                        <div key={i} style={{ width: '80px', height: '110px', borderRadius: R.md, position: 'relative', overflow: 'hidden', boxShadow: `0 10px 25px rgba(0,0,0,0.5), inset 0 0 0 2px ${accent}` }}>
                                                             <img src={p.preview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="upload" />
                                                             <div onClick={() => setPhotos(photos.filter((_, index) => index !== i))} style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(255,0,0,0.8)', backdropFilter: 'blur(8px)', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                                                                 <X size={14} color="white"/>
@@ -448,19 +449,19 @@ const CreateProfileModal = () => {
                                                         </div> 
                                                     ))}
                                                     {photos.length < MAX_PHOTOS && ( 
-                                                        <div onClick={() => !isCheckingPhoto && fileInputRef.current.click()} style={{ width: '80px', height: '110px', border: '2px dashed rgba(255,255,255,0.15)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: isCheckingPhoto ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.02)', transition: '0.3s' }} className="menu-hover">
+                                                        <div onClick={() => !isCheckingPhoto && fileInputRef.current.click()} style={{ width: '80px', height: '110px', border: '2px dashed rgba(255,255,255,0.15)', borderRadius: R.md, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: isCheckingPhoto ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.02)', transition: '0.3s' }} className="menu-hover">
                                                             {isCheckingPhoto ? <div style={{ width: '24px', height: '24px', border: `3px solid transparent`, borderTopColor: accent, borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div> : <Plus size={32} color="#666"/>}
                                                         </div> 
                                                     )}
                                                     <input type="file" ref={fileInputRef} hidden accept="image/*" multiple onChange={handlePhotoUpload} />
                                                 </div>
-                                                {photoError && <div style={{ color: '#ff4444', fontSize: '13px', marginTop: '20px', background: 'rgba(255,0,0,0.1)', padding: '10px', borderRadius: '10px' }}>{photoError}</div>}
+                                                {photoError && <div style={{ color: '#ff4444', fontSize: '13px', marginTop: '20px', background: 'rgba(255,0,0,0.1)', padding: '10px', borderRadius: R.sm }}>{photoError}</div>}
                                             </div>
 
                                             <div>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                                                     <label style={{ fontSize: '18px', color: 'white', fontWeight: '900', letterSpacing: '1px' }}>ПОСЛУГИ</label>
-                                                    <div onClick={handleSelectAllFetishes} className="menu-hover" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '10px 16px', background: isAllFetishesSelected ? `linear-gradient(135deg, ${accent}, #ff4081)` : 'rgba(255,255,255,0.05)', borderRadius: '12px', transition: '0.3s', boxShadow: isAllFetishesSelected ? `0 5px 15px ${accent}44` : 'none' }}>
+                                                    <div onClick={handleSelectAllFetishes} className="menu-hover" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '10px 16px', background: isAllFetishesSelected ? `linear-gradient(135deg, ${accent}, #ff4081)` : 'rgba(255,255,255,0.05)', borderRadius: R.sm, transition: '0.3s', boxShadow: isAllFetishesSelected ? `0 5px 15px ${accent}44` : 'none' }}>
                                                         {isAllFetishesSelected ? <CheckSquare size={16} color="white" /> : <Square size={16} color="#888" />}
                                                         <span style={{ fontSize: '13px', fontWeight: '800', color: isAllFetishesSelected ? 'white' : '#aaa' }}>{isAllFetishesSelected ? 'Зняти всі' : 'Вибрати всі'}</span>
                                                     </div>
@@ -469,13 +470,13 @@ const CreateProfileModal = () => {
                                                 {/* 🟢 Додаємо ref на внутрішній скрол */}
                                                 <div ref={fetishesScrollRef} style={{ maxHeight: '300px', overflowY: 'auto', paddingRight: '15px' }} className="custom-scrollbar">
                                                     {safeFetishes && Object.entries(safeFetishes).map(([catKey, category]) => (
-                                                        <div key={catKey} style={{ marginBottom: '20px', background: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: '20px', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.03)' }}>
+                                                        <div key={catKey} style={{ marginBottom: '20px', background: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: R.xl, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.03)' }}>
                                                             <div style={{ fontSize: '13px', color: accent, marginBottom: '15px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '2px' }}>{category.title}</div>
                                                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                                                                 {Object.entries(category.items || {}).map(([itemKey, itemLabel]) => {
                                                                     const isSel = formData.fetishes.includes(itemKey);
                                                                     return (
-                                                                        <div key={itemKey} onClick={() => toggleFetish(itemKey)} style={{ cursor: 'pointer', background: isSel ? `linear-gradient(135deg, ${accent}, #ff4081)` : 'rgba(255,255,255,0.03)', padding: '10px 16px', borderRadius: '12px', transition: 'all 0.3s cubic-bezier(0.25, 1, 0.5, 1)', fontSize: '13px', fontWeight: '800', color: isSel ? 'white' : '#aaa', boxShadow: isSel ? `0 5px 15px ${accent}44` : 'none' }} className="menu-hover">
+                                                                        <div key={itemKey} onClick={() => toggleFetish(itemKey)} style={{ cursor: 'pointer', background: isSel ? `linear-gradient(135deg, ${accent}, #ff4081)` : 'rgba(255,255,255,0.03)', padding: '10px 16px', borderRadius: R.sm, transition: 'all 0.3s cubic-bezier(0.25, 1, 0.5, 1)', fontSize: '13px', fontWeight: '800', color: isSel ? 'white' : '#aaa', boxShadow: isSel ? `0 5px 15px ${accent}44` : 'none' }} className="menu-hover">
                                                                             {itemLabel}
                                                                         </div>
                                                                     )
@@ -515,7 +516,7 @@ const CreateProfileModal = () => {
 
                                                 <div style={{ padding: '20px 25px 30px' }}>
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                                                        <span style={{ background: 'rgba(255,255,255,0.05)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.1)', padding: '8px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: '800', color: '#ccc' }}>📍 {safeT.onlineOnly || "Тільки онлайн"}</span>
+                                                        <span style={{ background: 'rgba(255,255,255,0.05)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.1)', padding: '8px 16px', borderRadius: R.sm, fontSize: '13px', fontWeight: '800', color: '#ccc' }}>📍 {safeT.onlineOnly || "Тільки онлайн"}</span>
                                                         <span style={{ fontSize: '26px', fontWeight: '900', color: 'white' }}>{displayPriceText} <span style={{ fontSize: '18px', color: accent }}>₴</span></span>
                                                     </div>
 
@@ -529,7 +530,7 @@ const CreateProfileModal = () => {
                                                         {formData.contactTypes.map(type => {
                                                             const netData = contactNetworks.find(n => n.id === type) || contactNetworks[0];
                                                             return (
-                                                                <button key={type} style={{ width: '100%', padding: '16px', background: netData.color, borderRadius: '16px', color: 'white', fontWeight: '900', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', fontSize: '15px', letterSpacing: '1px', boxShadow: `0 10px 25px ${netData.color}66`, border: 'none', pointerEvents: 'none' }}>
+                                                                <button key={type} style={{ width: '100%', padding: '16px', background: netData.color, borderRadius: R.md, color: 'white', fontWeight: '900', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', fontSize: '15px', letterSpacing: '1px', boxShadow: `0 10px 25px ${netData.color}66`, border: 'none', pointerEvents: 'none' }}>
                                                                     <Send size={18} /> НАПИСАТИ ({type})
                                                                 </button>
                                                             )

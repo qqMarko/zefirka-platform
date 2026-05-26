@@ -3,6 +3,7 @@ import { X, Crown, Zap, Star, ShieldCheck, Check, Sparkles, Diamond, Clock, Chec
 import { toast } from 'react-hot-toast';
 import useStore from '../store/useStore';
 import { useMegaphone } from '../context/MegaphoneContext';
+import { C, R, overlay, modalBox, closeBtn, section, btnPrimary, btnGhost } from '../styles/ds';
 
 const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) => {
     
@@ -200,7 +201,7 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
                 </div>
 
                 {promoText && (
-                    <div style={{ background: 'rgba(233, 30, 99, 0.1)', border: '1px solid rgba(233, 30, 99, 0.4)', padding: '16px', borderRadius: '16px', marginBottom: '30px', color: '#e91e63', textAlign: 'center', fontWeight: '800', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 0 30px rgba(233, 30, 99, 0.1)' }}>
+                    <div style={{ background: 'rgba(233, 30, 99, 0.1)', border: '1px solid rgba(233, 30, 99, 0.4)', padding: '16px', borderRadius: R.md, marginBottom: '30px', color: '#e91e63', textAlign: 'center', fontWeight: '800', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 0 30px rgba(233, 30, 99, 0.1)' }}>
                         <Zap size={22} fill="#e91e63" />
                         {promoText}
                         <Zap size={22} fill="#e91e63" />
@@ -274,7 +275,7 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
                                                         : 'linear-gradient(90deg, #ff007f, #ff4444)', 
                                                     color: 'white', 
                                                     padding: '4px 10px', 
-                                                    borderRadius: '8px', 
+                                                    borderRadius: R.xs, 
                                                     fontSize: '12px', 
                                                     fontWeight: '900', 
                                                     boxShadow: isPersonalOffer 
@@ -367,7 +368,7 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
                         </button>
                         
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
-                            <div style={{ width: '50px', height: '50px', borderRadius: '16px', background: `${detailsPkg.color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${detailsPkg.color}66` }}>
+                            <div style={{ width: '50px', height: '50px', borderRadius: R.md, background: `${detailsPkg.color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${detailsPkg.color}66` }}>
                                 {detailsPkg.icon}
                             </div>
                             <h3 style={{ fontSize: '24px', fontWeight: '900', color: 'white' }}>
@@ -396,7 +397,7 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
                         
                         <button 
                             onClick={() => setSelectedDetailsId(null)} 
-                            style={{ width: '100%', padding: '16px', background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: '16px', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}
+                            style={{ width: '100%', padding: '16px', background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: R.md, color: 'white', fontWeight: 'bold', cursor: 'pointer' }}
                         >
                             Зрозуміло
                         </button>
@@ -413,7 +414,7 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
                     />
                     <div 
                         className="fade-in-up premium-typography" 
-                        style={{ position: 'relative', background: '#111', border: '1px solid rgba(255, 68, 68, 0.4)', borderRadius: '24px', padding: '30px', maxWidth: '420px', width: '100%', textAlign: 'center' }}
+                        style={{ position: 'relative', background: C.surface2, border: '1px solid rgba(255, 68, 68, 0.4)', borderRadius: '24px', padding: '30px', maxWidth: '420px', width: '100%', textAlign: 'center' }}
                     >
                         <div style={{ width: '64px', height: '64px', background: 'rgba(255,68,68,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto', border: '1px solid rgba(255,68,68,0.3)' }}>
                             <AlertTriangle size={32} color="#ff4444" />
@@ -427,13 +428,13 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
                         <div style={{ display: 'flex', gap: '15px' }}>
                             <button 
                                 onClick={() => setConfirmDialog({ isOpen: false, pkgId: null, price: null })} 
-                                style={{ flex: 1, padding: '14px', background: 'rgba(255,255,255,0.05)', color: 'white', borderRadius: '12px', border: '1px solid #333' }}
+                                style={{ flex: 1, padding: '14px', background: 'rgba(255,255,255,0.05)', color: 'white', borderRadius: R.sm, border: '1px solid #333' }}
                             >
                                 Скасувати
                             </button>
                             <button 
                                 onClick={() => executePurchase(confirmDialog.price, confirmDialog.pkgId)} 
-                                style={{ flex: 1, padding: '14px', background: '#ff4444', color: 'white', borderRadius: '12px', border: 'none', fontWeight: 'bold' }}
+                                style={{ flex: 1, padding: '14px', background: '#ff4444', color: 'white', borderRadius: R.sm, border: 'none', fontWeight: 'bold' }}
                             >
                                 Так, замінити
                             </button>

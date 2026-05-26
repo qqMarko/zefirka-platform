@@ -171,7 +171,7 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
 
     if (!hasDisputeAccess && !forcedDispute) {
         return (
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '500px', background: '#050508', borderRadius: '16px', border: `1px solid ${accent}44`, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '500px', background: '#0b0b15', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' }}>
                 <UserVerdictModal verdictResultModal={verdictResultModal} setVerdictResultModal={setVerdictResultModal} accent={accent} />
                 <div style={{ padding: '50px', textAlign: 'center', margin: 'auto' }}>
                     <Lock size={60} color="#555" style={{margin: '0 auto 20px'}}/>
@@ -185,7 +185,7 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
     return (
         <div style={{
             display: 'flex', height: forcedDispute ? '100%' : 'calc(100vh - 180px)', minHeight: forcedDispute ? '0' : '500px', maxHeight: forcedDispute ? 'none' : '800px',
-            width: '100%', background: '#050508', borderRadius: forcedDispute ? '0' : '16px', border: forcedDispute ? 'none' : `1px solid ${accent}44`, overflow: 'hidden'
+            width: '100%', background: '#0b0b15', borderRadius: forcedDispute ? '0' : '16px', border: forcedDispute ? 'none' : '1px solid rgba(255,255,255,0.08)', overflow: 'hidden'
         }}>
             <UserVerdictModal verdictResultModal={verdictResultModal} setVerdictResultModal={setVerdictResultModal} accent={accent} />
 
@@ -210,7 +210,7 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
                 />
             )}
 
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#000', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#07070d', position: 'relative', overflow: 'hidden' }}>
                 {isCreatingDispute ? (
                     <DisputeCreate userUniqueId={userUniqueId} fetchDisputes={fetchDisputes} setIsCreatingDispute={setIsCreatingDispute} setActiveDispute={setActiveDispute} accent={accent} />
                 ) : activeDispute ? (

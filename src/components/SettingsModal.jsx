@@ -1,10 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Shield, Bell, Monitor, LogOut, ChevronRight, ChevronLeft, Lock, Smartphone, Mail, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import useStore from '../store/useStore';
 import { toast } from 'react-hot-toast';
+import { C, R, overlay, modalBox, closeBtn, section, btnPrimary, btnDanger, btnGhost, input, label, divider } from '../styles/ds';
+import useSmoothScroll from '../hooks/useSmoothScroll';
 
 const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLogout }) => {
     const [activeTab, setActiveTab] = useState('main'); 
+    const scrollRef = useRef(null);
+
+    // Smooth scroll — same as site-wide useSmoothScroll hook
+    useSmoothScroll(scrollRef, 0.06, 0.9);
     
     const { pushEnabled, togglePushEnabled, userUniqueId, user } = useStore();
 
@@ -222,75 +228,71 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
     const renderMain = () => (
         <>
             <div style={{ display: 'grid', gap: '10px' }}>
-                <div onClick={() => setActiveTab('security')} style={{ padding: '15px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.05)' }} className="menu-hover">
+                <div onClick={() => setActiveTab('security')} style={{ padding: '14px 16px', background: C.surface2, borderRadius: R.sm, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', border: `1px solid ${C.border}`, transition: 'border-color 0.18s' }} onMouseEnter={e=>e.currentTarget.style.borderColor=C.borderMd} onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <Shield size={20} color={accent} />
-                        <span style={{ color: 'white', fontWeight: '500' }}>{t[currentLang]?.tabSecurity || "Безпека"}</span>
+                        <Shield size={18} color={C.accent} />
+                        <span style={{ color: C.text, fontWeight: '600', fontSize: '14px' }}>{t[currentLang]?.tabSecurity || 'Безпека'}</span>
                     </div>
                     <ChevronRight size={18} color="#444" />
                 </div>
 
-                <div onClick={() => setActiveTab('notifications')} style={{ padding: '15px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.05)' }} className="menu-hover">
+                <div onClick={() => setActiveTab('notifications')} style={{ padding: '14px 16px', background: C.surface2, borderRadius: R.sm, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', border: `1px solid ${C.border}`, transition: 'border-color 0.18s' }} onMouseEnter={e=>e.currentTarget.style.borderColor=C.borderMd} onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <Bell size={20} color="#ffc107" />
-                        <span style={{ color: 'white', fontWeight: '500' }}>{t[currentLang]?.tabNotif || "Сповіщення"}</span>
+                        <Bell size={18} color={C.warning} />
+                        <span style={{ color: C.text, fontWeight: '600', fontSize: '14px' }}>{t[currentLang]?.tabNotif || 'Сповіщення'}</span>
                     </div>
                     <ChevronRight size={18} color="#444" />
                 </div>
 
-                <div onClick={() => setActiveTab('sessions')} style={{ padding: '15px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.05)' }} className="menu-hover">
+                <div onClick={() => setActiveTab('sessions')} style={{ padding: '14px 16px', background: C.surface2, borderRadius: R.sm, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', border: `1px solid ${C.border}`, transition: 'border-color 0.18s' }} onMouseEnter={e=>e.currentTarget.style.borderColor=C.borderMd} onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <Monitor size={20} color="#00ffff" />
-                        <span style={{ color: 'white', fontWeight: '500' }}>{t[currentLang]?.tabSessions || "Активні сесії"}</span>
+                        <Monitor size={18} color='#00ffff' />
+                        <span style={{ color: C.text, fontWeight: '600', fontSize: '14px' }}>{t[currentLang]?.tabSessions || 'Активні сесії'}</span>
                     </div>
                     <ChevronRight size={18} color="#444" />
                 </div>
             </div>
 
-            <button 
-                onClick={handleLogout}
-                style={{ width: '100%', marginTop: '30px', padding: '15px', background: 'rgba(255,68,68,0.1)', border: '1px solid rgba(255,68,68,0.2)', borderRadius: '12px', color: '#ff4444', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-                className="menu-hover"
-            >
-                <LogOut size={18} /> {t[currentLang]?.logout || "Вийти"}
+            <button onClick={handleLogout} style={{ width: '100%', marginTop: '20px', padding: '13px', background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.2)', borderRadius: R.sm, color: C.danger, fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '14px', fontFamily: 'inherit', transition: 'background 0.18s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,68,68,0.14)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,68,68,0.08)'}>
+                <LogOut size={16} /> {t[currentLang]?.logout || 'Вийти'}
             </button>
         </>
     );
 
     const renderSecurity = () => (
         <div className="fade-in-up">
-            <div style={{ marginBottom: '20px', background: '#111', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ ...section(), marginBottom: '16px' }}>
                 <h3 style={{ color: 'white', margin: '0 0 15px 0', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}><Lock size={16} color={accent}/> {t[currentLang]?.changePassword || "Зміна пароля"}</h3>
                 
                 <form onSubmit={handlePasswordChange}>
                     <div style={{ position: 'relative', marginBottom: '10px' }}>
-                        <input required type={showOld ? "text" : "password"} value={oldPassword} onChange={e => setOldPassword(e.target.value)} placeholder={t[currentLang]?.currentPassword || "Поточний пароль"} style={{ width: '100%', padding: '12px 40px 12px 12px', background: '#050508', border: '1px solid #222', color: 'white', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                        <input required type={showOld ? "text" : "password"} value={oldPassword} onChange={e => setOldPassword(e.target.value)} placeholder={t[currentLang]?.currentPassword || "Поточний пароль"} style={{ ...input(), paddingRight: '42px' }} />
                         <div onClick={() => setShowOld(!showOld)} style={{ position: 'absolute', right: '12px', top: '12px', cursor: 'pointer', color: '#888' }} className="menu-hover">
                             {showOld ? <EyeOff size={18} /> : <Eye size={18} />}
                         </div>
                     </div>
 
                     <div style={{ position: 'relative', marginBottom: '10px' }}>
-                        <input required type={showNew ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder={t[currentLang]?.newPassword || "Новий пароль"} style={{ width: '100%', padding: '12px 40px 12px 12px', background: '#050508', border: '1px solid #222', color: 'white', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                        <input required type={showNew ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder={t[currentLang]?.newPassword || "Новий пароль"} style={{ ...input(), paddingRight: '42px' }} />
                         <div onClick={() => setShowNew(!showNew)} style={{ position: 'absolute', right: '12px', top: '12px', cursor: 'pointer', color: '#888' }} className="menu-hover">
                             {showNew ? <EyeOff size={18} /> : <Eye size={18} />}
                         </div>
                     </div>
 
                     <div style={{ position: 'relative', marginBottom: '15px' }}>
-                        <input required type={showConfirm ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder={t[currentLang]?.confirmPassword || "Повторіть новий пароль"} style={{ width: '100%', padding: '12px 40px 12px 12px', background: '#050508', border: '1px solid #222', color: 'white', borderRadius: '8px', outline: 'none', boxSizing: 'border-box' }} />
+                        <input required type={showConfirm ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder={t[currentLang]?.confirmPassword || "Повторіть новий пароль"} style={{ ...input(), paddingRight: '42px' }} />
                         <div onClick={() => setShowConfirm(!showConfirm)} style={{ position: 'absolute', right: '12px', top: '12px', cursor: 'pointer', color: '#888' }} className="menu-hover">
                             {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
                         </div>
                     </div>
                     
-                    <button type="submit" disabled={isSaving} style={{ width: '100%', padding: '12px', background: accent, border: 'none', color: '#000', fontWeight: 'bold', borderRadius: '8px', cursor: isSaving ? 'not-allowed' : 'pointer' }} className="menu-hover">
+                    <button type="submit" disabled={isSaving} style={{ ...btnPrimary(), width: '100%', marginTop: '4px', opacity: isSaving ? 0.6 : 1 }}>
                         {isSaving ? (t[currentLang]?.savingPassword || 'ЗБЕРЕЖЕННЯ...') : (t[currentLang]?.savePassword || 'Зберегти пароль')}
                     </button>
                 </form>
             </div>
             
-            <div style={{ background: '#111', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ ...section(), display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <div style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px' }}>{t[currentLang]?.twoFactor || "Двофакторна автентифікація (2FA)"}</div>
                     <div style={{ color: '#888', fontSize: '12px' }}>{t[currentLang]?.twoFactorDesc || "Додатковий захист вашого акаунту"}</div>
@@ -304,7 +306,7 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
 
     const renderNotifications = () => (
         <div className="fade-in-up" style={{ display: 'grid', gap: '15px' }}>
-            <div style={{ background: '#111', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ ...section(), display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <div style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '8px' }}><Mail size={16} color="#ffc107"/> {t[currentLang]?.emailNotif || "Email сповіщення"}</div>
                     <div style={{ color: '#888', fontSize: '12px' }}>{t[currentLang]?.emailNotifDesc || "Отримувати листи про нові повідомлення"}</div>
@@ -314,7 +316,7 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
                 </div>
             </div>
             
-            <div style={{ background: '#111', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ ...section(), display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <div style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '8px' }}><Bell size={16} color="#ffc107"/> {t[currentLang]?.pushNotif || "Push-сповіщення"}</div>
                     <div style={{ color: '#888', fontSize: '12px' }}>{t[currentLang]?.pushNotifDesc || "Сповіщення в браузері та дзвіночок"}</div>
@@ -390,38 +392,32 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
     };
 
     return (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(15px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-            <div className="fade-in-up" style={{ width: '100%', maxWidth: '500px', background: '#0a0a0f', border: `1px solid ${accent}44`, borderRadius: '24px', overflow: 'hidden', position: 'relative', boxShadow: `0 20px 60px rgba(0,0,0,0.9)` }}>
+        <div style={{ ...overlay, zIndex: 9999 }}>
+            <div className="fade-in-up" style={{ ...modalBox('500px', { overflow: 'hidden' }) }}>
                 
-                <div style={{ padding: '25px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ padding: '20px 24px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                         {activeTab !== 'main' && (
-                            <div onClick={() => setActiveTab('main')} style={{ background: '#1a1a1a', padding: '5px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="menu-hover">
-                                <ChevronLeft size={20} color="white" />
-                            </div>
+                            <button onClick={() => setActiveTab('main')} style={{ ...closeBtn, position: 'static', marginRight: '4px' }}><ChevronLeft size={16} /></button>
                         )}
-                        <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: 'white' }}>
+                        <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: C.text }}>
                             {activeTab === 'main' ? (t[currentLang]?.settingsTitle || "Налаштування") : 
                              activeTab === 'security' ? (t[currentLang]?.tabSecurity || "Безпека") :
                              activeTab === 'notifications' ? (t[currentLang]?.tabNotif || "Сповіщення") :
                              activeTab === 'sessions' ? (t[currentLang]?.tabSessions || "Активні сесії") : ""}
                         </h2>
                     </div>
-                    <X onClick={() => setShowSettingsModal(false)} style={{ cursor: 'pointer', color: '#888' }} className="menu-hover" />
+                    <button onClick={() => setShowSettingsModal(false)} style={closeBtn}><X size={16} /></button>
                 </div>
 
-                <div style={{ padding: '25px', maxHeight: '70vh', overflowY: 'auto' }} className="custom-scrollbar">
+                <div ref={scrollRef} style={{ padding: '20px 24px', maxHeight: '70vh', overflowY: 'auto' }} className="custom-scrollbar">
                     {activeTab === 'main' && renderMain()}
                     {activeTab === 'security' && renderSecurity()}
                     {activeTab === 'notifications' && renderNotifications()}
                     {activeTab === 'sessions' && renderSessions()}
                 </div>
 
-                {activeTab === 'main' && (
-                    <div onClick={() => setShowSettingsModal(false)} style={{ padding: '15px', textAlign: 'center', color: '#555', fontSize: '12px', cursor: 'pointer', borderTop: '1px solid rgba(255,255,255,0.02)' }} className="menu-hover">
-                        {t[currentLang]?.close || "Закрити"}
-                    </div>
-                )}
+
             </div>
         </div>
     );
