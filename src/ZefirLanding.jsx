@@ -62,7 +62,8 @@ const ZefirkaPlatform = () => {
         myModels, loadMyModels, setMyModels,
         myChats, startPrivateChat, 
         balance, loadBalance, isBannedStatus, trustScore,
-        notifications, unreadNotifs, loadNotifications, markNotificationsAsRead, user 
+        notifications, unreadNotifs, loadNotifications, markNotificationsAsRead, user,
+        favorites, loadFavorites, toggleFavoriteServer
     } = useStore();
 
     const {
@@ -92,7 +93,6 @@ const ZefirkaPlatform = () => {
     const [filterAge, setFilterAge] = useState(60);
     const [filterPrice, setFilterPrice] = useState(20000);
     const [expandedFetishCat, setExpandedFetishCat] = useState(null); 
-    const [favorites, setFavorites] = useState([]);
 
     const [showVerifyModal, setShowVerifyModal] = useState(false);
     const [verifyTimer, setVerifyTimer] = useState(10);
@@ -121,8 +121,12 @@ const ZefirkaPlatform = () => {
     const hasDisputeAccess = userRole === 'admin' || (allowedPackages.includes(userPkg) && isVipActive) || hasHighVLevel;
 
     useEffect(() => { 
-        if (userUniqueId) { loadBalance(userUniqueId); loadNotifications(userUniqueId); }
-    }, [userUniqueId, loadBalance, loadNotifications]);
+        if (userUniqueId) { 
+            loadBalance(userUniqueId); 
+            loadNotifications(userUniqueId);
+            loadFavorites(userUniqueId);
+        }
+    }, [userUniqueId, loadBalance, loadNotifications, loadFavorites]);
 
     useEffect(() => { setIsBanned(isBannedStatus || localStorage.getItem('zefirka_banned_device') === 'true'); }, [isBannedStatus]);
     useEffect(() => { if (userUniqueId && userRole === 'model') loadMyModels(userUniqueId); }, [userUniqueId, userRole, loadMyModels]);
@@ -134,10 +138,16 @@ const ZefirkaPlatform = () => {
 
     useEffect(() => {
         let interval;
-        if (showVerifyModal && verifyTimer > 0) interval = setInterval(() => setVerifyTimer(prev => prev - 1), 1000);
-        else if (verifyTimer === 0) { 
-            setShowVerifyModal(false); 
-            login(Math.floor(100000 + Math.random() * 900000).toString(), userRole, email || 'guest@zefirka.com', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.fake.token');
+        if (showVerifyModal && verifyTimer > 0) {
+            interval = setInterval(() => setVerifyTimer(prev => prev - 1), 1000);
+        } else if (verifyTimer === 0 && showVerifyModal) {
+            // Час вийшов — просто закриваємо модалку, НЕ логінимо з фейковим токеном
+            setShowVerifyModal(false);
+            setVerifyTimer(10); // скидаємо таймер для наступного разу
+            toast.error('Час підтвердження вийшов. Будь ласка, зареєструйтесь знову.', {
+                duration: 5000,
+                style: { background: '#111', color: '#fff', border: '1px solid #ff4444' }
+            });
         }
         return () => clearInterval(interval);
     }, [showVerifyModal, verifyTimer]);
@@ -191,19 +201,21 @@ const ZefirkaPlatform = () => {
     
     const handleLogout = () => { 
         logout(); navigate('/'); setIsMenuOpen(false); setShowUserDropdown(false); 
-        setShowSettingsModal(false); setShowNotifDropdown(false); setFavorites([]); 
+        setShowSettingsModal(false); setShowNotifDropdown(false);
     };
 
-    const handleToggleFavorite = (model, e) => {
+    const handleToggleFavorite = async (model, e) => {
         if (e) { e.preventDefault(); e.stopPropagation(); }
         if (!isLoggedIn) { setShowAuth(true); return; }
-        if (favorites.some(m => m.id === model.id)) {
-            toast(`${model.name || 'Анкету'} ${t[currentLang]?.removedFromFavs}`, { icon: '💔', style: { background: '#111', color: '#fff', border: '1px solid #333' } });
-            setFavorites(prev => prev.filter(m => m.id !== model.id));
+        const isFav = favorites.some(m => String(m.id) === String(model.id || model._id));
+        // Оптимістичне оновлення UI — показуємо тост одразу
+        if (isFav) {
+            toast(`${model.name || 'Анкету'} ${t[currentLang]?.removedFromFavs || 'видалено з вибраних'}`, { icon: '💔', style: { background: '#111', color: '#fff', border: '1px solid #333' } });
         } else {
-            toast.success(`${model.name || 'Анкету'} ${t[currentLang]?.addedToFavs}`, { style: { background: '#111', color: '#fff', border: `1px solid ${accent}` } });
-            setFavorites(prev => [...prev, model]);
+            toast.success(`${model.name || 'Анкету'} ${t[currentLang]?.addedToFavs || 'додано до вибраних'}`, { style: { background: '#111', color: '#fff', border: `1px solid ${accent}` } });
         }
+        // Зберігаємо на сервері (store оновлює favorites автоматично)
+        await toggleFavoriteServer(userUniqueId, model);
     };
 
     const openPrivateChat = (model) => {

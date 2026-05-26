@@ -27,6 +27,9 @@ const userSchema = new mongoose.Schema({
         date: { type: Date, default: Date.now }
     }],
 
+    // ⭐ ВИБРАНІ АНКЕТИ
+    favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Profile', default: [] }],
+
     // 🚀 КИШЕНЯ ДЛЯ БЕЗКОШТОВНИХ РУЧНИХ ПІДНЯТТІВ (З VIP-ПАКЕТІВ)
     freeBumps: { type: Number, default: 0 },
 

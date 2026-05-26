@@ -328,6 +328,7 @@ const useStore = create((set, get) => ({
 
     models: [],
     myModels: [],
+    favorites: [],
     totalPages: 1,
     totalItems: 0,
     isLoading: true,
@@ -402,6 +403,45 @@ const useStore = create((set, get) => ({
         } catch (error) {
             console.error("❌ Помилка завантаження власних анкет:", error);
         }
+    },
+
+    // ⭐ ЗАВАНТАЖИТИ ВИБРАНІ З СЕРВЕРА
+    loadFavorites: async (userId) => {
+        if (!userId) return;
+        try {
+            const res = await fetch(`${BASE_URL}/profiles/favorites/${userId}`);
+            const data = await res.json();
+            if (data.success) {
+                const formatted = data.favorites.map(p => ({ ...p, id: p._id }));
+                set({ favorites: formatted });
+            }
+        } catch (error) {
+            console.error("❌ Помилка завантаження вибраних:", error);
+        }
+    },
+
+    // ⭐ ТОГЛЕННЯ ВИБРАНИХ (ДОДАТИ / ПРИБРАТИ) + СИНХРОНІЗАЦІЯ З СЕРВЕРОМ
+    toggleFavoriteServer: async (userId, profile) => {
+        if (!userId || !profile) return { added: false };
+        try {
+            const profileId = profile.id || profile._id;
+            const res = await fetch(`${BASE_URL}/profiles/favorites/${userId}/${profileId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            if (data.success) {
+                if (data.added) {
+                    set(state => ({ favorites: [...state.favorites, { ...profile, id: profileId }] }));
+                } else {
+                    set(state => ({ favorites: state.favorites.filter(f => String(f.id) !== String(profileId)) }));
+                }
+                return { added: data.added };
+            }
+        } catch (error) {
+            console.error("❌ Помилка тоглення вибраних:", error);
+        }
+        return { added: false };
     },
 
     addModel: (newModel) => set((state) => ({

@@ -1,5 +1,6 @@
 import express from 'express';
 import Profile from '../models/Profile.js';
+import User from '../models/User.js';
 import { getIO } from '../sockets/socketManager.js'; 
 import authMiddleware from '../middlewares/auth.js'; 
 
@@ -252,6 +253,49 @@ router.delete('/:id', authMiddleware, async (req, res) => {
         res.json({ success: true, message: 'Анкету успішно видалено' });
     } catch (error) {
         res.status(400).json({ success: false, message: 'Помилка сервера: ' + error.message });
+    }
+});
+
+
+// ─────────────────────────────────────────────────────────────────
+// ⭐ ВИБРАНІ — GET, TOGGLE
+// ─────────────────────────────────────────────────────────────────
+
+// Отримати список вибраних для юзера
+router.get('/favorites/:userId', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.userId).populate('favorites');
+        if (!user) return res.status(404).json({ success: false });
+        res.json({ success: true, favorites: user.favorites || [] });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Додати / прибрати з вибраних
+router.post('/favorites/:userId/:profileId', async (req, res) => {
+    try {
+        const { userId, profileId } = req.params;
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ success: false, message: 'Юзер не знайдений' });
+
+        const profile = await Profile.findById(profileId);
+        if (!profile) return res.status(404).json({ success: false, message: 'Анкета не знайдена' });
+
+        const idx = user.favorites.findIndex(id => String(id) === String(profileId));
+        let added;
+        if (idx === -1) {
+            user.favorites.push(profileId);
+            added = true;
+        } else {
+            user.favorites.splice(idx, 1);
+            added = false;
+        }
+        await user.save();
+
+        res.json({ success: true, added, total: user.favorites.length });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 
