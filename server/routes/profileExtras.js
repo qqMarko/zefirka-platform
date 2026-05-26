@@ -63,7 +63,9 @@ export default (sendNotification) => {
             const clientUser = await User.findById(clientId);
             
             // 🟢 ДОЗВОЛЕНІ СТАТУСИ ДЛЯ ВІДГУКІВ
-            const allowedVips = ['priority', 'concierge'];
+            // Канонічний ID пакету в БД — 'priority_chat' (як зберігає buy-vip).
+            // 'priority' лишено для зворотної сумісності зі старими записами.
+            const allowedVips = ['priority_chat', 'priority', 'concierge'];
 
             if (!clientUser || !allowedVips.includes(clientUser.vipPackage?.toLowerCase())) {
                 return res.status(403).json({ 

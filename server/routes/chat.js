@@ -88,7 +88,7 @@ export default (bot, ADMIN_ID) => {
             let priorityTag = '⏳ [Звичайна черга]';
             try {
                 const user = await User.findById(userId);
-                if (user && ['premium', 'diamond', 'priority', 'concierge'].includes(user.vipPackage)) {
+                if (user && ['premium', 'diamond', 'priority_chat', 'concierge'].includes(user.vipPackage)) {
                     priorityTag = '⚡ [VIP Пріоритет]';
                 }
             } catch(e) {}

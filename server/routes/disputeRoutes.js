@@ -73,7 +73,7 @@ export default (io, sendNotification) => {
             // 🔒 Тільки адмін
             if (req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Доступ лише для адміністратора' });
             const disputes = await Dispute.find({ status: 'open' }).lean();
-            const priorityMap = { 'diamond': 3, 'concierge': 3, 'premium': 2, 'priority': 2, 'guest': 1, 'start': 1, 'basic': 0 };
+            const priorityMap = { 'diamond': 3, 'concierge': 3, 'premium': 2, 'priority_chat': 2, 'premium_client': 1, 'start': 1, 'basic': 0 };
 
             const disputesWithPriority = await Promise.all(disputes.map(async (d) => {
                 // Виправлено: шукаємо по _id, не по userId (такого поля немає в схемі)
