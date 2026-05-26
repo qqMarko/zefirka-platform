@@ -158,62 +158,62 @@ const FaqSection = ({ t, currentLang, accent, setShowSupport }) => {
             <style>{`
                 /* FAQ glass — backdrop-filter works over faq-bg container */
                 .faq-bg {
-                    background: rgba(255,255,255,0.04);
-                    backdrop-filter: blur(40px) brightness(1.1);
-                    -webkit-backdrop-filter: blur(40px) brightness(1.1);
+                    background: rgba(255,255,255,0.015);
+                    backdrop-filter: blur(30px) brightness(1.02);
+                    -webkit-backdrop-filter: blur(30px) brightness(1.02);
                     border-radius: 20px;
                     padding: 24px;
                 }
                 .glass-card {
-                    background: rgba(255,255,255,0.03) !important;
-                    backdrop-filter: blur(20px) brightness(1.08) !important;
-                    -webkit-backdrop-filter: blur(20px) brightness(1.08) !important;
-                    border-color: rgba(255,255,255,0.09) !important;
-                    box-shadow: 0 2px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+                    background: rgba(255,255,255,0.015) !important;
+                    backdrop-filter: blur(16px) brightness(1.03) !important;
+                    -webkit-backdrop-filter: blur(16px) brightness(1.03) !important;
+                    border-color: rgba(255,255,255,0.07) !important;
+                    box-shadow: 0 2px 14px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04) !important;
                     transition: border-color 0.2s, background 0.2s !important;
                 }
                 .glass-card:hover {
-                    border-color: rgba(255,255,255,0.18) !important;
-                    background: rgba(255,255,255,0.055) !important;
+                    border-color: rgba(255,255,255,0.14) !important;
+                    background: rgba(255,255,255,0.03) !important;
                 }
                 .glass-card-open {
-                    background: rgba(255,255,255,0.055) !important;
-                    backdrop-filter: blur(24px) brightness(1.10) !important;
-                    -webkit-backdrop-filter: blur(24px) brightness(1.10) !important;
-                    border-color: rgba(255,255,255,0.14) !important;
-                    box-shadow: 0 4px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08) !important;
+                    background: rgba(255,255,255,0.035) !important;
+                    backdrop-filter: blur(20px) brightness(1.05) !important;
+                    -webkit-backdrop-filter: blur(20px) brightness(1.05) !important;
+                    border-color: rgba(255,255,255,0.12) !important;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06) !important;
                 }
                 .glass-stats {
-                    background: rgba(255,255,255,0.03) !important;
-                    backdrop-filter: blur(20px) brightness(1.08) !important;
-                    -webkit-backdrop-filter: blur(20px) brightness(1.08) !important;
-                    border: 1px solid rgba(255,255,255,0.09) !important;
-                    box-shadow: 0 2px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+                    background: rgba(255,255,255,0.015) !important;
+                    backdrop-filter: blur(16px) brightness(1.03) !important;
+                    -webkit-backdrop-filter: blur(16px) brightness(1.03) !important;
+                    border: 1px solid rgba(255,255,255,0.07) !important;
+                    box-shadow: 0 2px 14px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04) !important;
                 }
                 .glass-cta {
-                    background: rgba(255,255,255,0.03) !important;
-                    backdrop-filter: blur(20px) brightness(1.08) !important;
-                    -webkit-backdrop-filter: blur(20px) brightness(1.08) !important;
-                    border: 1px solid rgba(255,255,255,0.09) !important;
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+                    background: rgba(255,255,255,0.015) !important;
+                    backdrop-filter: blur(16px) brightness(1.03) !important;
+                    -webkit-backdrop-filter: blur(16px) brightness(1.03) !important;
+                    border: 1px solid rgba(255,255,255,0.07) !important;
+                    box-shadow: 0 4px 18px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04) !important;
                 }
                 .glass-pill {
-                    background: rgba(255,255,255,0.04) !important;
-                    backdrop-filter: blur(16px) brightness(1.06) !important;
-                    -webkit-backdrop-filter: blur(16px) brightness(1.06) !important;
-                    border: 1px solid rgba(255,255,255,0.09) !important;
+                    background: rgba(255,255,255,0.02) !important;
+                    backdrop-filter: blur(12px) brightness(1.02) !important;
+                    -webkit-backdrop-filter: blur(12px) brightness(1.02) !important;
+                    border: 1px solid rgba(255,255,255,0.08) !important;
                     transition: background 0.18s, border-color 0.18s !important;
                 }
                 .glass-pill:hover {
-                    background: rgba(255,255,255,0.08) !important;
-                    border-color: rgba(255,255,255,0.18) !important;
+                    background: rgba(255,255,255,0.06) !important;
+                    border-color: rgba(255,255,255,0.16) !important;
                 }
                 .glass-pill-active {
-                    background: rgba(255,255,255,0.11) !important;
-                    backdrop-filter: blur(16px) brightness(1.1) !important;
-                    -webkit-backdrop-filter: blur(16px) brightness(1.1) !important;
+                    background: rgba(255,255,255,0.10) !important;
+                    backdrop-filter: blur(12px) brightness(1.05) !important;
+                    -webkit-backdrop-filter: blur(12px) brightness(1.05) !important;
                     border: 1px solid rgba(255,255,255,0.2) !important;
-                    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12) !important;
+                    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1) !important;
                 }
             `}</style>
             

@@ -6,7 +6,6 @@ import { t } from '../data/translations';
 import { accent } from '../styles/theme';
 import { C, R, closeBtn, section, btnPrimary, btnGhost, input, label } from '../styles/ds';
 import imageCompression from 'browser-image-compression'; 
-import * as nsfwjs from 'nsfwjs'; 
 import useSmoothScroll from '../hooks/useSmoothScroll';
 
 const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
@@ -62,11 +61,13 @@ const CreateProfileModal = () => {
 
     useEffect(() => {
         // Defer NSFW model load so modal opens instantly without lag
-        const loadModel = () => {
+        const loadModel = async () => {
             try {
-                nsfwjs.load().then(model => setNsfwModel(model)).catch(err => console.log("AI Load Warn:", err));
+                const nsfwjs = await import('nsfwjs');
+                const model = await nsfwjs.load();
+                setNsfwModel(model);
             } catch (e) {
-                console.warn("NSFWJS не встановлено.");
+                console.warn("NSFWJS load warn:", e);
             }
         };
         if (typeof requestIdleCallback !== 'undefined') {
@@ -275,7 +276,7 @@ const CreateProfileModal = () => {
                     const isPassed = step > s.id;
                     return (
                         <div key={s.id} onClick={() => setStep(s.id)} style={{ position: 'relative', zIndex: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', cursor: 'pointer' }} className="menu-hover">
-                            <div style={{ width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isActive || isPassed ? `linear-gradient(135deg, ${accent}, #ff4081)` : '#14141a', color: isActive || isPassed ? 'white' : '#666', boxShadow: isActive || isPassed ? `0 8px 25px ${accent}66, inset 0 0 0 1px rgba(255,255,255,0.3)` : 'inset 0 0 0 1px rgba(255,255,255,0.1)', transition: 'all 0.4s ease' }}>
+                            <div style={{ width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isActive || isPassed ? `linear-gradient(135deg, ${accent}, ${accent}cc)` : '#141422', color: isActive || isPassed ? 'white' : '#666', boxShadow: isActive || isPassed ? `0 8px 25px ${accent}66, inset 0 0 0 1px rgba(255,255,255,0.3)` : 'inset 0 0 0 1px rgba(255,255,255,0.1)', transition: 'all 0.4s ease' }}>
                                 {isPassed ? <Check size={22} /> : s.icon}
                             </div>
                             <span style={{ fontSize: '12px', fontWeight: '800', color: isActive ? 'white' : (isPassed ? accent : '#666'), textTransform: 'uppercase', letterSpacing: '1px', transition: '0.3s' }}>{s.label}</span>
@@ -290,16 +291,17 @@ const CreateProfileModal = () => {
 
     return (
         <>
-            <div style={{ position: 'fixed', inset: 0, background: 'rgba(5, 5, 8, 0.90)', backdropFilter: 'blur(15px)', WebkitBackdropFilter: 'blur(15px)', zIndex: 3999 }}></div>
+            <div onClick={() => setShowCreateModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', zIndex: 3999 }}></div>
 
             <div style={{ position: 'fixed', inset: 0, zIndex: 4000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                <div style={{ 
+                <div className="modal-pop" style={{ 
                     width: '100%', 
                     maxWidth: (step === 4 || showModerationScreen) ? '550px' : '750px', 
                     maxHeight: '90vh', 
-                    background: 'radial-gradient(120% 120% at 50% -20%, #1a1a24 0%, #0a0a0f 100%)', 
-                    boxShadow: `inset 0 1px 1px rgba(255,255,255,0.1), 0 40px 100px rgba(0,0,0,0.9)`, 
-                    borderRadius: '36px', 
+                    background: 'radial-gradient(120% 120% at 50% -20%, #16161f 0%, #0e0e18 100%)', 
+                    boxShadow: `inset 0 1px 0 rgba(255,255,255,0.06), 0 32px 80px rgba(0,0,0,0.9)`, 
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '24px', 
                     position: 'relative', 
                     transition: 'max-width 0.4s cubic-bezier(0.25, 1, 0.5, 1)',
                     overflow: 'hidden', 
@@ -308,7 +310,7 @@ const CreateProfileModal = () => {
                 }}>
                     
                     {!showModerationScreen && (
-                        <X onClick={() => setShowCreateModal(false)} className="menu-hover" style={{ position: 'absolute', top: 25, right: 25, cursor: 'pointer', color: '#aaa', zIndex: 50, background: 'rgba(255,255,255,0.05)', borderRadius: '50%', padding: '8px', backdropFilter: 'blur(10px)' }} size={36} />
+                        <button onClick={() => setShowCreateModal(false)} style={{ ...closeBtn, top: 20, right: 20, zIndex: 50 }}><X size={16} /></button>
                     )}
 
                     <div ref={scrollContainerRef} data-lenis-prevent="true" className="custom-scrollbar" style={{ 
@@ -328,7 +330,7 @@ const CreateProfileModal = () => {
                                     Ваша анкета успішно завантажена та наразі знаходиться на модерації.<br/><br/>
                                     Зазвичай перевірка адміністратором займає <b style={{color: 'white'}}>від 10 до 20 хвилин</b>. Після цього вона з'явиться в каталозі.
                                 </p>
-                                <button onClick={() => { setShowCreateModal(false); loadCatalog(); }} style={{ width: '100%', padding: '18px', background: `linear-gradient(135deg, ${accent}, #ff4081)`, border: 'none', borderRadius: '18px', color: 'white', fontSize: '15px', fontWeight: '900', cursor: 'pointer', boxShadow: `0 10px 30px ${accent}66, inset 0 0 0 1px rgba(255,255,255,0.2)`, transition: 'all 0.3s' }} className="menu-hover">
+                                <button onClick={() => { setShowCreateModal(false); loadCatalog(); }} style={{ ...btnPrimary(), width: '100%', padding: '15px' }}>
                                     ЗРОЗУМІЛО, ДЯКУЮ
                                 </button>
                             </div>
@@ -543,12 +545,12 @@ const CreateProfileModal = () => {
                                 </div>
 
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '40px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '30px' }}>
-                                    <button onClick={() => step > 1 ? setStep(step - 1) : setShowCreateModal(false)} style={{ padding: '18px 35px', background: 'rgba(255,255,255,0.02)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.1)', borderRadius: '18px', color: '#fff', fontSize: '15px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: 'all 0.3s' }} className="menu-hover">
+                                    <button onClick={() => step > 1 ? setStep(step - 1) : setShowCreateModal(false)} style={{ ...btnGhost(), padding: '14px 28px' }}>
                                         {step > 1 ? <><ChevronLeft size={20} /> НАЗАД</> : 'СКАСУВАТИ'}
                                     </button>
                                     
                                     {step < 4 ? (
-                                        <button onClick={() => setStep(step + 1)} style={{ padding: '18px 50px', background: `linear-gradient(135deg, ${accent}, #ff4081)`, border: 'none', borderRadius: '18px', color: 'white', fontSize: '15px', fontWeight: '900', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: `0 10px 30px ${accent}66, inset 0 0 0 1px rgba(255,255,255,0.2)`, transition: 'all 0.3s' }} className="menu-hover">
+                                        <button onClick={() => setStep(step + 1)} style={{ ...btnPrimary(), padding: '14px 40px' }}>
                                             ДАЛІ <ChevronRight size={20} />
                                         </button>
                                     ) : (
