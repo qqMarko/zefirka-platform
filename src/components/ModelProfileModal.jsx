@@ -45,8 +45,10 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
     useEffect(() => {
         if (model?.id && !isOwner) {
             const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
+            const token = localStorage.getItem('zefirka_token');
             fetch(`${BASE_URL}/profiles/${model.id}/track`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
                 body: JSON.stringify({ action: 'view' }), keepalive: true
             }).catch(() => {});
         }
@@ -87,8 +89,10 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
     const confirmSocialRedirect = () => {
         if (!isOwner) {
             const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
+            const token = localStorage.getItem('zefirka_token');
             fetch(`${BASE_URL}/profiles/${model.id}/track`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
                 body: JSON.stringify({ action: 'click' }), keepalive: true
             }).catch(() => {});
         }
@@ -109,9 +113,11 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
         const loadingToast = toast.loading('Публікація...');
         try {
             const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
+            const token = localStorage.getItem('zefirka_token');
             const res  = await fetch(`${BASE_URL}/profiles/${model.id}/reviews`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ clientId: myId, rating, text: reviewText })
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ rating, text: reviewText })
             });
             const data = await res.json();
             if (data.success) {
@@ -136,9 +142,10 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
         const loadingToast = toast.loading('Видалення...');
         try {
             const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
+            const token = localStorage.getItem('zefirka_token');
             const res  = await fetch(`${BASE_URL}/profiles/${model.id}/reviews/${reviewId}`, {
-                method: 'DELETE', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: myId })
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
             if (data.success) {

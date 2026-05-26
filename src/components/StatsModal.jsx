@@ -24,7 +24,8 @@ const StatsModal = ({ setShowStats, t, currentLang, accent }) => {
     useEffect(() => {
         if (isFree) { setLoading(false); return; }
         const BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
-        fetch(`${BASE}/stats/${userUniqueId}`).then(r => r.json()).then(d => {
+        const token = localStorage.getItem('zefirka_token');
+        fetch(`${BASE}/stats/${userUniqueId}`, { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()).then(d => {
             if (d.success) setStats({ totalViews: d.totalViews, totalClicks: d.totalClicks, chartData: d.chartData.length ? d.chartData : [{ date: 'Сьогодні', views: 0, clicks: 0 }] });
         }).catch(() => {}).finally(() => setLoading(false));
     }, [userUniqueId, isFree]);

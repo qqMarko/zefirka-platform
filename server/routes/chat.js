@@ -2,54 +2,88 @@ import express from 'express';
 import Chat from '../models/Chat.js';
 import User from '../models/User.js';
 import { uploadChat } from '../middlewares/upload.js';
+import authMiddleware from '../middlewares/auth.js';
 
 export default (bot, ADMIN_ID) => {
     const router = express.Router();
 
-    router.get('/chats/:userId', async (req, res) => {
+    router.get('/chats/:userId', authMiddleware, async (req, res) => {
         try {
+            // 🔒 Юзер може запитувати ТІЛЬКИ свої чати
+            if (String(req.user.id) !== String(req.params.userId) && req.user.role !== 'admin') {
+                return res.status(403).json({ success: false, message: 'Доступ заборонено' });
+            }
             const chats = await Chat.find({ participants: req.params.userId }).sort({ updatedAt: -1 });
             res.status(200).json({ success: true, data: chats });
         } catch (error) { res.status(500).json({ success: false }); }
     });
 
-    router.delete('/chats/:roomId/clear', async (req, res) => {
+    router.delete('/chats/:roomId/clear', authMiddleware, async (req, res) => {
         try {
             const chat = await Chat.findOne({ roomId: req.params.roomId });
-            if (chat) { chat.messages = []; await chat.save(); }
+            if (!chat) return res.status(404).json({ success: false, message: 'Чат не знайдено' });
+            // 🔒 Тільки учасник чату може очистити його
+            const isParticipant = chat.participants.some(p => String(p) === String(req.user.id));
+            if (!isParticipant && req.user.role !== 'admin') {
+                return res.status(403).json({ success: false, message: 'Ви не є учасником цього чату' });
+            }
+            chat.messages = [];
+            await chat.save();
             res.json({ success: true });
         } catch (error) { res.status(500).json({ success: false }); }
     });
 
-    router.delete('/chats/:roomId/delete', async (req, res) => {
+    router.delete('/chats/:roomId/delete', authMiddleware, async (req, res) => {
         try {
+            const chat = await Chat.findOne({ roomId: req.params.roomId });
+            if (!chat) return res.status(404).json({ success: false, message: 'Чат не знайдено' });
+            // 🔒 Тільки учасник чату може видалити його
+            const isParticipant = chat.participants.some(p => String(p) === String(req.user.id));
+            if (!isParticipant && req.user.role !== 'admin') {
+                return res.status(403).json({ success: false, message: 'Ви не є учасником цього чату' });
+            }
             await Chat.findOneAndDelete({ roomId: req.params.roomId });
             res.json({ success: true });
         } catch (error) { res.status(500).json({ success: false }); }
     });
 
-    router.post('/chats/:roomId/mute', async (req, res) => {
+    router.post('/chats/:roomId/mute', authMiddleware, async (req, res) => {
         try {
-            const { userId, mute } = req.body;
+            // 🔒 userId з токена, не з body
+            const userId = req.user.id;
+            const { mute } = req.body;
             const chat = await Chat.findOne({ roomId: req.params.roomId });
-            if (chat) {
-                if (mute && !chat.mutedBy.includes(userId)) chat.mutedBy.push(userId);
-                else if (!mute) chat.mutedBy = chat.mutedBy.filter(id => id !== userId);
-                await chat.save();
-                res.json({ success: true, mutedBy: chat.mutedBy });
-            } else res.status(404).json({ success: false });
+            if (!chat) return res.status(404).json({ success: false });
+            // 🔒 Тільки учасник може керувати своїм mute
+            const isParticipant = chat.participants.some(p => String(p) === String(userId));
+            if (!isParticipant) return res.status(403).json({ success: false, message: 'Ви не є учасником цього чату' });
+
+            if (mute && !chat.mutedBy.includes(userId)) chat.mutedBy.push(userId);
+            else if (!mute) chat.mutedBy = chat.mutedBy.filter(id => String(id) !== String(userId));
+            await chat.save();
+            res.json({ success: true, mutedBy: chat.mutedBy });
         } catch (error) { res.status(500).json({ success: false }); }
     });
 
-    router.post('/chat/upload', uploadChat.single('media'), (req, res) => {
+    router.post('/chat/upload', authMiddleware, uploadChat.single('media'), (req, res) => {
         if (!req.file) return res.status(400).json({ success: false, message: 'Файл не знайдено' });
         res.json({ success: true, mediaUrl: `/uploads/chat/${req.file.filename}` });
     });
 
-    // 🆘 ПІДТРИМКА: РОЗУМНА МАРШРУТИЗАЦІЯ
+    // 🆘 ПІДТРИМКА: гостьовий доступ дозволено, але якщо є токен — userId беремо з нього
     router.post('/support/send', async (req, res) => {
         try {
-            const { userId, text, userEmail, image } = req.body;
+            let userId = req.body.userId;
+            // Якщо є валідний токен — довіряємо ЙОМУ, а не body (захист від підміни ID)
+            const authHeader = req.headers.authorization;
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                try {
+                    const jwt = (await import('jsonwebtoken')).default;
+                    const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET || 'super_secret_key');
+                    userId = decoded.id;
+                } catch (e) { /* невалідний токен — лишаємо як гостя */ }
+            }
+            const { text, userEmail, image } = req.body;
             
             let priorityTag = '⏳ [Звичайна черга]';
             try {

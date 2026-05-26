@@ -17,7 +17,8 @@ const DisputeCreate = ({ userUniqueId, fetchDisputes, setIsCreatingDispute, setA
 
         const tid = toast.loading('Створення скарги...');
         try {
-            const res = await fetch('/api/disputes', { method: 'POST', body: formData });
+            const token = localStorage.getItem('zefirka_token');
+            const res = await fetch('/api/disputes', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData });
             const data = await res.json();
             if (data.success) {
                 toast.success('Скаргу відкрито!', { id: tid });

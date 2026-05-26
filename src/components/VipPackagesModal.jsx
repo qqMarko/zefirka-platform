@@ -131,9 +131,11 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
                 let BASE_URL = import.meta.env.VITE_API_URL || '';
                 if (BASE_URL.endsWith('/api')) BASE_URL = BASE_URL.slice(0, -4);
 
+                const token = localStorage.getItem('zefirka_token');
                 const res = await fetch(`${BASE_URL}/api/wallet/buy-vip`, { 
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ userId: userUniqueId, amount, packageId }) 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
+                    body: JSON.stringify({ amount, packageId }) 
                 });
                 
                 const data = await res.json();

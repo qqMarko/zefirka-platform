@@ -3,13 +3,16 @@ import Dispute from '../models/Dispute.js';
 import Profile from '../models/Profile.js';
 import User from '../models/User.js';
 import { uploadDispute } from '../middlewares/upload.js';
+import authMiddleware from '../middlewares/auth.js';
 
 export default (io, sendNotification) => {
     const router = express.Router();
 
     // ⚖️ СТВОРЕННЯ СКАРГИ
-    router.post('/disputes', uploadDispute.array('screenshots', 5), async (req, res) => {
+    router.post('/disputes', authMiddleware, uploadDispute.array('screenshots', 5), async (req, res) => {
         try {
+            // 🔒 initiatorId береться з токена, не з body — не можна створити скаргу від чужого імені
+            const initiatorId = req.user.id;
             const rawId = req.body.accusedId || "";
             const match = rawId.match(/[0-9a-fA-F]{24}/);
             if (!match) return res.status(400).json({ success: false, message: 'Невірний формат ID' });
@@ -18,16 +21,21 @@ export default (io, sendNotification) => {
             const profile = await Profile.findById(targetUserId).catch(() => null);
             if (profile) targetUserId = String(profile.userId);
 
+            // 🔒 Не можна відкрити скаргу сам на себе
+            if (String(targetUserId) === String(initiatorId)) {
+                return res.status(400).json({ success: false, message: 'Не можна відкрити скаргу на самого себе' });
+            }
+
             const screenshotPaths = req.files ? req.files.map(file => `/uploads/disputes/${file.filename}`) : [];
 
             const newDispute = new Dispute({ 
-                initiatorId: req.body.initiatorId, 
+                initiatorId: initiatorId, 
                 accusedId: targetUserId, 
                 accusedName: req.body.accusedName, 
                 reason: req.body.reason,
                 screenshots: screenshotPaths,
                 messages: [{ 
-                    senderId: req.body.initiatorId, 
+                    senderId: initiatorId, 
                     senderRole: 'user', 
                     text: req.body.reason, 
                     time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) 
@@ -48,16 +56,22 @@ export default (io, sendNotification) => {
     });
 
     // 📋 ОТРИМАННЯ СКАРГ ЮЗЕРА
-    router.get('/disputes/user/:userId', async (req, res) => { 
+    router.get('/disputes/user/:userId', authMiddleware, async (req, res) => { 
         try { 
+            // 🔒 Юзер бачить тільки скарги, де він учасник
+            if (String(req.user.id) !== String(req.params.userId) && req.user.role !== 'admin') {
+                return res.status(403).json({ success: false, message: 'Доступ заборонено' });
+            }
             const disputes = await Dispute.find({ $or: [{ initiatorId: req.params.userId }, { accusedId: req.params.userId }] }).sort({ updatedAt: -1 });
             res.json({ success: true, data: disputes }); 
         } catch (error) { res.status(500).json({ success: false }); } 
     });
 
     // 👑 АДМІНСЬКІ СКАРГИ
-    router.get('/admin/disputes', async (req, res) => {
+    router.get('/admin/disputes', authMiddleware, async (req, res) => {
         try {
+            // 🔒 Тільки адмін
+            if (req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Доступ лише для адміністратора' });
             const disputes = await Dispute.find({ status: 'open' }).lean();
             const priorityMap = { 'diamond': 3, 'concierge': 3, 'premium': 2, 'priority': 2, 'guest': 1, 'start': 1, 'basic': 0 };
 
@@ -91,8 +105,10 @@ export default (io, sendNotification) => {
         }
     });
 
-    router.post('/disputes/:id/resolve', async (req, res) => {
+    router.post('/disputes/:id/resolve', authMiddleware, async (req, res) => {
         try {
+            // 🔒 Закрити спір може тільки адмін
+            if (req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Доступ лише для адміністратора' });
             // Гарантуємо наявність тексту вироку
             const finalVerdict = req.body.verdict || 'Спір вирішено адміністрацією.';
 

@@ -30,9 +30,13 @@ export const useSupportLogic = (userUniqueId, email) => {
         }
         
         try { 
+            const token = localStorage.getItem('zefirka_token');
             await fetch('/api/support/send', { 
                 method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                }, 
                 body: JSON.stringify({ 
                     userId: userUniqueId || localStorage.getItem('guest_support_id'), 
                     text: textToSend, 

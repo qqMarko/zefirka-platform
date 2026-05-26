@@ -494,11 +494,13 @@ const useStore = create((set, get) => ({
     loadChats: async (userId) => {
         if (!userId) return;
         try {
+            const token = localStorage.getItem('zefirka_token');
             const response = await fetch(`${BASE_URL}/chats/${userId}?t=${Date.now()}`, {
                 headers: {
                     'Cache-Control': 'no-cache, no-store, must-revalidate',
                     'Pragma': 'no-cache',
-                    'Expires': '0'
+                    'Expires': '0',
+                    'Authorization': `Bearer ${token}`
                 }
             });
             const result = await response.json();

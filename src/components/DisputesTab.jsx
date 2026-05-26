@@ -36,7 +36,8 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
     const fetchDisputes = async () => {
         const endpoint = userRole === 'admin' ? '/api/admin/disputes' : `/api/disputes/user/${userUniqueId}`;
         try {
-            const res = await fetch(endpoint);
+            const token = localStorage.getItem('zefirka_token');
+            const res = await fetch(endpoint, { headers: { 'Authorization': `Bearer ${token}` } });
             const data = await res.json();
             if (data.success) setDisputes(data.data);
         } catch (err) { console.error(err); }
@@ -49,7 +50,8 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
 
         const loadingId = toast.loading('Видалення...');
         try {
-            const res = await fetch(`/api/admin/disputes/${id}`, { method: 'DELETE' });
+            const tk = localStorage.getItem('zefirka_token');
+            const res = await fetch(`/api/admin/disputes/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${tk}` } });
             const data = await res.json();
 
             if (data.success || res.ok) {
@@ -149,8 +151,9 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
 
             if (actions.length > 0) await Promise.all(actions);
 
+            const token = localStorage.getItem('zefirka_token');
             const res = await fetch(`/api/disputes/${activeDispute._id}/resolve`, {
-                method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ verdict: finalVerdictText })
+                method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`}, body: JSON.stringify({ verdict: finalVerdictText })
             });
             const data = await res.json();
 

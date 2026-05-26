@@ -3,6 +3,7 @@ import nodemailer from 'nodemailer';
 import User from '../models/User.js';
 import Profile from '../models/Profile.js';
 import TopUpRequest from '../models/TopUpRequest.js'; 
+import authMiddleware from '../middlewares/auth.js';
 import { getIO } from '../sockets/socketManager.js'; // 🚀
 
 const getTransporter = () => nodemailer.createTransport({ 
@@ -54,9 +55,11 @@ export default (io, bot, sendNotification) => {
         } catch (error) { res.status(500).json({ success: false }); }
     });
 
-    router.post('/buy-vip', async (req, res) => {
+    router.post('/buy-vip', authMiddleware, async (req, res) => {
         try {
-            const { userId, amount, packageId } = req.body;
+            // 🔒 userId береться ВИКЛЮЧНО з токена, не з body — захист від списання чужого балансу
+            const userId = req.user.id;
+            const { amount, packageId } = req.body;
             const user = await User.findById(userId);
             if (!user || user.balance < amount) return res.status(400).json({ success: false, message: 'Недостатньо коштів' });
 
@@ -140,9 +143,10 @@ export default (io, bot, sendNotification) => {
         }
     });
 
-    router.post('/use-free-bump', async (req, res) => {
+    router.post('/use-free-bump', authMiddleware, async (req, res) => {
         try {
-            const { userId } = req.body;
+            // 🔒 userId з токена, не з body — захист від витрачання чужих бампів
+            const userId = req.user.id;
             const user = await User.findById(userId);
             if (!user) return res.status(404).json({ success: false, message: 'Користувача не знайдено' });
             if (user.freeBumps <= 0) return res.status(400).json({ success: false, message: 'У вас немає безкоштовних підняттів' });

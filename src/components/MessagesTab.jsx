@@ -54,8 +54,10 @@ const MessagesTab = ({ setCurrentPage, setSelectedModel }) => {
         const fetchChats = async () => {
             try {
                 const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
+                const token = localStorage.getItem('zefirka_token');
                 const res = await fetch(`${BASE_URL}/chats/${userUniqueId}?t=${Date.now()}`, {
-                    method: 'GET', cache: 'no-store', headers: { 'Cache-Control': 'no-cache' }
+                    method: 'GET', cache: 'no-store',
+                    headers: { 'Cache-Control': 'no-cache', 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -104,9 +106,11 @@ const MessagesTab = ({ setCurrentPage, setSelectedModel }) => {
         const isMuted = Array.isArray(activeChat?.mutedBy) && activeChat.mutedBy.includes(userUniqueId);
         try {
             const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
+            const token = localStorage.getItem('zefirka_token');
             const res = await fetch(`${BASE_URL}/chats/${activeChatId}/mute`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: userUniqueId, mute: !isMuted })
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ mute: !isMuted })
             });
             const data = await res.json();
             if (data.success) useStore.setState(state => ({ myChats: state.myChats.map(c => c.id === activeChatId ? { ...c, mutedBy: data.mutedBy } : c) }));
@@ -118,7 +122,10 @@ const MessagesTab = ({ setCurrentPage, setSelectedModel }) => {
         setShowMenu(false);
         try {
             const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
-            await fetch(`${BASE_URL}/chats/${activeChatId}/clear`, { method: 'DELETE' });
+            const token = localStorage.getItem('zefirka_token');
+            await fetch(`${BASE_URL}/chats/${activeChatId}/clear`, {
+                method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }
+            });
             useStore.setState(state => ({ myChats: state.myChats.map(c => c.id === activeChatId ? { ...c, messages: [] } : c) }));
         } catch (err) { console.error(err); }
     };
@@ -128,7 +135,10 @@ const MessagesTab = ({ setCurrentPage, setSelectedModel }) => {
         setShowMenu(false);
         try {
             const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
-            await fetch(`${BASE_URL}/chats/${activeChatId}/delete`, { method: 'DELETE' });
+            const token = localStorage.getItem('zefirka_token');
+            await fetch(`${BASE_URL}/chats/${activeChatId}/delete`, {
+                method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }
+            });
             useStore.setState(state => ({ myChats: state.myChats.filter(c => c.id !== activeChatId), activeChatId: null }));
         } catch (err) { console.error(err); }
     };
@@ -222,7 +232,10 @@ const MessagesTab = ({ setCurrentPage, setSelectedModel }) => {
 
         try {
             const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
-            const res = await fetch(`${BASE_URL}/chat/upload`, { method: 'POST', body: formData });
+            const token = localStorage.getItem('zefirka_token');
+            const res = await fetch(`${BASE_URL}/chat/upload`, {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData
+            });
             const data = await res.json();
             if (data.success) emitMessage('', 'audio', data.mediaUrl);
         } catch (err) { alert("Помилка відправки голосового"); } 
@@ -240,7 +253,10 @@ const MessagesTab = ({ setCurrentPage, setSelectedModel }) => {
             formData.append('media', mediaFile);
             try {
                 const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
-                const res = await fetch(`${BASE_URL}/chat/upload`, { method: 'POST', body: formData });
+                const token = localStorage.getItem('zefirka_token');
+            const res = await fetch(`${BASE_URL}/chat/upload`, {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData
+            });
                 const data = await res.json();
                 if (data.success) {
                     finalMediaUrl = data.mediaUrl;

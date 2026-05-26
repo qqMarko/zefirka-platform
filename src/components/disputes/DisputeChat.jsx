@@ -60,7 +60,10 @@ const DisputeChat = ({ activeDispute, userUniqueId, userRole, setFullscreenImage
         formData.append('media', file);
         const toastId = toast.loading('Завантаження фото...');
         try {
-            const res = await fetch('/api/chat/upload', { method: 'POST', body: formData });
+            const token = localStorage.getItem('zefirka_token');
+            const res = await fetch('/api/chat/upload', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData
+            });
             const data = await res.json();
             if (data.success) {
                 setAttachedImage(data.mediaUrl);

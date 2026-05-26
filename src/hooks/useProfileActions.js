@@ -40,10 +40,12 @@ export const useProfileActions = ({
             return;
         }
         try {
-            const BASE_URL = import.meta.env.VITE_API_URL || 'http://192.168.0.102:5000/api'; 
+            const BASE_URL = import.meta.env.VITE_API_URL || '/api';
+            const token = useStore.getState().token || localStorage.getItem('zefirka_token');
             const response = await fetch(`${BASE_URL}/wallet/buy-vip`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: userUniqueId, amount: bumpPrice, packageId: 'bump' })
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ amount: bumpPrice, packageId: 'bump' })
             });
             const result = await response.json();
             if (result.success) {
@@ -60,10 +62,12 @@ export const useProfileActions = ({
         setConfirmModal({ isOpen: false });
         const loadingToast = toast.loading('Піднімаємо анкету...');
         try {
-            const BASE_URL = import.meta.env.VITE_API_URL || 'http://192.168.0.102:5000/api'; 
+            const BASE_URL = import.meta.env.VITE_API_URL || '/api';
+            const token = useStore.getState().token || localStorage.getItem('zefirka_token');
             const response = await fetch(`${BASE_URL}/wallet/use-free-bump`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: userUniqueId })
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({})
             });
             const result = await response.json();
             if (result.success) {

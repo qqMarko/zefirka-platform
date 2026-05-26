@@ -1,11 +1,12 @@
 import express from 'express';
 import Profile from '../models/Profile.js';
 import User from '../models/User.js';
+import authMiddleware from '../middlewares/auth.js';
 
 export default (sendNotification) => {
     const router = express.Router();
 
-    // 📊 ТРЕКІНГ ПЕРЕГЛЯДІВ
+    // 📊 ТРЕКІНГ ПЕРЕГЛЯДІВ (гостьовий доступ дозволено, але власник не накручує собі)
     router.post('/profiles/:id/track', async (req, res) => {
         try {
             const { action } = req.body; 
@@ -13,6 +14,19 @@ export default (sendNotification) => {
             
             const profile = await Profile.findById(req.params.id);
             if (!profile) return res.status(404).json({ success: false });
+
+            // 🔒 Якщо є токен — перевіряємо чи це не власник дивиться сам себе
+            const authHeader = req.headers.authorization;
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                try {
+                    const jwt = (await import('jsonwebtoken')).default;
+                    const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET || 'super_secret_key');
+                    // Власник анкети не накручує собі перегляди / кліки
+                    if (String(decoded.id) === String(profile.userId)) {
+                        return res.json({ success: true, skipped: 'own_profile' });
+                    }
+                } catch (e) { /* невалідний токен — рахуємо як гостя */ }
+            }
 
             profile.views = profile.views || 0;
             profile.clicks = profile.clicks || 0;
@@ -38,9 +52,11 @@ export default (sendNotification) => {
     });
 
     // ⭐ ВІДГУКИ: ДОДАВАННЯ
-    router.post('/profiles/:id/reviews', async (req, res) => {
+    router.post('/profiles/:id/reviews', authMiddleware, async (req, res) => {
         try {
-            const { clientId, clientName, rating, text } = req.body;
+            // 🔒 clientId з токена, не з body — не можна писати відгук від чужого імені
+            const clientId = req.user.id;
+            const { clientName, rating, text } = req.body;
             const profileId = req.params.id;
 
             // 🟢 1. ШУКАЄМО КЛІЄНТА В БАЗІ ЮЗЕРІВ (щоб перевірити його VIP-статус)
@@ -116,9 +132,10 @@ export default (sendNotification) => {
     });
 
     // 🗑 ВІДГУКИ: ВИДАЛЕННЯ
-    router.delete('/profiles/:id/reviews/:reviewId', async (req, res) => {
+    router.delete('/profiles/:id/reviews/:reviewId', authMiddleware, async (req, res) => {
         try {
-            const { userId } = req.body; 
+            // 🔒 userId з токена
+            const userId = req.user.id;
             const profileId = req.params.id;
             const reviewId = req.params.reviewId;
 
@@ -148,8 +165,12 @@ export default (sendNotification) => {
     });
 
     // 📈 ОТРИМАННЯ СТАТИСТИКИ
-    router.get('/stats/:userId', async (req, res) => {
+    router.get('/stats/:userId', authMiddleware, async (req, res) => {
         try {
+            // 🔒 Юзер бачить тільки свою статистику
+            if (String(req.user.id) !== String(req.params.userId) && req.user.role !== 'admin') {
+                return res.status(403).json({ success: false, message: 'Доступ заборонено' });
+            }
             const profiles = await Profile.find({ userId: req.params.userId });
             let totalViews = 0; let totalClicks = 0;
             const combinedDaily = {};
