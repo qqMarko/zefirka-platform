@@ -196,7 +196,8 @@ const ZefirkaPlatform = () => {
     }, [isLoggedIn, userUniqueId]);
 
     const toggleDisputeMinimize = (val) => { setIsDisputeMinimized(val); localStorage.setItem('zefir_dispute_minimized', val ? 'true' : 'false'); };
-    const handlePageChange = (newPage) => { setCatalogPage(newPage); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+    const handlePageChange = (newPage) => { setCatalogPage(newPage); };
+    // Скидаємо на першу сторінку при зміні фільтрів (useEffect нижче)
     const closeMenu = () => { setIsMenuOpen(false); };
     
     const handleLogout = () => { 

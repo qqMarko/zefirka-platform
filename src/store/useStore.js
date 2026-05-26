@@ -327,6 +327,8 @@ const useStore = create((set, get) => ({
     showVipModal: false, setShowVipModal: (show) => set({ showVipModal: show }),
 
     models: [],
+    catalogCacheKey: '',      // зберігаємо ключ останнього запиту
+    catalogCachedAt: 0,       // timestamp останнього успішного завантаження
     myModels: [],
     favorites: [],
     totalPages: 1,
@@ -338,6 +340,20 @@ const useStore = create((set, get) => ({
     setMyModels: (newMyModels) => set({ myModels: newMyModels }),
 
     loadCatalog: async (filters = {}, page = 1) => {
+        // Будуємо ключ кешу
+        const cacheKey = JSON.stringify({ ...filters, page });
+        const CACHE_TTL = 60 * 1000; // 60 секунд
+        const state = get();
+
+        // Якщо це та сама сторінка з тими самими фільтрами і кеш свіжий — не запитуємо
+        if (
+            page === 1 &&
+            cacheKey === state.catalogCacheKey &&
+            Date.now() - state.catalogCachedAt < CACHE_TTL
+        ) {
+            return; // дані вже актуальні
+        }
+
         set({ isLoading: true });
         try {
             const queryParams = new URLSearchParams({ page, limit: 12 });
@@ -371,11 +387,14 @@ const useStore = create((set, get) => ({
                         isMine: userIdStr === myId,
                     };
                 });
-                set({
-                    models: formattedModels,
+                set((state) => ({
+                    // page 1 = заміна, page 2+ = доповнення (infinite scroll)
+                    models: page === 1 ? formattedModels : [...state.models, ...formattedModels],
                     totalPages: result.totalPages,
-                    totalItems: result.totalItems
-                });
+                    totalItems: result.totalItems,
+                    catalogCacheKey: cacheKey,
+                    catalogCachedAt: Date.now(),
+                }));
             }
         } catch (error) {
             console.error("❌ Помилка завантаження каталогу:", error);

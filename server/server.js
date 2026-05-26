@@ -11,6 +11,7 @@ import rateLimit from 'express-rate-limit'; // 🔒 НОВИЙ ІМПОРТ
 
 // 🟢 МОДЕЛІ БД
 import User from './models/User.js'; 
+import Profile from './models/Profile.js';
 
 // 🟢 РОУТИ
 import authRoutes from './routes/auth.js';
@@ -76,6 +77,24 @@ const authLimiter = rateLimit({
     legacyHeaders: false,
 });
 
+// 🔒 RATE LIMIT для підтримки — не більше 20 повідомлень за 5 хвилин з одного IP
+const supportLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000,
+    max: 20,
+    message: { success: false, message: 'Занадто багато повідомлень. Зачекайте 5 хвилин.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// 🔒 RATE LIMIT для завантаження фото — не більше 30 фото за 10 хвилин
+const uploadLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: 30,
+    message: { success: false, message: 'Занадто багато завантажень. Зачекайте 10 хвилин.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
 app.use((req, res, next) => { 
     if (process.env.NODE_ENV !== 'production') console.log(`📡 Радар: [${req.method}] ${req.url}`); 
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -125,14 +144,44 @@ app.use('/api/admin', adminRoutes(sendNotification));
 app.use('/api/wallet', walletRoutes(io, bot, sendNotification));
 
 // 2. Наші нові винесені роути (монтуємо їх на корінь /api)
+app.use('/api/support', supportLimiter);
 app.use('/api', chatRoutes(bot, ADMIN_ID));
 app.use('/api', disputeRoutes(io, sendNotification));
 app.use('/api', profileExtraRoutes(sendNotification));
 
-// 3. Єдиний залишковий роут для завантаження фотографії анкети
-app.post('/api/upload', uploadProfile.single('photo'), (req, res) => {
+// 3. Завантаження фотографії анкети з перевіркою ліміту по VIP
+app.post('/api/upload', uploadLimiter, uploadProfile.single('photo'), async (req, res) => {
     if (!req.file) return res.status(400).json({ success: false, message: 'Файл не знайдено' });
-    res.json({ success: true, url: req.file.path });
+
+    try {
+        const { userId, profileId } = req.body;
+
+        if (userId && profileId) {
+            // Ліміти фото по VIP рівню
+            const PHOTO_LIMITS = { 0: 5, 1: 10, 2: 15, 3: 99 };
+
+            const profile = await User.findById(userId).then(() =>
+                Profile.findById(profileId)
+            ).catch(() => null);
+
+            if (profile) {
+                const vLevel = profile.vLevel || 0;
+                const maxPhotos = PHOTO_LIMITS[vLevel] ?? 5;
+                const currentCount = (profile.photos || []).length;
+
+                if (currentCount >= maxPhotos) {
+                    return res.status(403).json({
+                        success: false,
+                        message: `Ліміт фото для вашого VIP-рівня: ${maxPhotos}. Підвищте статус щоб додати більше.`
+                    });
+                }
+            }
+        }
+
+        res.json({ success: true, url: req.file.path });
+    } catch (err) {
+        res.json({ success: true, url: req.file.path }); // не блокуємо якщо перевірка впала
+    }
 });
 
 // ==========================================
