@@ -1,4 +1,5 @@
 import './config/env.js'; // 🚀 ЗАВАНТАЖЕННЯ .ENV НАЙПЕРШИМ
+import { getPhotoLimit } from './config/limits.js';
 import express from 'express';
 import http from 'http'; 
 import { Server } from 'socket.io'; 
@@ -157,16 +158,11 @@ app.post('/api/upload', uploadLimiter, uploadProfile.single('photo'), async (req
         const { userId, profileId } = req.body;
 
         if (userId && profileId) {
-            // Ліміти фото по VIP рівню
-            const PHOTO_LIMITS = { 0: 5, 1: 10, 2: 15, 3: 99 };
-
-            const profile = await User.findById(userId).then(() =>
-                Profile.findById(profileId)
-            ).catch(() => null);
+            const profile = await Profile.findById(profileId).catch(() => null);
 
             if (profile) {
                 const vLevel = profile.vLevel || 0;
-                const maxPhotos = PHOTO_LIMITS[vLevel] ?? 5;
+                const maxPhotos = getPhotoLimit(vLevel);
                 const currentCount = (profile.photos || []).length;
 
                 if (currentCount >= maxPhotos) {

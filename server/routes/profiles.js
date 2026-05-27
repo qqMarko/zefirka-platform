@@ -3,6 +3,7 @@ import Profile from '../models/Profile.js';
 import User from '../models/User.js';
 import { getIO } from '../sockets/socketManager.js'; 
 import authMiddleware from '../middlewares/auth.js'; 
+import { packageToLevel, getProfileLimit } from '../config/limits.js';
 
 const router = express.Router();
 
@@ -177,10 +178,7 @@ router.post('/', authMiddleware, async (req, res) => {
         if (!user)
             return res.status(404).json({ success: false, message: 'Юзера не знайдено' });
 
-        let maxProfiles = 1;
-        if      (user.vipPackage === 'diamond') maxProfiles = 10;
-        else if (user.vipPackage === 'premium') maxProfiles = 5;
-        else if (user.vipPackage === 'start')   maxProfiles = 3;
+        const maxProfiles = getProfileLimit(packageToLevel(user.vipPackage));
 
         const currentCount = await Profile.countDocuments({ userId: user._id });
         if (currentCount >= maxProfiles) {

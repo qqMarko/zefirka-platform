@@ -6,7 +6,7 @@ import authMiddleware from '../middlewares/auth.js';
 export default (sendNotification) => {
     const router = express.Router();
 
-    // 📊 ТРЕКІНГ ПЕРЕГЛЯДІВ (гостьовий доступ дозволено, але власник не накручує собі)
+    // 📊 ТРЕКІНГ ПЕРЕГЛЯДІВ (гостьовий доступ дозволено, власник не накручує, дедуплікація по добі)
     router.post('/profiles/:id/track', async (req, res) => {
         try {
             const { action } = req.body; 
@@ -15,32 +15,43 @@ export default (sendNotification) => {
             const profile = await Profile.findById(req.params.id);
             if (!profile) return res.status(404).json({ success: false });
 
-            // 🔒 Якщо є токен — перевіряємо чи це не власник дивиться сам себе
+            // Визначаємо ключ глядача: ID юзера (з токена) або IP гостя
+            let viewerKey = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'anon';
             const authHeader = req.headers.authorization;
             if (authHeader && authHeader.startsWith('Bearer ')) {
                 try {
                     const jwt = (await import('jsonwebtoken')).default;
                     const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET || 'super_secret_key');
-                    // Власник анкети не накручує собі перегляди / кліки
+                    // 🔒 Власник анкети не накручує собі
                     if (String(decoded.id) === String(profile.userId)) {
                         return res.json({ success: true, skipped: 'own_profile' });
                     }
-                } catch (e) { /* невалідний токен — рахуємо як гостя */ }
+                    viewerKey = `u_${decoded.id}`; // залогінений — ключ по ID
+                } catch (e) { /* невалідний токен — лишаємо IP */ }
             }
+
+            const isClick = action === 'click';
+            const dedupMap = isClick ? (profile.clickedBy || {}) : (profile.viewedBy || {});
+
+            // 🔁 Якщо цей глядач вже зараховувався сьогодні — не дублюємо
+            if (dedupMap[viewerKey] === today) {
+                return res.json({ success: true, skipped: 'already_counted_today' });
+            }
+            dedupMap[viewerKey] = today;
 
             profile.views = profile.views || 0;
             profile.clicks = profile.clicks || 0;
-
-            if (action === 'click') profile.clicks += 1;
+            if (isClick) profile.clicks += 1;
             else profile.views += 1;
 
             const currentDaily = profile.dailyStats || {};
             if (!currentDaily[today]) currentDaily[today] = { views: 0, clicks: 0 };
-            
-            if (action === 'click') currentDaily[today].clicks = (currentDaily[today].clicks || 0) + 1;
+            if (isClick) currentDaily[today].clicks = (currentDaily[today].clicks || 0) + 1;
             else currentDaily[today].views = (currentDaily[today].views || 0) + 1;
 
             profile.dailyStats = currentDaily;
+            if (isClick) { profile.clickedBy = dedupMap; profile.markModified('clickedBy'); }
+            else { profile.viewedBy = dedupMap; profile.markModified('viewedBy'); }
             profile.markModified('dailyStats'); 
             
             await profile.save();

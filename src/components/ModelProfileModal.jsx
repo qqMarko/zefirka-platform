@@ -84,7 +84,20 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
     ];
 
     const handleSocialClick    = (network) => { setSelectedSocial(network); setShowWarningModal(true); };
-    const handleInternalChatClick = () => { openPrivateChat(model); onClose(); };
+    const handleInternalChatClick = () => {
+        // Перехід = юзер написав моделі через її анкету
+        if (!isOwner) {
+            const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
+            const token = localStorage.getItem('zefirka_token');
+            fetch(`${BASE_URL}/profiles/${model.id}/track`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+                body: JSON.stringify({ action: 'click' }), keepalive: true
+            }).catch(() => {});
+        }
+        openPrivateChat(model);
+        onClose();
+    };
 
     const confirmSocialRedirect = () => {
         if (!isOwner) {

@@ -34,6 +34,9 @@ const profileSchema = new mongoose.Schema({
     views: { type: Number, default: 0 },
     clicks: { type: Number, default: 0 },
     dailyStats: { type: Object, default: {} },
+    // Дедуплікація: { "viewerKey": "2026-05-27" } — останній день коли зараховано
+    viewedBy: { type: Object, default: {} },
+    clickedBy: { type: Object, default: {} },
 
     // ⭐ СИСТЕМА ВІДГУКІВ ТА РЕЙТИНГІВ
     averageRating: { type: Number, default: 0 }, 

@@ -9,10 +9,12 @@ import imageCompression from 'browser-image-compression';
 import useSmoothScroll from '../hooks/useSmoothScroll';
 
 const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
-const MAX_PHOTOS = 5;
+const PHOTO_LIMITS = { 0: 5, 1: 5, 2: 5, 3: 5 };
 
 const CreateProfileModal = () => {
-    const { currentLang, setShowCreateModal, editingModel, loadCatalog, userUniqueId, token: storeToken } = useStore();
+    const { currentLang, setShowCreateModal, editingModel, loadCatalog, userUniqueId, token: storeToken, user } = useStore();
+    const vLevel = user?.vLevel ?? ({ start: 1, premium: 2, diamond: 3 }[String(user?.vipPackage || '').toLowerCase()] ?? 0);
+    const MAX_PHOTOS = PHOTO_LIMITS[vLevel] ?? 5;
     const fileInputRef = useRef(null);
     const scrollContainerRef = useRef(null);
     const fetishesScrollRef = useRef(null); // 🟢 Реф для внутрішнього скролу послуг
