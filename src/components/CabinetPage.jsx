@@ -99,7 +99,8 @@ const CabinetPage = ({ userRole, balance, userUniqueId, myModels, favorites, myC
                                     <div style={{ padding: '14px 16px', flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                             <span style={{ fontSize: '16px', fontWeight: '800', color: C.text }}>{m.title || m.name}</span>
-                                            {m.vLevel > 0 && <CheckCircle2 size={14} color={tier.color} />}
+                                            {m.verification === 'video' && <CheckCircle2 size={14} color="#FFD700" />}
+                                            {m.verification === 'photo' && <CheckCircle2 size={14} color="#C0C0C0" />}
                                         </div>
                                         <div style={{ color: C.textSub, fontSize: '12px' }}>📍 {t[currentLang]?.onlineOnly || 'Онлайн'} · {m.priceFrom} UAH · {m.age}р.</div>
 

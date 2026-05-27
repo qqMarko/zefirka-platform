@@ -333,10 +333,10 @@ const CatalogGrid = ({
 
                                 {/* Ім'я + онлайн + ціна */}
                                 <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', padding: '20px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                                        <div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 10 }}>
+                                        <div style={{ minWidth: 0, flex: 1 }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                                                <span style={{ color: 'white', fontSize: 24, fontWeight: 900, textShadow: '0 2px 10px rgba(0,0,0,.8)' }}>{m.name}</span>
+                                                <span style={{ color: 'white', fontSize: 'clamp(18px, 5vw, 24px)', fontWeight: 900, textShadow: '0 2px 10px rgba(0,0,0,.8)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</span>
                                                 {m.verification === 'video' && <CheckCircle2 size={18} color="#FFD700" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,.5))' }} />}
                                                 {m.verification === 'photo' && <CheckCircle2 size={18} color="#C0C0C0" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,.5))' }} />}
                                             </div>
@@ -353,10 +353,11 @@ const CatalogGrid = ({
                                                 {m.age} {t[currentLang]?.ageUnit || 'років'}
                                             </div>
                                         </div>
-                                        <div style={{ textAlign: 'right' }}>
-                                            <div style={{ fontSize: 22, fontWeight: 900, color: accent, textShadow: '0 2px 10px rgba(0,0,0,.8)' }}>
-                                                {m.priceFrom}{m.priceTo ? `–${m.priceTo}` : ''} <span style={{ fontSize: 12, color: '#ccc' }}>UAH</span>
+                                        <div style={{ textAlign: 'right', flexShrink: 0, maxWidth: '45%' }}>
+                                            <div style={{ fontSize: 'clamp(15px, 4vw, 20px)', fontWeight: 900, color: accent, textShadow: '0 2px 10px rgba(0,0,0,.8)', lineHeight: 1.1, whiteSpace: 'nowrap' }}>
+                                                {m.priceFrom}{m.priceTo ? `–${m.priceTo}` : ''}
                                             </div>
+                                            <div style={{ fontSize: 10, color: '#bbb', fontWeight: 700, letterSpacing: '0.5px', textShadow: '0 1px 4px rgba(0,0,0,.8)' }}>UAH</div>
                                         </div>
                                     </div>
                                 </div>

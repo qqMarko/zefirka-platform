@@ -11,6 +11,17 @@ const AdminProfiles = ({ adminModels, modelTab, setModelTab, setSelectedModel, f
         } catch (error) { toast.error('Помилка сервера'); }
     };
 
+    // ✅ ВЕРИФІКАЦІЯ: фото (срібна) / відео (золота) / зняти
+    const handleSetVerification = async (profileId, verification) => {
+        try {
+            const res = await authFetch(`/api/admin/profiles/${profileId}/set-verification`, { method: 'POST', body: JSON.stringify({ verification }) });
+            if (res.ok) {
+                const labels = { photo: '🥈 Фото-верифікацію видано', video: '🥇 Відео-верифікацію видано', none: '❌ Верифікацію знято' };
+                toast.success(labels[verification]); fetchUsers(); if (loadCatalog) loadCatalog();
+            } else toast.error('Помилка сервера');
+        } catch (error) { toast.error('Помилка сервера'); }
+    };
+
     const handleApproveProfile = async (profileId) => {
         const loadingToast = toast.loading('Зберігаю в базу...');
         try {
@@ -86,6 +97,21 @@ const AdminProfiles = ({ adminModels, modelTab, setModelTab, setSelectedModel, f
                                             <button onClick={() => handleVerifyProfile(profileId, 1)} style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid #4caf50', color: '#4caf50', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }} className="menu-hover">Базова (1)</button>
                                             <button onClick={() => handleVerifyProfile(profileId, 2)} style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid #ffc107', color: '#ffc107', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }} className="menu-hover">VIP (2)</button>
                                             <button onClick={() => handleVerifyProfile(profileId, 0)} style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid #666', color: '#ccc', borderRadius: '8px', cursor: 'pointer', fontSize: '12px' }} className="menu-hover">Зняти</button>
+                                        </div>
+
+                                        {/* ✅ ВЕРИФІКАЦІЯ ГАЛОЧКОЮ (окремо від VIP) */}
+                                        <div style={{ marginTop: '4px', padding: '10px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px' }}>
+                                            <div style={{ fontSize: '10px', color: '#777', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                Верифікація
+                                                {m.verification === 'photo' && <span style={{ color: '#C0C0C0' }}>🥈 Фото</span>}
+                                                {m.verification === 'video' && <span style={{ color: '#FFD700' }}>🥇 Відео</span>}
+                                                {(!m.verification || m.verification === 'none') && <span style={{ color: '#555' }}>— немає</span>}
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                <button onClick={() => handleSetVerification(profileId, 'photo')} style={{ flex: 1, padding: '9px', background: m.verification === 'photo' ? 'rgba(192,192,192,0.2)' : 'transparent', border: '1px solid #C0C0C0', color: '#C0C0C0', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }} className="menu-hover">🥈 Фото</button>
+                                                <button onClick={() => handleSetVerification(profileId, 'video')} style={{ flex: 1, padding: '9px', background: m.verification === 'video' ? 'rgba(255,215,0,0.2)' : 'transparent', border: '1px solid #FFD700', color: '#FFD700', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }} className="menu-hover">🥇 Відео</button>
+                                                <button onClick={() => handleSetVerification(profileId, 'none')} style={{ flex: 1, padding: '9px', background: 'transparent', border: '1px solid #666', color: '#ccc', borderRadius: '8px', cursor: 'pointer', fontSize: '12px' }} className="menu-hover">Зняти</button>
+                                            </div>
                                         </div>
                                         <button onClick={() => handleDeleteProfile(profileId)} style={{ width: '100%', padding: '10px', background: 'rgba(220, 53, 69, 0.05)', border: '1px dashed #dc3545', color: '#dc3545', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px' }} className="menu-hover"><Trash2 size={14}/> Видалити анкету назавжди</button>
                                     </div>
