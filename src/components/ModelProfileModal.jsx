@@ -6,6 +6,10 @@ import { accent } from '../styles/theme';
 import { C, R, closeBtn, section, btnPrimary, btnGhost } from '../styles/ds';
 import useSmoothScroll from '../hooks/useSmoothScroll';
 import { toast } from 'react-hot-toast';
+import PhotoLightbox from './modelProfile/PhotoLightbox';
+import SocialWarningModal from './modelProfile/SocialWarningModal';
+import ReviewsBlock from './modelProfile/ReviewsBlock';
+import BottomCTA from './modelProfile/BottomCTA';
 
 const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], handleToggleFavorite }) => {
     const { currentLang, userUniqueId, user, onlineUsers } = useStore();
@@ -309,67 +313,22 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
 
                     {/* ── Lightbox ── */}
                     {lightboxOpen && (
-                        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.97)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={closeLightbox}>
-                            <button onClick={closeLightbox} style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', borderRadius: '50%', width: '44px', height: '44px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', zIndex: 10, backdropFilter: 'blur(8px)' }}>✕</button>
-
-                            <div style={{ position: 'absolute', top: '16px', left: '16px', display: 'flex', gap: '8px', zIndex: 10 }}>
-                                {model.photos.length > 1 && (
-                                    <div style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', borderRadius: '20px', padding: '6px 14px', fontSize: '13px', fontWeight: '700', backdropFilter: 'blur(8px)' }}>
-                                        {lightboxIndex + 1} / {model.photos.length}
-                                    </div>
-                                )}
-                                <div style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', borderRadius: '20px', padding: '6px 14px', fontSize: '13px', fontWeight: '700', backdropFilter: 'blur(8px)' }}>
-                                    {Math.round(zoom * 100)}%
-                                </div>
-                            </div>
-
-                            {/* Zoom controls */}
-                            <div style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '10px', zIndex: 10 }}>
-                                <button onClick={e => { e.stopPropagation(); setZoom(p => Math.max(1, +(p - 0.5).toFixed(1))); if (zoom <= 1.5) setOffset({ x: 0, y: 0 }); }} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '50%', width: '44px', height: '44px', cursor: 'pointer', fontSize: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>−</button>
-                                <button onClick={e => { e.stopPropagation(); setZoom(1); setOffset({ x: 0, y: 0 }); }} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '12px', padding: '0 16px', height: '44px', cursor: 'pointer', fontSize: '12px', fontWeight: '700', backdropFilter: 'blur(8px)' }}>
-                                    {T('resetZoom', 'СКИНУТИ')}
-                                </button>
-                                <button onClick={e => { e.stopPropagation(); setZoom(p => Math.min(4, +(p + 0.5).toFixed(1))); }} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '50%', width: '44px', height: '44px', cursor: 'pointer', fontSize: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>+</button>
-                            </div>
-
-                            {/* Prev/Next arrows */}
-                            {model.photos.length > 1 && (
-                                <>
-                                    <button onClick={e => { e.stopPropagation(); lightboxPrev(e); }} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', borderRadius: '50%', width: '52px', height: '52px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, fontSize: '22px', backdropFilter: 'blur(8px)' }}>‹</button>
-                                    <button onClick={e => { e.stopPropagation(); lightboxNext(e); }} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '50%', width: '52px', height: '52px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, fontSize: '22px', backdropFilter: 'blur(8px)' }}>›</button>
-                                </>
-                            )}
-
-                            {/* Photo itself */}
-                            <div
-                                ref={lightboxImgRef}
-                                style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: zoom > 1 ? 'grab' : 'zoom-in' }}
-                                onClick={e => e.stopPropagation()}
-                                onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}
-                                onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
-                            >
-                                <img
-                                    src={model.photos[lightboxIndex]} alt={model.name} draggable={false}
-                                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', transform: `scale(${zoom}) translate(${offset.x / zoom}px, ${offset.y / zoom}px)`, transition: dragStart ? 'none' : 'transform 0.15s ease', userSelect: 'none', borderRadius: zoom === 1 ? '8px' : '0' }}
-                                />
-                            </div>
-
-                            {/* Thumbnails */}
-                            {model.photos.length > 1 && (
-                                <div style={{ position: 'absolute', bottom: '80px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', zIndex: 10, padding: '8px', background: 'rgba(0,0,0,0.5)', borderRadius: '16px', backdropFilter: 'blur(8px)' }} onClick={e => e.stopPropagation()}>
-                                    {model.photos.map((photo, i) => (
-                                        <div key={i} onClick={() => { setLightboxIndex(i); setZoom(1); setOffset({ x: 0, y: 0 }); }}
-                                            style={{ width: i === lightboxIndex ? '52px' : '44px', height: i === lightboxIndex ? '52px' : '44px', borderRadius: '10px', overflow: 'hidden', cursor: 'pointer', border: `2px solid ${i === lightboxIndex ? accent : 'transparent'}`, transition: '0.2s', flexShrink: 0, opacity: i === lightboxIndex ? 1 : 0.55 }}
-                                        >
-                                            <img src={photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        <PhotoLightbox
+                            photos={model.photos}
+                            index={lightboxIndex} setIndex={setLightboxIndex}
+                            zoom={zoom} setZoom={setZoom}
+                            offset={offset} setOffset={setOffset}
+                            onClose={closeLightbox}
+                            onNext={lightboxNext} onPrev={lightboxPrev}
+                            imgRef={lightboxImgRef}
+                            dragStart={dragStart}
+                            onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}
+                            onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
+                            accent={accent}
+                        />
                     )}
 
-                    {/* ── Main info ── */}
+                                        {/* ── Main info ── */}
                     <div style={{ padding: '24px 24px 150px 24px', position: 'relative', zIndex: 20 }}>
 
                         {/* Name + status */}
@@ -468,146 +427,36 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
                         )}
 
                         {/* Reviews */}
-                        <div style={{ borderTop: '1px solid #27272a', paddingTop: '30px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                                <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#fff', margin: 0 }}>{T('reviewsTitle', 'Відгуки клієнтів')}</h3>
-                                <span style={{ color: '#71717a', fontSize: '14px', fontWeight: '600' }}>{T('reviewsTotal', 'Всього')}: {localTotal}</span>
-                            </div>
-
-                            {/* Average rating */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', background: '#141417', padding: '16px', borderRadius: '16px', border: '1px solid #232326', marginBottom: '24px' }}>
-                                <div style={{ fontSize: '38px', fontWeight: '900', color: '#f59e0b', lineHeight: 1, letterSpacing: '-1px' }}>
-                                    {localAvg > 0 ? localAvg.toFixed(1) : '0.0'}
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ display: 'flex', gap: '3px', marginBottom: '4px' }}>
-                                        {[1,2,3,4,5].map(s => <Star key={s} size={15} color={s <= Math.round(localAvg) ? '#f59e0b' : '#27272a'} fill={s <= Math.round(localAvg) ? '#f59e0b' : 'none'} />)}
-                                    </div>
-                                    <div style={{ fontSize: '12px', color: '#71717a', fontWeight: '600' }}>{T('reviewsRating', 'Загальна оцінка на основі відгуків')}</div>
-                                </div>
-                            </div>
-
-                            {/* Write review */}
-                            {!isOwner && (
-                                <div style={{ background: '#141417', border: '1px solid #232326', borderRadius: '16px', padding: '16px', marginBottom: '24px' }}>
-                                    <div style={{ display: 'flex', gap: '6px', marginBottom: '16px' }}>
-                                        {[1,2,3,4,5].map(s => (
-                                            <Star key={s} size={24} onClick={() => setRating(s)} color={s <= rating ? '#f59e0b' : '#3f3f46'} fill={s <= rating ? '#f59e0b' : 'none'} style={{ cursor: 'pointer', transition: '0.2s' }} />
-                                        ))}
-                                    </div>
-                                    <textarea
-                                        value={reviewText} onChange={e => setReviewText(e.target.value)}
-                                        placeholder={T('reviewPlaceholder', 'Поділіться досвідом співпраці...')}
-                                        style={{ width: '100%', background: '#09090b', border: '1px solid #232326', color: '#fff', padding: '12px', borderRadius: '12px', minHeight: '80px', outline: 'none', marginBottom: '16px', boxSizing: 'border-box', fontSize: '14px', resize: 'vertical' }}
-                                        className="focus-accent-border"
-                                    />
-                                    <button onClick={submitReview} disabled={isSubmittingReview} style={{ width: '100%', padding: '14px', background: '#f59e0b', border: 'none', color: '#000', borderRadius: '12px', fontWeight: '800', cursor: isSubmittingReview ? 'not-allowed' : 'pointer', fontSize: '14px', transition: '0.2s' }}>
-                                        {isSubmittingReview ? T('reviewProcessing', 'ОБРОБКА...') : T('reviewSubmit', 'ЗАЛИШИТИ ВІДГУК')}
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* Review list */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                {localReviews.length > 0 ? (
-                                    localReviews.filter(r => isOwner || r.status !== 'pending').map((review, i) => (
-                                        <div key={i} style={{ background: '#141417', borderRadius: '16px', padding: '16px', border: '1px solid #232326', position: 'relative' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <div style={{ fontWeight: 'bold', color: 'white', fontSize: '14px' }}>{review.clientName}</div>
-                                                    {review.status === 'pending' && (
-                                                        <div style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b', fontSize: '10px', fontWeight: 'bold', padding: '2px 6px', borderRadius: '4px', border: '1px solid #f59e0b' }}>
-                                                            {T('reviewPending', 'НА ПЕРЕВІРЦІ')}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div style={{ color: '#52525b', fontSize: '12px' }}>{new Date(review.date).toLocaleDateString()}</div>
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
-                                                {[1,2,3,4,5].map(s => <Star key={s} size={14} color={s <= review.rating ? '#f59e0b' : '#27272a'} fill={s <= review.rating ? '#f59e0b' : 'none'} />)}
-                                            </div>
-                                            <p style={{ color: '#a1a1aa', fontSize: '13px', lineHeight: '1.5', margin: 0 }}>{review.text}</p>
-                                            {isOwner && user?.vipPackage === 'diamond' && (
-                                                <button onClick={() => handleDeleteReview(review._id)} className="hover-scale"
-                                                    style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: 'none', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold', transition: '0.2s' }}>
-                                                    🗑 {T('reviewDelete', 'Видалити')}
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div style={{ textAlign: 'center', color: '#52525b', fontSize: '13px', padding: '20px' }}>
-                                        {T('reviewEmptyText', 'Ще немає відгуків. Будьте першим!')}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                        <ReviewsBlock
+                            localReviews={localReviews} localAvg={localAvg} localTotal={localTotal}
+                            rating={rating} setRating={setRating}
+                            reviewText={reviewText} setReviewText={setReviewText}
+                            isSubmittingReview={isSubmittingReview}
+                            submitReview={submitReview} handleDeleteReview={handleDeleteReview}
+                            isOwner={isOwner} user={user}
+                        />
 
                     </div>
                 </div>
 
-                {/* ── Bottom CTA ── */}
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 24px 24px', background: 'linear-gradient(0deg, #09090b 80%, rgba(9,9,11,0) 100%)', zIndex: 100 }}>
-                    {isOwner ? (
-                        <div style={{ ...section(), padding: '16px 18px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', color: C.textSub, fontSize: '14px', fontWeight: '700' }}>
-                            <ShieldCheck size={20} color="#71717a" /> {T('thisIsYourCard', 'ЦЕ ВАША АНКЕТА')}
-                        </div>
-                    ) : !showContacts ? (
-                        <button onClick={() => setShowContacts(true)} style={{ width: '100%', padding: '18px', background: accent, border: 'none', borderRadius: '16px', color: '#000', fontSize: '16px', fontWeight: '900', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', transition: '0.2s', boxShadow: `0 10px 30px ${accent}66` }} className="hover-scale">
-                            <Sparkles size={20} /> {T('initChat', 'ІНІЦІЮВАТИ СПІЛКУВАННЯ')}
-                        </button>
-                    ) : (
-                        <div style={{ display: 'grid', gridTemplateColumns: availableSocials.length === 0 ? '1fr' : '1fr 1fr', gap: '12px', animation: 'fadeInUp 0.3s ease' }}>
-                            <button onClick={handleInternalChatClick} style={{ padding: '14px', background: C.surface2, border: `1px solid ${accent}44`, borderRadius: R.sm, color: C.text, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', fontFamily: 'inherit', transition: 'border-color 0.18s' }}>
-                                <ShieldCheck size={24} color={accent} />
-                                <div style={{ fontSize: '13px', fontWeight: '700' }}>{T('internalChat', 'Внутрішній Чат')}</div>
-                            </button>
-                            {availableSocials.length > 0 ? (
-                                availableSocials.map(network => {
-                                    const netData = contactNetworks.find(n => n.id === network) || contactNetworks[0];
-                                    return (
-                                        <button key={network} onClick={() => handleSocialClick(network)} style={{ padding: '14px', background: '#141417', border: `1px solid ${netData.color}`, borderRadius: '14px', color: '#fff', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', transition: '0.2s' }} className="hover-scale">
-                                            <Send size={24} color={netData.color} />
-                                            <div style={{ fontSize: '13px', fontWeight: '700' }}>{network}</div>
-                                        </button>
-                                    );
-                                })
-                            ) : (
-                                <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px dashed #3f3f46', borderRadius: '14px', color: '#71717a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: '600' }}>
-                                    {T('noSocials', 'Соцмережі не вказані')}
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
+                <BottomCTA
+                    isOwner={isOwner} showContacts={showContacts} setShowContacts={setShowContacts}
+                    availableSocials={availableSocials} contactNetworks={contactNetworks}
+                    handleInternalChatClick={handleInternalChatClick} handleSocialClick={handleSocialClick}
+                    accent={accent}
+                />
             </div>
 
             {/* ── Warning modal ── */}
-            {showWarningModal && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(10px)', zIndex: 6000, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fadeIn 0.2s ease' }} onClick={() => setShowWarningModal(false)}>
-                    <div onClick={e => e.stopPropagation()} className="fade-in-up" style={{ background: C.surface, borderRadius: R.xl, border: `1px solid ${C.border}`, padding: '28px', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.9)', width: '90%', maxWidth: '400px' }}>
-                        <div style={{ width: '56px', height: '56px', borderRadius: R.md, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
-                            <AlertTriangle size={30} color="#ef4444" />
-                        </div>
-                        <h3 style={{ color: 'white', fontSize: '20px', fontWeight: '900', marginBottom: '15px' }}>{T('warningTitle', 'ПОПЕРЕДЖЕННЯ')}</h3>
-                        <p style={{ color: '#a1a1aa', fontSize: '14px', lineHeight: '1.6', marginBottom: '20px' }}>
-                            {T('warningText1', 'Переходячи в')} <b>{selectedSocial}</b>, {T('warningText2', 'ви залишаєте безпечну зону нашої платформи.')}<br /><br />
-                            <b style={{ color: '#ef4444' }}>{T('warningNotResponsible', 'Ми не несемо відповідальності')}</b> {T('warningNotResponsibleText', 'за будь-які фінансові операції або домовленості поза цим сайтом.')}<br /><br />
-                            <b style={{ color: '#10b981' }}>{T('warningRecommend', 'Рекомендуємо')}:</b> {T('warningRecommendText', 'для вашої безпеки ведіть листування у нашому')} <b>{T('internalChat', 'Внутрішньому Чаті')}</b>.
-                        </p>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            <button onClick={handleInternalChatClick} style={{ ...btnPrimary(), width: '100%', padding: '13px' }}>
-                                {T('warnGoToSite', 'НАПИСАТИ В ЧАТІ САЙТУ')}
-                            </button>
-                            <button onClick={confirmSocialRedirect} style={{ ...btnGhost(), width: '100%', padding: '13px' }}>
-                                {`${T('warnGoAnyway', 'ВСЕ ОДНО ПЕРЕЙТИ В')} ${selectedSocial}`}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <SocialWarningModal
+                open={showWarningModal}
+                selectedSocial={selectedSocial}
+                onClose={() => setShowWarningModal(false)}
+                onGoToInternal={handleInternalChatClick}
+                onConfirmRedirect={confirmSocialRedirect}
+            />
 
-            <style>{`
+                        <style>{`
                 @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
                 @keyframes fadeIn   { from { opacity: 0; } to { opacity: 1; } }
                 .hover-scale:hover  { transform: scale(1.02); }
