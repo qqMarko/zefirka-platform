@@ -57,7 +57,9 @@ export const initTelegramBot = (io, sendNotification) => {
                 "/userinfo — інфо про юзера\n" +
                 "/ban — заблокувати\n" +
                 "/unban — розблокувати\n" +
-                "/give 500 — нарахувати ₴ (мінус = списати)"
+                "/give 500 — нарахувати ₴ (мінус = списати)\n\n" +
+                "📋 /mytickets — мої активні тікети\n\n" +
+                "ℹ️ Натисніть «Взяти в роботу» на тікеті — він закріпиться за вами, інші адміни не зможуть відповідати цьому юзеру."
             ); 
         }
     });
@@ -181,17 +183,43 @@ export const initTelegramBot = (io, sendNotification) => {
         const match = originalText.match(/ID Юзера: \[(.*?)\]/);
         if (match && match[1]) {
             const userId = match[1];
+            const adminId = msg.from.id;
+            const adminName = msg.from.first_name || msg.from.username || 'Агент';
 
-            // ⚠️ Перевірка: чи не закріплений цей тікет за іншим адміном?
             const lock = ticketLocks.get(userId);
-            if (lock && lock.adminId !== msg.from.id) {
-                bot.sendMessage(ADMIN_ID, `⚠️ @${msg.from.username}, цим запитом вже займається **${lock.adminName}**! Не дублюйте відповіді.`, { reply_to_message_id: msg.message_id, parse_mode: 'Markdown' });
+
+            // ⚠️ Закріплений за ІНШИМ адміном — блокуємо
+            if (lock && lock.adminId !== adminId) {
+                bot.sendMessage(ADMIN_ID, `🚫 @${msg.from.username || adminName}, цим юзером займається ${lock.adminName}! Не втручайтесь у чужий діалог.`, { reply_to_message_id: msg.message_id });
                 return;
             }
 
+            // 🆕 Тікет ще нічий — закріплюємо за тим, хто відповів першим
+            if (!lock) {
+                ticketLocks.set(userId, { adminId, adminName, takenAt: Date.now() });
+                bot.sendMessage(ADMIN_ID, `✅ Тікет автоматично закріплено за вами (${adminName}).`, { reply_to_message_id: msg.message_id });
+            }
+
             io.emit(`support_reply_${userId}`, { text: msg.text, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), sender: 'agent' });
-            bot.sendMessage(ADMIN_ID, `✅ Відповідь успішно надіслано юзеру!`);
+            bot.sendMessage(ADMIN_ID, `✅ Відповідь надіслано юзеру.`);
         }
+    });
+
+    // 📋 МОЇ ТІКЕТИ
+    bot.onText(/^\/mytickets$/, (msg) => {
+        if (msg.chat.id.toString() !== ADMIN_ID) return;
+        const adminId = msg.from.id;
+        const mine = [];
+        for (const [userId, lock] of ticketLocks.entries()) {
+            if (lock.adminId === adminId) {
+                const mins = Math.round((Date.now() - (lock.takenAt || Date.now())) / 60000);
+                mine.push(`• Юзер ${userId} — ${mins} хв тому`);
+            }
+        }
+        const text = mine.length
+            ? `📋 ВАШІ АКТИВНІ ТІКЕТИ (${mine.length}):\n\n${mine.join('\n')}\n\nВсього активних: ${ticketLocks.size}`
+            : `📭 У вас немає активних тікетів.\nВсього активних в системі: ${ticketLocks.size}`;
+        bot.sendMessage(ADMIN_ID, text, { reply_to_message_id: msg.message_id });
     });
 
     // 🚀 ОБРОБКА КНОПОК "ВЗЯТИ В РОБОТУ", "ЗАКРИТИ", "ОПЛАТИ"
@@ -215,18 +243,38 @@ export const initTelegramBot = (io, sendNotification) => {
             }
 
             // Закріплюємо за адміном
-            ticketLocks.set(userId, { adminId, adminName });
+            ticketLocks.set(userId, { adminId, adminName, takenAt: Date.now() });
             
             const newText = query.message.text ? 
                 `${query.message.text}\n\n✅ В роботі: ${adminName}` : 
                 `${query.message.caption}\n\n✅ В роботі: ${adminName}`;
 
-            const closeKeyboard = { inline_keyboard: [[{ text: "🔒 Закрити запит", callback_data: `close_${userId}` }]] };
+            const closeKeyboard = { inline_keyboard: [[
+                { text: "🔒 Закрити запит", callback_data: `close_${userId}` },
+                { text: "↩️ Звільнити", callback_data: `release_${userId}` }
+            ]] };
 
             if (query.message.text) bot.editMessageText(newText, { chat_id: chatId, message_id: messageId, reply_markup: closeKeyboard });
             else bot.editMessageCaption(newText, { chat_id: chatId, message_id: messageId, reply_markup: closeKeyboard });
             
-            bot.answerCallbackQuery(query.id, { text: `✅ Ви взяли запит в роботу!` });
+            bot.answerCallbackQuery(query.id, { text: `✅ Ви взяли запит в роботу! Тільки ви відповідаєте цьому юзеру.` });
+        }
+
+        // --- ЗВІЛЬНИТИ ТІКЕТ (передати назад у чергу) ---
+        if (data.startsWith('release_')) {
+            const userId = data.split('_')[1];
+            const lock = ticketLocks.get(userId);
+            if (!lock) return bot.answerCallbackQuery(query.id, { text: `⚠️ Тікет не закріплений.` });
+            if (lock.adminId !== query.from.id) {
+                return bot.answerCallbackQuery(query.id, { text: `❌ Тільки ${lock.adminName} може звільнити цей тікет.`, show_alert: true });
+            }
+            ticketLocks.delete(userId);
+            const baseText = (query.message.text || query.message.caption).replace(/\n\n✅ В роботі: .*/s, '');
+            const claimKb = { inline_keyboard: [[{ text: "✋ Взяти в роботу", callback_data: `claim_${userId}` }]] };
+            const releasedText = baseText + `\n\n↩️ Тікет звільнено — доступний іншим`;
+            if (query.message.text) bot.editMessageText(releasedText, { chat_id: chatId, message_id: messageId, reply_markup: claimKb });
+            else bot.editMessageCaption(releasedText, { chat_id: chatId, message_id: messageId, reply_markup: claimKb });
+            bot.answerCallbackQuery(query.id, { text: `↩️ Тікет звільнено.` });
         }
 
         // --- ЛОГІКА ЗАКРИТТЯ ТІКЕТА ---
