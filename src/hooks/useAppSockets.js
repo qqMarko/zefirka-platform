@@ -7,7 +7,9 @@ export const useAppSockets = ({
     userUniqueId,
     setSupportMessages,
     setShowSupport,
-    setHasActiveDisputeAlert
+    setHasActiveDisputeAlert,
+    setAgentName,
+    clearSupportSession
 }) => {
     useEffect(() => {
         // Логіка визначення ID користувача (або гостя для підтримки)
@@ -87,6 +89,24 @@ export const useAppSockets = ({
         // Підписка на події
         socket.on(`support_reply_${currentUserId}`, handleSupportReply);
 
+        // 👤 Адмін взяв тікет — повідомляємо в чаті
+        const handleAgentJoined = (data) => {
+            if (setAgentName) setAgentName(data.adminName);
+            setSupportMessages(prev => [...prev, {
+                id: Date.now(),
+                text: `👤 Адмін ${data.adminName} підключився до чату`,
+                sender: 'system',
+                time: data.time
+            }]);
+            setShowSupport(true);
+        };
+        // 🧹 Закриття тікета — очищаємо чат
+        const handleSupportClosed = () => {
+            setTimeout(() => { if (clearSupportSession) clearSupportSession(); }, 3000); // даємо побачити прощальне повідомлення
+        };
+        socket.on(`support_agent_joined_${currentUserId}`, handleAgentJoined);
+        socket.on(`support_closed_${currentUserId}`, handleSupportClosed);
+
         if (userUniqueId) {
             socket.on(`new_dispute_${userUniqueId}`, handleDispute);
             socket.on(`new_notification_${userUniqueId}`, handleNotif);
@@ -110,6 +130,8 @@ export const useAppSockets = ({
             document.removeEventListener('touchstart', unlockAudioContext, { capture: true });
             
             socket.off(`support_reply_${currentUserId}`, handleSupportReply); 
+            socket.off(`support_agent_joined_${currentUserId}`, handleAgentJoined);
+            socket.off(`support_closed_${currentUserId}`, handleSupportClosed);
             if (userUniqueId) {
                 socket.off(`new_dispute_${userUniqueId}`, handleDispute);
                 socket.off(`new_notification_${userUniqueId}`, handleNotif);

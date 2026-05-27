@@ -197,6 +197,7 @@ export const initTelegramBot = (io, sendNotification) => {
             // 🆕 Тікет ще нічий — закріплюємо за тим, хто відповів першим
             if (!lock) {
                 ticketLocks.set(userId, { adminId, adminName, takenAt: Date.now() });
+                io.emit(`support_agent_joined_${userId}`, { adminName, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
                 bot.sendMessage(ADMIN_ID, `✅ Тікет автоматично закріплено за вами (${adminName}).`, { reply_to_message_id: msg.message_id });
             }
 
@@ -244,6 +245,8 @@ export const initTelegramBot = (io, sendNotification) => {
 
             // Закріплюємо за адміном
             ticketLocks.set(userId, { adminId, adminName, takenAt: Date.now() });
+            // 📣 Повідомляємо юзера в чаті підтримки що адмін підключився
+            io.emit(`support_agent_joined_${userId}`, { adminName, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
             
             const newText = query.message.text ? 
                 `${query.message.text}\n\n✅ В роботі: ${adminName}` : 
@@ -295,6 +298,8 @@ export const initTelegramBot = (io, sendNotification) => {
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
                 sender: 'agent' 
             });
+            // 🧹 Сигнал що сесію завершено — фронт очистить збережену переписку
+            io.emit(`support_closed_${userId}`);
 
             const newText = query.message.text ? 
                 query.message.text.replace(/✅ В роботі: .*/, `🔒 Запит закрито (${lock.adminName})`) : 

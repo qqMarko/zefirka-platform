@@ -1,28 +1,52 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { X, Camera, Send, MessageSquare, AlertTriangle } from 'lucide-react';
 
-// Шаблони для швидких відповідей (більш корисні для клієнтів)
+// Шаблони швидких відповідей — повний набір, синхронізовано з ботом
 const quickReplies = [
-    { icon: "🚨", text: "Меня обманули / шахрайство", short: "Шахрайство" },
-    { icon: "💳", text: "Проблема з оплатою або поповненням", short: "Оплата" },
-    { icon: "🔒", text: "Мій акаунт заблоковано — чому?", short: "Блокування" },
-    { icon: "👤", text: "Хочу верифікувати профіль", short: "Верифікація" },
-    { icon: "⭐", text: "Як отримати VIP статус?", short: "VIP / Premium" },
-    { icon: "📸", text: "AI заблокував моє фото", short: "Фото заблоковано" },
-    { icon: "💬", text: "Проблема з повідомленнями / чатом", short: "Чат / Повідомлення" },
-    { icon: "❓", text: "Загальне питання до підтримки", short: "Інше питання" },
+    { icon: "🚨", text: "Мене обманули, я підозрюю шахрайство", short: "Шахрайство" },
+    { icon: "💳", text: "Проблема з оплатою або поповненням балансу", short: "Оплата" },
+    { icon: "🔒", text: "Мій акаунт заблоковано — за що і чому?", short: "Блокування" },
+    { icon: "🥈", text: "Хочу пройти Базову верифікацію (фото)", short: "Верифікація фото" },
+    { icon: "🥇", text: "Хочу пройти Повну верифікацію (відео)", short: "Верифікація відео" },
+    { icon: "⭐", text: "Як отримати VIP статус і що він дає?", short: "VIP / Premium" },
+    { icon: "📸", text: "AI заблокував моє фото — потрібна перевірка вручну", short: "Фото заблоковано" },
+    { icon: "💬", text: "Проблема з повідомленнями або чатом", short: "Чат" },
+    { icon: "⚖️", text: "Питання щодо Арбітражу / скарги", short: "Арбітраж" },
+    { icon: "💰", text: "Як вивести зароблені кошти?", short: "Виведення" },
+    { icon: "👤", text: "Питання щодо мого профілю / анкети", short: "Анкета" },
+    { icon: "📜", text: "Питання щодо правил платформи", short: "Правила" },
+    { icon: "❓", text: "Інше питання до підтримки", short: "Інше" },
 ];
 
 const SupportChat = ({
     setShowSupport, supportMessages, supportInput, setSupportInput,
     supportAttachedImg, setSupportAttachedImg, supportFileRef,
-    handleSupportAttach, handleSupportSend, t, currentLang, accent
+    handleSupportAttach, handleSupportSend, agentName, t, currentLang, accent
 }) => {
     const messagesEndRef = useRef(null);
     const scrollContainerRef = useRef(null);
     const [isClosing, setIsClosing] = useState(false);
     const targetScroll = useRef(0);
     const isScrolling = useRef(false);
+
+    // Горизонтальний скрол швидких тем колесом миші — без витоку на сторінку.
+    // Callback-ref гарантує атач відразу при монтуванні (умовний рендер)
+    const wheelHandlerRef = useRef(null);
+    const quickScrollRef = (el) => {
+        // detach попередній
+        if (wheelHandlerRef.current && wheelHandlerRef.current.el) {
+            wheelHandlerRef.current.el.removeEventListener('wheel', wheelHandlerRef.current.fn);
+        }
+        if (!el) { wheelHandlerRef.current = null; return; }
+        const fn = (e) => {
+            // блокуємо ВЕРТИКАЛЬНИЙ скрол сторінки і переводимо в ГОРИЗОНТАЛЬНИЙ
+            e.preventDefault();
+            e.stopPropagation();
+            el.scrollLeft += (e.deltaY || e.deltaX) * 0.6;
+        };
+        el.addEventListener('wheel', fn, { passive: false });
+        wheelHandlerRef.current = { el, fn };
+    };
 
     useEffect(() => {
         const container = scrollContainerRef.current;
@@ -80,8 +104,8 @@ const SupportChat = ({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: `linear-gradient(135deg, ${accent}44, ${accent}11)`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${accent}66`, color: accent, boxShadow: `0 0 10px ${accent}44` }}><MessageSquare size={18} fill={`${accent}44`} /></div>
                         <div>
-                            <div style={{ fontSize: '14px', fontWeight: '700', color: 'white', letterSpacing: '0.5px' }}>{t[currentLang]?.supportAgent || 'Support'}</div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#4caf50', fontWeight: '600' }}><span style={{ width: '6px', height: '6px', background: '#4caf50', borderRadius: '50%', display: 'inline-block', boxShadow: '0 0 6px #4caf50' }}></span>{t[currentLang]?.supportOnline || 'Online'}</div>
+                            <div style={{ fontSize: '14px', fontWeight: '700', color: 'white', letterSpacing: '0.5px' }}>{agentName ? agentName : (t[currentLang]?.supportAgent || 'Support')}</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#4caf50', fontWeight: '600' }}><span style={{ width: '6px', height: '6px', background: '#4caf50', borderRadius: '50%', display: 'inline-block', boxShadow: '0 0 6px #4caf50' }}></span>{agentName ? 'Адмін у чаті' : (t[currentLang]?.supportOnline || 'Online')}</div>
                         </div>
                     </div>
                     <div onClick={handleClose} style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.2s' }} className="menu-hover"><X size={18} color="#aaa" /></div>
@@ -105,6 +129,10 @@ const SupportChat = ({
 
                         {supportMessages.map(msg => {
                             const isUser = msg.sender === 'user';
+                            const isSystem = msg.sender === 'system';
+                            if (isSystem) return (
+                                <div key={msg.id} style={{ alignSelf: 'center', background: 'rgba(76,175,80,0.1)', border: '1px solid rgba(76,175,80,0.3)', color: '#4caf50', padding: '6px 14px', borderRadius: '20px', fontSize: '11px', fontWeight: '700' }}>{msg.text}</div>
+                            );
                             return (
                                 <div key={msg.id} style={{ alignSelf: isUser ? 'flex-end' : 'flex-start', background: isUser ? `linear-gradient(135deg, ${accent}, ${accent}dd)` : '#15151a', border: isUser ? 'none' : '1px solid rgba(255,255,255,0.05)', color: 'white', padding: '12px 16px', borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px', maxWidth: '85%', fontSize: '13px', lineHeight: '1.5', whiteSpace: 'pre-wrap', fontWeight: '500', boxShadow: isUser ? `0 4px 15px ${accent}44` : '0 4px 15px rgba(0,0,0,0.2)' }}>
                                     {msg.img && <img src={msg.img} style={{ width: '100%', borderRadius: '8px', marginBottom: '8px', border: '1px solid rgba(255,255,255,0.1)' }} alt="attached" />}
@@ -119,17 +147,12 @@ const SupportChat = ({
 
                 {/* 🚀 ШВИДКІ ВІДПОВІДІ — горизонтальний скрол + колесо миші */}
                 {!supportInput && !supportAttachedImg && (
-                    <div 
-                        style={{ padding: '8px 14px', marginBottom: '4px', position: 'relative' }}
-                        onWheel={e => {
-                            const el = e.currentTarget.querySelector('.quick-scroll-inner');
-                            if (el) { e.preventDefault(); el.scrollLeft += e.deltaY * 1.2; }
-                        }}
-                    >
+                    <div style={{ padding: '8px 14px', marginBottom: '4px', position: 'relative' }}>
                         <div style={{ fontSize: '10px', color: '#555', fontWeight: '700', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '7px', paddingLeft: '2px' }}>Швидкі теми</div>
                         <div 
+                            ref={quickScrollRef}
                             className="quick-scroll-inner custom-scrollbar"
-                            style={{ display: 'flex', gap: '7px', overflowX: 'auto', paddingBottom: '4px', scrollBehavior: 'smooth' }}
+                            style={{ display: 'flex', gap: '7px', overflowX: 'auto', overflowY: 'hidden', paddingBottom: '4px', overscrollBehavior: 'contain' }}
                         >
                             {quickReplies.map((reply, i) => (
                                 <button 

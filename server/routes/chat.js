@@ -86,10 +86,15 @@ export default (bot, ADMIN_ID) => {
             const { text, userEmail, image } = req.body;
             
             let priorityTag = '⏳ [Звичайна черга]';
+            let vipInfo = 'Без VIP';
+            let priorityLevel = 0;
             try {
                 const user = await User.findById(userId);
-                if (user && ['premium', 'diamond', 'priority_chat', 'concierge'].includes(user.vipPackage)) {
-                    priorityTag = '⚡ [VIP Пріоритет]';
+                if (user) {
+                    const VIP_LEVEL = { concierge: 4, diamond: 4, priority_chat: 3, premium: 3, premium_client: 2, start: 1 };
+                    priorityLevel = VIP_LEVEL[user.vipPackage?.toLowerCase()] || 0;
+                    vipInfo = user.vipPackage && user.vipPackage !== 'none' ? user.vipPackage.toUpperCase() : 'Без VIP';
+                    if (priorityLevel >= 3) priorityTag = '⚡ [VIP Пріоритет]';
                 }
             } catch(e) {}
 
@@ -103,7 +108,7 @@ export default (bot, ADMIN_ID) => {
                 messageToAdmin = `💬 Доповнення до тікета\nID Юзера: [${userId}]\n(Веде діалог: ${lock.adminName})\n\nПовідомлення:\n${text}`;
             } else {
                 // Це повністю нове звернення
-                messageToAdmin = `🚨 Нове звернення!\n\n${priorityTag}\nID Юзера: [${userId}]\nEmail: ${userEmail || 'Гість'}\n\nПовідомлення:\n${text}`;
+                messageToAdmin = `🚨 Нове звернення!\n\n${priorityTag}\n👑 VIP: ${vipInfo}  •  🎯 Пріоритет: ${priorityLevel}/4\nID Юзера: [${userId}]\nEmail: ${userEmail || 'Гість'}\n\nПовідомлення:\n${text}`;
                 replyMarkup = {
                     inline_keyboard: [[{ text: "✋ Взяти в роботу", callback_data: `claim_${userId}` }]]
                 };

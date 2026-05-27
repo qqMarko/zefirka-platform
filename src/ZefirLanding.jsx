@@ -75,7 +75,8 @@ const ZefirkaPlatform = () => {
     const {
         showSupport, setShowSupport, supportMessages, setSupportMessages,
         supportInput, setSupportInput, supportAttachedImg, setSupportAttachedImg,
-        supportFileRef, handleSupportAttach, handleSupportSend
+        supportFileRef, handleSupportAttach, handleSupportSend,
+        agentName, setAgentName, clearSupportSession
     } = useSupportLogic(userUniqueId, email);
 
     const [isBanned, setIsBanned] = useState(false);
@@ -152,7 +153,7 @@ const ZefirkaPlatform = () => {
         return () => clearInterval(interval);
     }, [showVerifyModal, verifyTimer]);
 
-    useAppSockets({ userUniqueId, setSupportMessages, setShowSupport, setHasActiveDisputeAlert });
+    useAppSockets({ userUniqueId, setSupportMessages, setShowSupport, setHasActiveDisputeAlert, setAgentName, clearSupportSession });
 
     // 🚀 МИТТЄВЕ ОТРИМАННЯ ПОВІДОМЛЕНЬ ВІД ПІДТРИМКИ (ТА ПРО ЗАКРИТТЯ)
     useEffect(() => {
@@ -370,7 +371,7 @@ const ZefirkaPlatform = () => {
                 {showSettingsModal && <SettingsModal setShowSettingsModal={setShowSettingsModal} t={t} currentLang={currentLang} accent={accent} handleLogout={handleLogout} />}
                 {showCreateModal && <CreateProfileModal />}
                 {showVerifyPromo && <VerifyPromoModal setShowVerifyPromo={setShowVerifyPromo} setShowSupport={setShowSupport} handleSupportSend={handleSupportSend} t={t} currentLang={currentLang} accent={accent} />}
-                {showSupport && <SupportChat setShowSupport={setShowSupport} supportMessages={supportMessages} supportInput={supportInput} setSupportInput={setSupportInput} supportAttachedImg={supportAttachedImg} setSupportAttachedImg={setSupportAttachedImg} supportFileRef={supportFileRef} handleSupportAttach={handleSupportAttach} handleSupportSend={handleSupportSend} t={t} currentLang={currentLang} accent={accent} />}
+                {showSupport && <SupportChat setShowSupport={setShowSupport} supportMessages={supportMessages} supportInput={supportInput} setSupportInput={setSupportInput} supportAttachedImg={supportAttachedImg} setSupportAttachedImg={setSupportAttachedImg} supportFileRef={supportFileRef} handleSupportAttach={handleSupportAttach} handleSupportSend={handleSupportSend} agentName={agentName} t={t} currentLang={currentLang} accent={accent} />}
                 {selectedModel && <ModelProfileModal model={selectedModel} onClose={() => setSelectedModel(null)} openPrivateChat={openPrivateChat} favorites={favorites} handleToggleFavorite={handleToggleFavorite} />}
                 {showStats && <StatsModal setShowStats={setShowStats} t={t} currentLang={currentLang} accent={accent} />}
                 {showWalletModal && <WalletModal setShowWalletModal={setShowWalletModal} t={t} currentLang={currentLang} accent={accent} openSupport={() => setShowSupport(true)} onPaymentSubmit={handlePaymentInitiated} initialAmount={walletInitialAmount} />}
