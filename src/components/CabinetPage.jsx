@@ -39,17 +39,41 @@ const CabinetPage = ({ userRole, balance, userUniqueId, myModels, favorites, myC
                     <div style={{ marginTop: '6px', fontSize: '12px', color: C.textMuted }}>{t[currentLang]?.yourId || 'Ваш ID'}: <span style={{ color: C.text, fontWeight: '700' }}>ID{userUniqueId}</span></div>
                 </div>
 
-                {userRole === 'model' && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.2)', padding: '14px 16px', borderRadius: R.sm }}>
-                        <div>
-                            <div style={{ fontSize: '10px', color: C.textMuted, textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.6px' }}>{t[currentLang]?.accStatus || 'Статус'}</div>
-                            <div style={{ fontSize: '13px', color: C.danger, fontWeight: '800', marginTop: '2px' }}>{t[currentLang]?.unverified || 'Не верифіковано'}</div>
+                {userRole === 'model' && (() => {
+                    const v = myModels?.[0]?.verification || 'none';
+                    if (v === 'video') return (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.3)', padding: '14px 16px', borderRadius: R.sm }}>
+                            <CheckCircle2 size={28} color="#FFD700" />
+                            <div>
+                                <div style={{ fontSize: '10px', color: C.textMuted, textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.6px' }}>Статус</div>
+                                <div style={{ fontSize: '13px', color: '#FFD700', fontWeight: '800', marginTop: '2px' }}>🥇 Верифіковано (відео)</div>
+                            </div>
                         </div>
-                        <button onClick={e => { e.preventDefault(); e.stopPropagation(); setShowVerifyPromo(true); }} style={{ ...btnPrimary({ background: 'linear-gradient(135deg, #ff4444, #cc2222)', boxShadow: '0 4px 14px rgba(255,68,68,0.3)', padding: '10px 16px', fontSize: '13px' }) }}>
-                            <ShieldCheck size={15} /> {t[currentLang]?.verifyNowBtn || 'Верифікувати'}
-                        </button>
-                    </div>
-                )}
+                    );
+                    if (v === 'photo') return (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(192,192,192,0.08)', border: '1px solid rgba(192,192,192,0.3)', padding: '14px 16px', borderRadius: R.sm }}>
+                            <CheckCircle2 size={28} color="#C0C0C0" />
+                            <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: '10px', color: C.textMuted, textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.6px' }}>Статус</div>
+                                <div style={{ fontSize: '13px', color: '#C0C0C0', fontWeight: '800', marginTop: '2px' }}>🥈 Верифіковано (фото)</div>
+                            </div>
+                            <button onClick={e => { e.preventDefault(); e.stopPropagation(); setShowVerifyPromo(true); }} style={{ ...btnPrimary({ background: 'linear-gradient(135deg, #FFD700, #DAA520)', color: '#000', boxShadow: '0 4px 14px rgba(255,215,0,0.3)', padding: '10px 16px', fontSize: '13px' }) }}>
+                                <ShieldCheck size={15} /> Покращити до 🥇
+                            </button>
+                        </div>
+                    );
+                    return (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.2)', padding: '14px 16px', borderRadius: R.sm }}>
+                            <div>
+                                <div style={{ fontSize: '10px', color: C.textMuted, textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.6px' }}>{t[currentLang]?.accStatus || 'Статус'}</div>
+                                <div style={{ fontSize: '13px', color: C.danger, fontWeight: '800', marginTop: '2px' }}>{t[currentLang]?.unverified || 'Не верифіковано'}</div>
+                            </div>
+                            <button onClick={e => { e.preventDefault(); e.stopPropagation(); setShowVerifyPromo(true); }} style={{ ...btnPrimary({ background: 'linear-gradient(135deg, #ff4444, #cc2222)', boxShadow: '0 4px 14px rgba(255,68,68,0.3)', padding: '10px 16px', fontSize: '13px' }) }}>
+                                <ShieldCheck size={15} /> {t[currentLang]?.verifyNowBtn || 'Верифікувати'}
+                            </button>
+                        </div>
+                    );
+                })()}
 
                 <div style={{ display: 'flex', gap: '10px' }}>
                     <button onClick={() => setShowWalletModal(true)} style={{ ...btnPrimary(), padding: '12px 20px', fontSize: '13px' }} className="cabinet-action-btn">
