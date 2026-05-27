@@ -337,7 +337,8 @@ const CatalogGrid = ({
                                         <div>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                                                 <span style={{ color: 'white', fontSize: 24, fontWeight: 900, textShadow: '0 2px 10px rgba(0,0,0,.8)' }}>{m.name}</span>
-                                                {m.vLevel > 0 && <CheckCircle2 size={18} color={checkColor} style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,.5))' }} />}
+                                                {m.verification === 'video' && <CheckCircle2 size={18} color="#FFD700" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,.5))' }} />}
+                                                {m.verification === 'photo' && <CheckCircle2 size={18} color="#C0C0C0" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,.5))' }} />}
                                             </div>
                                             <div style={{ color: '#ddd', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
                                                 <span style={{
@@ -354,7 +355,7 @@ const CatalogGrid = ({
                                         </div>
                                         <div style={{ textAlign: 'right' }}>
                                             <div style={{ fontSize: 22, fontWeight: 900, color: accent, textShadow: '0 2px 10px rgba(0,0,0,.8)' }}>
-                                                {m.priceFrom} <span style={{ fontSize: 12, color: '#ccc' }}>UAH</span>
+                                                {m.priceFrom}{m.priceTo ? `–${m.priceTo}` : ''} <span style={{ fontSize: 12, color: '#ccc' }}>UAH</span>
                                             </div>
                                         </div>
                                     </div>

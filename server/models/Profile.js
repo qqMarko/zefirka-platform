@@ -26,6 +26,9 @@ const profileSchema = new mongoose.Schema({
     
     isApproved: { type: Boolean, default: false }, // Для модерації
     vLevel: { type: Number, default: 0 },
+    // ✅ ВЕРИФІКАЦІЯ (окремо від VIP): none | photo | video
+    verification: { type: String, enum: ['none', 'photo', 'video'], default: 'none' },
+    verifiedAt: { type: Date },
     vipExpiresAt: { type: Date },
     bumpedAt: { type: Date },
     bumpExpiresAt: { type: Date },

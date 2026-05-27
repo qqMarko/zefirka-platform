@@ -376,7 +376,18 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
                         <div style={{ marginBottom: '24px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                                 <h1 style={{ margin: 0, fontSize: '30px', fontWeight: '900', color: '#fff', letterSpacing: '-0.5px' }}>{model.name}</h1>
-                                {model.vLevel > 0 && <CheckCircle2 size={22} color="#10b981" />}
+                                {model.verification === 'video' && (
+                                    <span title="Верифіковано по відео" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(255,215,0,0.12)', border: '1px solid rgba(255,215,0,0.4)', borderRadius: '20px', padding: '3px 10px' }}>
+                                        <CheckCircle2 size={15} color="#FFD700" />
+                                        <span style={{ fontSize: '11px', fontWeight: '800', color: '#FFD700' }}>VIDEO</span>
+                                    </span>
+                                )}
+                                {model.verification === 'photo' && (
+                                    <span title="Верифіковано по фото" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(192,192,192,0.12)', border: '1px solid rgba(192,192,192,0.4)', borderRadius: '20px', padding: '3px 10px' }}>
+                                        <CheckCircle2 size={15} color="#C0C0C0" />
+                                        <span style={{ fontSize: '11px', fontWeight: '800', color: '#C0C0C0' }}>PHOTO</span>
+                                    </span>
+                                )}
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                 <span style={{ color: accent, fontSize: '15px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase' }}>

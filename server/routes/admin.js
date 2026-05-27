@@ -165,6 +165,31 @@ export default (sendNotification) => {
         } catch (error) { res.status(500).json({ success: false }); } 
     });
 
+    // ✅ ВСТАНОВИТИ ВЕРИФІКАЦІЮ (photo / video / none) — окремо від VIP
+    router.post('/profiles/:id/set-verification', adminMiddleware, async (req, res) => {
+        try {
+            const { verification } = req.body; // 'photo' | 'video' | 'none'
+            if (!['photo', 'video', 'none'].includes(verification)) {
+                return res.status(400).json({ success: false, message: 'Невірний тип верифікації' });
+            }
+            const profile = await Profile.findByIdAndUpdate(
+                req.params.id,
+                { verification, verifiedAt: verification === 'none' ? null : new Date() },
+                { new: true }
+            );
+            if (!profile) return res.status(404).json({ success: false });
+
+            const io = getIO();
+            if (io) io.emit('global_sync', { action: 'reload_catalog' });
+
+            if (verification !== 'none' && sendNotification) {
+                const label = verification === 'video' ? 'Відео (золота)' : 'Фото (срібна)';
+                sendNotification(profile.userId, `✅ Вашу анкету "${profile.name}" верифіковано! Тип: ${label} галочка.`);
+            }
+            res.json({ success: true, profile });
+        } catch (error) { res.status(500).json({ success: false }); }
+    });
+
     router.post('/profiles/:id/approve', adminMiddleware, async (req, res) => {
         try {
             await mongoose.connection.collection('profiles').updateOne(
