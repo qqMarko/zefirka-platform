@@ -1,11 +1,21 @@
-import React from 'react';
-import { Search, LogIn, Trash2 } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { Search, LogIn, Trash2, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useStore from '../../store/useStore';
 import { useNavigate } from 'react-router-dom';
 
 const AdminUsers = ({ users, isMobile, searchQuery, setSearchQuery, fetchUsers, authFetch }) => {
     const navigate = useNavigate();
+    const scrollRef = useRef(null);
+    const [expandedId, setExpandedId] = useState(null);
+
+    useEffect(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const onWheel = (e) => { e.preventDefault(); el.scrollTop += e.deltaY; };
+        el.addEventListener('wheel', onWheel, { passive: false });
+        return () => el.removeEventListener('wheel', onWheel);
+    }, []);
 
     const handleCustomBalance = async (userId, type) => {
         const amountStr = prompt(`Введіть суму для ${type === 'add' ? 'ПОПОВНЕННЯ' : 'ШТРАФУ'} (тільки цифри):`, "500");
@@ -45,6 +55,41 @@ const AdminUsers = ({ users, isMobile, searchQuery, setSearchQuery, fetchUsers, 
         } catch (err) { toast.error('Помилка сервера'); }
     };
 
+    const handleGrantVip = async (userId) => {
+        const pkg = prompt("Введіть VIP-пакет:\n\nМоделі: start / premium / diamond\nКлієнти: premium_client / priority_chat / concierge", "premium");
+        if (!pkg) return;
+        try {
+            const res = await authFetch(`/api/admin/grant-vip/${userId}`, { method: 'POST', body: JSON.stringify({ packageId: pkg.trim().toLowerCase() }) });
+            const data = await res.json();
+            if (data.success) { toast.success(`👑 Видано VIP: ${pkg.toUpperCase()}`); fetchUsers(); }
+            else toast.error(`❌ ${data.message}`);
+        } catch (err) { toast.error('Помилка сервера'); }
+    };
+
+    const handleSetVerification = async (userId, verification) => {
+        try {
+            const res = await authFetch(`/api/admin/users/${userId}/set-verification-all`, { method: 'POST', body: JSON.stringify({ verification }) });
+            const data = await res.json();
+            if (data.success) {
+                const lbl = { photo: '🥈 Фото', video: '🥇 Відео', none: '❌ Знято' };
+                toast.success(`Верифікація: ${lbl[verification]}`); fetchUsers();
+            } else toast.error(`❌ ${data.message || 'Помилка'}`);
+        } catch (err) { toast.error('Помилка сервера'); }
+    };
+
+    const handleSetTrust = async (userId, current) => {
+        const val = prompt("Відсоток довіри (0-100):", current ?? 100);
+        if (val === null) return;
+        const score = Number(val);
+        if (isNaN(score) || score < 0 || score > 100) return toast.error('❌ Введіть число 0-100');
+        try {
+            const res = await authFetch(`/api/admin/users/${userId}/trust`, { method: 'POST', body: JSON.stringify({ trustScore: score }) });
+            const data = await res.json();
+            if (data.success) { toast.success(`📊 Довіра: ${score}%`); fetchUsers(); }
+            else toast.error(`❌ ${data.message}`);
+        } catch (err) { toast.error('Помилка сервера'); }
+    };
+
     const handleRemoveVip = async (userId) => {
         if (!window.confirm("🗑 Точно хочеш забрати VIP статус у цього юзера?")) return;
         const loadingToast = toast.loading('Забираємо VIP...');
@@ -70,7 +115,7 @@ const AdminUsers = ({ users, isMobile, searchQuery, setSearchQuery, fetchUsers, 
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+            <div ref={scrollRef} className="custom-scrollbar" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px', maxHeight: 'calc(100vh - 180px)', overflowY: 'auto', paddingRight: '6px' }}>
                 {filteredUsers.map(u => (
                     <div key={u._id} style={{ background: '#0a0a0f', padding: '20px', borderRadius: '16px', border: u.isBanned ? '1px solid #ff444488' : '1px solid rgba(255,255,255,0.05)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
@@ -83,15 +128,32 @@ const AdminUsers = ({ users, isMobile, searchQuery, setSearchQuery, fetchUsers, 
                             </div>
                             <div style={{ textAlign: 'right', color: '#4caf50', fontWeight: '900', fontSize: '22px', whiteSpace: 'nowrap', background: '#0a2212', padding: '5px 12px', borderRadius: '8px' }}>{u.balance} ₴</div>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                            <button onClick={() => handleCustomBalance(u._id, 'add')} style={{ padding: '12px', background: '#28a745', border: 'none', color: 'white', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>+ Дати</button>
-                            <button onClick={() => handleCustomBalance(u._id, 'sub')} style={{ padding: '12px', background: '#dc3545', border: 'none', color: 'white', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>- Забрати</button>
-                            <button onClick={() => handleToggleBan(u._id)} style={{ padding: '12px', background: 'transparent', border: `1px solid ${u.isBanned ? '#28a745' : '#dc3545'}`, color: u.isBanned ? '#28a745' : '#dc3545', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>{u.isBanned ? "Розбанити" : "БАН"}</button>
-                            <button onClick={() => handleShadowLogin(u._id, u.email)} style={{ padding: '12px', background: 'transparent', border: '1px solid #b14bff', color: '#b14bff', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px' }}><LogIn size={16}/> Увійти</button>
-                            {u.vipPackage && u.vipPackage !== 'none' && (
-                                <button onClick={() => handleRemoveVip(u._id)} style={{ gridColumn: 'span 2', padding: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', justifyContent: 'center', gap: '5px' }}>
-                                    <Trash2 size={16}/> Зняти VIP
-                                </button>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '7px' }}>
+                            <button onClick={() => handleCustomBalance(u._id, 'add')} style={{ padding: '9px', background: '#28a745', border: 'none', color: 'white', borderRadius: '7px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>+ Дати</button>
+                            <button onClick={() => handleCustomBalance(u._id, 'sub')} style={{ padding: '9px', background: '#dc3545', border: 'none', color: 'white', borderRadius: '7px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>- Забрати</button>
+                            <button onClick={() => handleToggleBan(u._id)} style={{ padding: '9px', background: 'transparent', border: `1px solid ${u.isBanned ? '#28a745' : '#dc3545'}`, color: u.isBanned ? '#28a745' : '#dc3545', borderRadius: '7px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>{u.isBanned ? "Розбан" : "БАН"}</button>
+                            <button onClick={() => handleShadowLogin(u._id, u.email)} style={{ padding: '9px', background: 'transparent', border: '1px solid #b14bff', color: '#b14bff', borderRadius: '7px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px', fontSize: '13px' }}><LogIn size={14}/> Увійти</button>
+
+                            {/* Розкривне меню керування */}
+                            <button onClick={() => setExpandedId(expandedId === u._id ? null : u._id)} style={{ gridColumn: 'span 2', padding: '9px', background: expandedId === u._id ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.1)', color: '#ccc', borderRadius: '7px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', transition: '0.18s' }}>
+                                ⚙ Керування (VIP, галочка, довіра)
+                                <ChevronDown size={15} style={{ transform: expandedId === u._id ? 'rotate(180deg)' : 'none', transition: '0.2s' }} />
+                            </button>
+
+                            {expandedId === u._id && (
+                                <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '7px', padding: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', animation: 'fadeIn 0.2s ease' }}>
+                                    <button onClick={() => handleGrantVip(u._id)} style={{ padding: '9px', background: 'rgba(255,193,7,0.12)', border: '1px solid #ffc107', color: '#ffc107', borderRadius: '7px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>👑 Видати / Змінити VIP{u.vipPackage && u.vipPackage !== 'none' ? ` (${u.vipPackage})` : ''}</button>
+                                    {u.vipPackage && u.vipPackage !== 'none' && (
+                                        <button onClick={() => handleRemoveVip(u._id)} style={{ padding: '7px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444', borderRadius: '7px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>🗑 Зняти VIP</button>
+                                    )}
+                                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '11px', color: '#777', fontWeight: '700', flexShrink: 0 }}>Галочка:</span>
+                                        <button onClick={() => handleSetVerification(u._id, 'photo')} style={{ flex: 1, padding: '7px', background: 'transparent', border: '1px solid #C0C0C0', color: '#C0C0C0', borderRadius: '7px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>🥈 Фото</button>
+                                        <button onClick={() => handleSetVerification(u._id, 'video')} style={{ flex: 1, padding: '7px', background: 'transparent', border: '1px solid #FFD700', color: '#FFD700', borderRadius: '7px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>🥇 Відео</button>
+                                        <button onClick={() => handleSetVerification(u._id, 'none')} style={{ flex: 1, padding: '7px', background: 'transparent', border: '1px solid #666', color: '#ccc', borderRadius: '7px', cursor: 'pointer', fontSize: '12px' }}>✕</button>
+                                    </div>
+                                    <button onClick={() => handleSetTrust(u._id, u.trustScore)} style={{ padding: '9px', background: 'rgba(0,255,255,0.08)', border: '1px solid #00bcd4', color: '#00bcd4', borderRadius: '7px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>📊 Довіра: {u.trustScore ?? 100}% — змінити</button>
+                                </div>
                             )}
                         </div>
                     </div>

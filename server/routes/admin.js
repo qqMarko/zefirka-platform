@@ -385,6 +385,50 @@ export default (sendNotification) => {
         }
     });
 
+    // ✅ ВЕРИФІКАЦІЯ ВСІХ АНКЕТ ЮЗЕРА
+    router.post('/users/:id/set-verification-all', adminMiddleware, async (req, res) => {
+        try {
+            const { verification } = req.body;
+            if (!['photo','video','none'].includes(verification)) return res.status(400).json({ success: false, message: 'Невірний тип' });
+            const result = await Profile.updateMany(
+                { userId: req.params.id },
+                { verification, verifiedAt: verification === 'none' ? null : new Date() }
+            );
+            const io = getIO();
+            if (io) io.emit('global_sync', { action: 'reload_catalog' });
+            res.json({ success: true, modified: result.modifiedCount });
+        } catch (error) { res.status(500).json({ success: false, message: 'Помилка сервера' }); }
+    });
+
+    // 👑 ВИДАТИ VIP
+    router.post('/grant-vip/:userId', adminMiddleware, async (req, res) => {
+        try {
+            const { packageId } = req.body;
+            const MODEL_LEVEL = { start: 1, premium: 2, diamond: 3 };
+            const valid = ['start','premium','diamond','premium_client','priority_chat','concierge'];
+            if (!valid.includes(packageId)) return res.status(400).json({ success: false, message: 'Невідомий пакет' });
+
+            const user = await User.findById(req.params.userId);
+            if (!user) return res.status(404).json({ success: false, message: 'Користувача не знайдено' });
+
+            user.vipPackage = packageId;
+            user.vipPurchasedAt = new Date();
+            user.vipExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+            await user.save();
+
+            if (MODEL_LEVEL[packageId]) {
+                await Profile.updateMany({ userId: user._id }, { $set: { vLevel: MODEL_LEVEL[packageId], vipExpiresAt: user.vipExpiresAt } });
+            }
+
+            const io = getIO();
+            if (io) {
+                io.emit(`instant_sync_${user._id}`, { action: 'update_data' });
+                io.emit('global_sync', { action: 'reload_catalog' });
+            }
+            res.json({ success: true, vipPackage: user.vipPackage });
+        } catch (error) { res.status(500).json({ success: false, message: 'Помилка сервера' }); }
+    });
+
     router.post('/remove-vip/:userId', adminMiddleware, async (req, res) => {
         try {
             const user = await User.findById(req.params.userId);
