@@ -78,6 +78,8 @@ export const initSockets = (io) => {
         
         socket.on('send_message', async (data) => {
             try {
+                // 🚫 Захист від чату з самим собою
+                if (String(data.senderId) === String(data.partnerId)) return;
                 console.log(`💬 send_message: roomId=${data.roomId}, from=${data.senderId}, to=${data.partnerId}`);
                 let chat = await Chat.findOne({ roomId: data.roomId });
                 if (!chat) { chat = new Chat({ roomId: data.roomId, participants: [data.senderId, data.partnerId], modelProfile: data.modelProfile, messages: [] }); }

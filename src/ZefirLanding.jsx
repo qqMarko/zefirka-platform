@@ -222,6 +222,12 @@ const ZefirkaPlatform = () => {
 
     const openPrivateChat = (model) => {
         if (!isLoggedIn) { setShowAuth(true); return; }
+        // 🚫 Своя ж анкета — не можна писати самому собі
+        const partnerUserId = String(model.userId?._id || model.userId);
+        if (String(userUniqueId) === partnerUserId) {
+            toast.error('Це ваша анкета — ви не можете написати самі собі', { style: { background: '#111', color: '#fff', border: '1px solid #ef4444' } });
+            return;
+        }
         startPrivateChat(model, t[currentLang]?.chatAutoGreeting || 'Привіт!');
         setPreviousPage(location.pathname); navigate('/messages'); setSelectedModel(null);
     };

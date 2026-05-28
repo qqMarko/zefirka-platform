@@ -44,7 +44,12 @@ const MessagesTab = ({ setCurrentPage, setSelectedModel }) => {
     const getPartnerInfo = (chat) => {
         if (!chat || !userUniqueId) return { name: 'Модель', avatar: null, isClient: false };
         const myId = String(userUniqueId);
-        if (myId === String(chat.model?.userId)) return { name: `Клієнт (ID: ${chat.partnerId ? String(chat.partnerId).slice(-4) : '0000'})`, avatar: null, isClient: true };
+        const modelOwnerId = String(chat.model?.userId?._id || chat.model?.userId || '');
+        // Якщо власник анкети = я → співрозмовник є КЛІЄНТОМ
+        if (modelOwnerId && myId === modelOwnerId) {
+            const shortId = chat.partnerId ? String(chat.partnerId).slice(-4) : '0000';
+            return { name: `Клієнт #${shortId}`, avatar: null, isClient: true };
+        }
         return { name: chat.model?.name || 'Модель', avatar: chat.model?.photos?.[0] || null, isClient: false };
     };
 

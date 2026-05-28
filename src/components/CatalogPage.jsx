@@ -1,6 +1,6 @@
 import React, { useRef, useCallback, useEffect } from 'react';
 import CatalogGrid from './CatalogGrid';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Lock, ShieldCheck, Zap } from 'lucide-react';
 
 const CatalogPage = ({
     isLoggedIn, userRole, t, currentLang, accent,
@@ -35,11 +35,24 @@ const CatalogPage = ({
         <main>
             {(!isLoggedIn || userRole === 'client') && (
                 <div style={{ marginBottom: '80px' }} className="fade-in-up">
-                    <h2 style={{ color: 'white', letterSpacing: '1px', marginBottom: '40px', textAlign: 'center', fontSize: '36px', fontWeight: '900', textTransform: 'uppercase' }}>{t[currentLang]?.whyUsTitle}</h2>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '25px' }}>
-                        <div className="benefit-card"><div style={{ fontSize: '20px', fontWeight: 'bold', color: accent, marginBottom: '15px', letterSpacing: '0.5px' }}>{t[currentLang]?.whyUs1}</div><div style={{ color: '#ccc', fontSize: '14px', lineHeight: '1.7', fontWeight: '400' }}>{t[currentLang]?.whyUs1Desc}</div></div>
-                        <div className="benefit-card"><div style={{ fontSize: '20px', fontWeight: 'bold', color: '#4caf50', marginBottom: '15px', letterSpacing: '0.5px' }}>{t[currentLang]?.whyUs2}</div><div style={{ color: '#ccc', fontSize: '14px', lineHeight: '1.7', fontWeight: '400' }}>{t[currentLang]?.whyUs2Desc}</div></div>
-                        <div className="benefit-card"><div style={{ fontSize: '20px', fontWeight: 'bold', color: '#ffc107', marginBottom: '15px', letterSpacing: '0.5px' }}>{t[currentLang]?.whyUs3}</div><div style={{ color: '#ccc', fontSize: '14px', lineHeight: '1.7', fontWeight: '400' }}>{t[currentLang]?.whyUs3Desc}</div></div>
+                    <h2 style={{ color: 'white', letterSpacing: '1px', marginBottom: '40px', textAlign: 'center', fontSize: 'clamp(26px, 5vw, 36px)', fontWeight: '900', textTransform: 'uppercase' }}>{t[currentLang]?.whyUsTitle}</h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                        {[
+                            { icon: Lock, color: accent, title: t[currentLang]?.whyUs1, desc: t[currentLang]?.whyUs1Desc },
+                            { icon: ShieldCheck, color: '#4caf50', title: t[currentLang]?.whyUs2, desc: t[currentLang]?.whyUs2Desc },
+                            { icon: Zap, color: '#ffc107', title: t[currentLang]?.whyUs3, desc: t[currentLang]?.whyUs3Desc },
+                        ].map((f, i) => (
+                            <div key={i} style={{ background: '#0e0e18', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px', padding: '26px', transition: 'border-color 0.2s, transform 0.2s', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}
+                                onMouseEnter={e => { e.currentTarget.style.borderColor = f.color + '55'; e.currentTarget.style.transform = 'translateY(-3px)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.transform = 'none'; }}
+                            >
+                                <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: f.color + '18', border: `1px solid ${f.color}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                                    <f.icon size={22} color={f.color} />
+                                </div>
+                                <div style={{ fontSize: '18px', fontWeight: '900', color: '#fff', marginBottom: '10px', letterSpacing: '0.3px' }}>{f.title}</div>
+                                <div style={{ color: '#999', fontSize: '14px', lineHeight: '1.65', fontWeight: '400' }}>{f.desc}</div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             )}

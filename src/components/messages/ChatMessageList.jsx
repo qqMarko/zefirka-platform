@@ -108,8 +108,10 @@ const ChatMessageList = ({ activeChat, partnerIsTyping, getPartnerInfo, mediaPre
                         }
                     }
 
+                    const isVipMsg = !isMe && (msg.priority || 0) >= 2;
                     return (
-                        <div key={msg.id} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', background: isMe ? accent : '#1a1a1a', border: 'none', color: 'white', padding: '12px 18px', borderRadius: isMe ? '18px 18px 0 18px' : '18px 18px 18px 0', maxWidth: '85%', fontSize: '14px', lineHeight: '1.5', boxShadow: '0 4px 15px rgba(0,0,0,0.5)', fontWeight: '500', wordBreak: 'break-word', flexShrink: 0 }}>
+                        <div key={msg.id} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', position: 'relative', background: isMe ? accent : '#1a1a1a', border: isVipMsg ? '1px solid #FFD700' : 'none', color: 'white', padding: '12px 18px', borderRadius: isMe ? '18px 18px 0 18px' : '18px 18px 18px 0', maxWidth: '85%', fontSize: '14px', lineHeight: '1.5', boxShadow: isVipMsg ? '0 4px 18px rgba(255,215,0,0.25)' : '0 4px 15px rgba(0,0,0,0.5)', fontWeight: '500', wordBreak: 'break-word', flexShrink: 0 }}>
+                            {isVipMsg && <div style={{ fontSize: '10px', fontWeight: '900', color: '#FFD700', marginBottom: '4px', letterSpacing: '0.5px' }}>⭐ VIP КЛІЄНТ</div>}
                             {msg.type === 'image' && mediaSrc && <img src={mediaSrc} alt="photo" style={{ width: '100%', maxWidth: '300px', borderRadius: '10px', marginBottom: msg.text ? '10px' : '0', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)' }} />}
                             {msg.type === 'video' && mediaSrc && <video src={mediaSrc} controls playsInline webkit-playsinline="true" preload="metadata" style={{ width: '100%', maxWidth: '300px', borderRadius: '10px', marginBottom: msg.text ? '10px' : '0', outline: 'none', background: '#000' }} />}
                             {msg.type === 'audio' && mediaSrc && <CustomAudioPlayer src={mediaSrc} accent={accent} />}

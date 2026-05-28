@@ -241,11 +241,11 @@ export const t = {
         faq3_2_a: "Наша система штучного інтелекту автоматично сканує всі завантажені фотографії. Якщо фото містить відвертий контент (18+), насильство або зброю, воно буде автоматично заблоковано. Будь ласка, використовуйте більш стримані фото для головної сторінки.",
   
         whyUsTitle: "ЧОМУ ОБИРАЮТЬ ЗЕФІРКУ?",
-        whyUs1: "🔐 Абсолютна Анонімність",
+        whyUs1: "Абсолютна Анонімність",
         whyUs1Desc: "Ваші дані зашифровані. Ми не вимагаємо реальних імен чи документів для реєстрації.",
-        whyUs2: "🛡️ Гарантія Безпеки",
+        whyUs2: "Гарантія Безпеки",
         whyUs2Desc: "Наша система Арбітражу захищає як моделей, так і клієнтів від шахрайства.",
-        whyUs3: "⚡ Лише Перевірені",
+        whyUs3: "Лише Перевірені",
         whyUs3Desc: "Система TrustScore та верифікація по відео гарантують, що по той бік екрану реальна людина.",
   
         chooseChatMethod: "Оберіть спосіб зв'язку",
@@ -605,11 +605,11 @@ export const t = {
         faq3_2_a: "Our artificial intelligence system automatically scans all uploaded photos. If a photo contains explicit content (18+), violence, or weapons, it will be automatically blocked. Please use more modest photos for the main page.",
   
         whyUsTitle: "WHY CHOOSE ZEFIRKA?",
-        whyUs1: "🔐 Absolute Anonymity",
+        whyUs1: "Absolute Anonymity",
         whyUs1Desc: "Your data is fully encrypted. We never ask for real names or passports during registration.",
-        whyUs2: "🛡️ Safety Guaranteed",
+        whyUs2: "Safety Guaranteed",
         whyUs2Desc: "Our internal Arbitration system protects both models and clients from scams and fraud.",
-        whyUs3: "⚡ 100% Verified Users",
+        whyUs3: "100% Verified Users",
         whyUs3Desc: "Our TrustScore rating and strict video verification ensure there's a real person behind every screen.",
   
         chooseChatMethod: "Choose contact method",
@@ -969,11 +969,11 @@ export const t = {
         faq3_2_a: "Наша система искусственного интеллекта автоматически сканирует все загруженные фотографии. Если фото содержит откровенный контент (18+), насилие или оружие, оно будет автоматически заблокировано. Пожалуйста, используйте более сдержанные фото для главной страницы.",
   
         whyUsTitle: "ПОЧЕМУ ВЫБИРАЮТ ЗЕФИРКУ?",
-        whyUs1: "🔐 Абсолютная Анонимность",
+        whyUs1: "Абсолютная Анонимность",
         whyUs1Desc: "Ваши данные зашифровані. Мы не требуем реальных имен или документов для регистрации.",
-        whyUs2: "🛡️ Гарантия Безопасности",
+        whyUs2: "Гарантия Безопасности",
         whyUs2Desc: "Наша система Арбитража защищает как моделей, так и клиентов от мошенничества.",
-        whyUs3: "⚡ Только Проверенные",
+        whyUs3: "Только Проверенные",
         whyUs3Desc: "Система TrustScore и верификация по видео гарантируют, что по ту сторону экрана реальный человек.",
   
         chooseChatMethod: "Выберите способ связи",

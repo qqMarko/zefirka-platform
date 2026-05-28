@@ -7,7 +7,8 @@ const messageSchema = new mongoose.Schema({
     
     // 🔥 НОВІ ПОЛЯ ДЛЯ МЕДІА
     type: { type: String, enum: ['text', 'image', 'video', 'audio'], default: 'text' }, 
-    mediaUrl: { type: String, default: null } 
+    mediaUrl: { type: String, default: null },
+    priority: { type: Number, default: 0 } 
 }, { _id: true });
 
 const chatSchema = new mongoose.Schema({

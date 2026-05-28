@@ -62,16 +62,18 @@ export const createSocketSlice = (socket, set, get) => ({
 
         socket.off(`receive_direct_message_${userId}`);
         socket.on(`receive_direct_message_${userId}`, (data) => {
-            if (String(data.message?.senderId) !== String(userId)) {
-                try { new Audio('/sounds/ah.mp3').play().catch(() => {}); } catch (e) {}
-            }
+            // 🚫 Власні повідомлення вже додані локально при відправці — ігноруємо ехо
+            if (String(data.message?.senderId) === String(userId)) return;
+
+            try { new Audio('/sounds/ah.mp3').play().catch(() => {}); } catch (e) {}
             const normalizedMsg = {
                 id: data.message._id || Date.now() + Math.random(),
                 text: data.message.text,
                 time: data.message.time,
                 type: data.message.type || 'text',
                 mediaUrl: data.message.mediaUrl || null,
-                sender: String(data.message.senderId) === String(userId) ? 'me' : 'partner',
+                priority: data.message.priority || 0,
+                sender: 'partner',
             };
             const chatExists = get().myChats.find(c => c.id === data.roomId);
             if (chatExists) {

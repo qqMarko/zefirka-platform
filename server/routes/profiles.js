@@ -290,7 +290,15 @@ router.post('/favorites/:userId/:profileId', authMiddleware, async (req, res) =>
         const profile = await Profile.findById(profileId);
         if (!profile) return res.status(404).json({ success: false, message: 'Анкета не знайдена' });
 
-        const idx = user.favorites.findIndex(id => String(id) === String(profileId));
+        // 🔒 Обране доступне лише клієнтам з VIP (GUEST і вище)
+        const FAV_ALLOWED = ['premium_client', 'priority_chat', 'concierge', 'premium', 'diamond'];
+        const idxExisting = user.favorites.findIndex(id => String(id) === String(profileId));
+        // Дозволяємо ПРИБИРАТИ завжди, але ДОДАВАТИ — тільки з VIP
+        if (idxExisting === -1 && !FAV_ALLOWED.includes(user.vipPackage?.toLowerCase())) {
+            return res.status(403).json({ success: false, message: 'Додавання в Обране доступне з VIP-пакетом GUEST і вище' });
+        }
+
+        const idx = idxExisting;
         let added;
         if (idx === -1) {
             user.favorites.push(profileId);

@@ -59,6 +59,8 @@ export const createChatsSlice = (set, get) => {
             const myId = String(get().userUniqueId);
             const partnerUserId = String(model.userId?._id || model.userId);
             if (!myId) return { showAuth: true };
+            // 🚫 Не можна писати самому собі (своя ж анкета)
+            if (myId === partnerUserId) return {};
             const roomId = [myId, partnerUserId].sort().join('_');
             const exists = state.myChats.find(c => c.id === roomId);
             if (!exists) {
