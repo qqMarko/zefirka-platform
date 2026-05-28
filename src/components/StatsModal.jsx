@@ -4,20 +4,21 @@ import useStore from '../store/useStore';
 import { toast } from 'react-hot-toast';
 import { C, R, shadow, overlay, modalBox, btnPrimary, closeBtn, section } from '../styles/ds';
 
-const StatCard = ({ icon: Icon, iconColor, label, value }) => (
+const StatCard = ({ icon: Icon, iconColor, label, value, sub }) => (
     <div style={{ ...section(), position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: '-8px', right: '-8px', opacity: 0.04 }}><Icon size={100} /></div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: C.textMuted, fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '10px' }}>
             <Icon size={14} color={iconColor} /> {label}
         </div>
         <div style={{ fontSize: '38px', fontWeight: '900', color: C.text, lineHeight: 1 }}>{value}</div>
+        {sub && <div style={{ fontSize: '11px', color: C.textMuted, fontWeight: '700', marginTop: '6px' }}>{sub}</div>}
     </div>
 );
 
 const StatsModal = ({ setShowStats, t, currentLang, accent }) => {
     const { userUniqueId, user } = useStore();
     const [hoveredPoint, setHoveredPoint] = useState(null);
-    const [stats, setStats] = useState({ totalViews: 0, totalClicks: 0, chartData: [] });
+    const [stats, setStats] = useState({ totalViews: 0, totalClicks: 0, allTimeViews: 0, allTimeClicks: 0, chartData: [] });
     const [loading, setLoading] = useState(true);
     const isFree = !user?.vipPackage || user.vipPackage === 'none';
 
@@ -26,7 +27,7 @@ const StatsModal = ({ setShowStats, t, currentLang, accent }) => {
         const BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
         const token = localStorage.getItem('zefirka_token');
         fetch(`${BASE}/stats/${userUniqueId}`, { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()).then(d => {
-            if (d.success) setStats({ totalViews: d.totalViews, totalClicks: d.totalClicks, chartData: d.chartData.length ? d.chartData : [{ date: 'Сьогодні', views: 0, clicks: 0 }] });
+            if (d.success) setStats({ totalViews: d.totalViews, totalClicks: d.totalClicks, allTimeViews: d.allTimeViews || 0, allTimeClicks: d.allTimeClicks || 0, chartData: d.chartData || [] });
         }).catch(() => {}).finally(() => setLoading(false));
     }, [userUniqueId, isFree]);
 
@@ -71,8 +72,8 @@ const StatsModal = ({ setShowStats, t, currentLang, accent }) => {
                 ) : (
                     <>
                         <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
-                            <StatCard icon={Eye} iconColor={C.accent} label="Перегляди" value={stats.totalViews.toLocaleString()} />
-                            <StatCard icon={MousePointerClick} iconColor={C.success} label="Переходи" value={stats.totalClicks.toLocaleString()} />
+                            <StatCard icon={Eye} iconColor={C.accent} label="Перегляди сьогодні" value={stats.totalViews.toLocaleString()} sub={`Всього: ${stats.allTimeViews.toLocaleString()}`} />
+                            <StatCard icon={MousePointerClick} iconColor={C.success} label="Переходи сьогодні" value={stats.totalClicks.toLocaleString()} sub={`Всього: ${stats.allTimeClicks.toLocaleString()}`} />
                         </div>
 
                         <div style={{ ...section(), padding: '20px' }}>

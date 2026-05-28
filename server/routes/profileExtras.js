@@ -185,6 +185,8 @@ export default (sendNotification) => {
                 return res.status(403).json({ success: false, message: 'Доступ заборонено' });
             }
             const profiles = await Profile.find({ userId: req.params.userId });
+            const today = new Date().toISOString().split('T')[0];
+            let todayViews = 0; let todayClicks = 0;
             let totalViews = 0; let totalClicks = 0;
             const combinedDaily = {};
 
@@ -200,14 +202,26 @@ export default (sendNotification) => {
                 }
             });
 
-            const sortedDates = Object.keys(combinedDaily).sort().slice(-7);
-            const chartData = sortedDates.map(date => ({
-                date: date.substring(5).replace('-', '.'), 
-                views: combinedDaily[date].views,
-                clicks: combinedDaily[date].clicks
-            }));
+            // Лічильники зверху — тільки за СЬОГОДНІ (щодоби обнуляються)
+            if (combinedDaily[today]) {
+                todayViews = combinedDaily[today].views;
+                todayClicks = combinedDaily[today].clicks;
+            }
 
-            res.json({ success: true, totalViews, totalClicks, chartData });
+            // Графік — останні 7 днів (включно з днями де 0)
+            const last7 = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const key = d.toISOString().split('T')[0];
+                last7.push({
+                    date: key.substring(5).replace('-', '.'),
+                    views: combinedDaily[key]?.views || 0,
+                    clicks: combinedDaily[key]?.clicks || 0
+                });
+            }
+
+            res.json({ success: true, totalViews: todayViews, totalClicks: todayClicks, allTimeViews: totalViews, allTimeClicks: totalClicks, chartData: last7 });
         } catch (error) { res.status(500).json({ success: false }); }
     });
 

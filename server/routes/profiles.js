@@ -213,12 +213,22 @@ router.put('/:id', authMiddleware, async (req, res) => {
             return res.status(403).json({ success: false, message: 'Ви не можете редагувати чужу анкету' });
         }
 
-        const updated = await Profile.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        // 🔄 Після редагування анкета знову йде на модерацію (адмін — виняток)
+        // Верифікацію (галочку) НЕ чіпаємо — фото моделі залишаються ті самі
+        const updateData = { ...req.body };
+        if (req.user.role !== 'admin') {
+            updateData.isApproved = false;
+            // захист: модель не може сама проставити/змінити верифікацію через PUT
+            delete updateData.verification;
+            delete updateData.verifiedAt;
+        }
+
+        const updated = await Profile.findByIdAndUpdate(req.params.id, updateData, { new: true });
 
         const io = getIO();
         if (io) io.emit('global_sync', { action: 'reload_catalog' });
 
-        res.json({ success: true, data: updated });
+        res.json({ success: true, data: updated, message: req.user.role !== 'admin' ? 'Анкету відправлено на повторну модерацію' : 'Збережено' });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Помилка сервера' });
     }
