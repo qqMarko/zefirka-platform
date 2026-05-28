@@ -26,6 +26,7 @@ const MessagesTab = ({ setCurrentPage, setSelectedModel }) => {
     const fileInputRef = useRef(null);
 
     const [isRecording, setIsRecording] = useState(false);
+    const cancelledRef = useRef(false);
     const [recordingTime, setRecordingTime] = useState(0);
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
@@ -193,14 +194,17 @@ const MessagesTab = ({ setCurrentPage, setSelectedModel }) => {
 
             mediaRecorderRef.current.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
             mediaRecorderRef.current.onstop = async () => {
-                if (audioChunksRef.current.length > 0) {
+                if (!cancelledRef.current && audioChunksRef.current.length > 0) {
                     const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/mp4' }); 
                     await sendAudioFile(audioBlob);
                 }
+                audioChunksRef.current = [];
+                cancelledRef.current = false;
                 stream.getTracks().forEach(track => track.stop());
             };
 
             mediaRecorderRef.current.start();
+            cancelledRef.current = false;
             setIsRecording(true); setRecordingTime(0);
             timerIntervalRef.current = setInterval(() => setRecordingTime(prev => prev + 1), 1000);
         } catch (err) { alert(`Апаратна помилка мікрофона.`); }
@@ -216,7 +220,7 @@ const MessagesTab = ({ setCurrentPage, setSelectedModel }) => {
 
     const cancelRecording = () => {
         if (mediaRecorderRef.current && isRecording) {
-            audioChunksRef.current = []; 
+            cancelledRef.current = true; // 🚫 onstop пропустить відправку
             mediaRecorderRef.current.stop();
             setIsRecording(false);
             clearInterval(timerIntervalRef.current);

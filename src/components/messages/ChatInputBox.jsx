@@ -16,19 +16,29 @@ const ChatInputBox = ({ chatInput, handleInputChange, handleSend, mediaPreview, 
             )}
 
             {isRecording ? (
-                <div style={{ padding: '15px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', background: '#0a0a0f', display: 'flex', gap: '15px', alignItems: 'center', flexShrink: 0 }}>
-                    <div onClick={cancelRecording} style={{ cursor: 'pointer', color: '#ff4444', padding: '10px', background: 'rgba(255,68,68,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.3s' }} className="menu-hover">
-                        <Trash2 size={20} />
+                <div style={{ padding: '15px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', background: '#0a0a0f', display: 'flex', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
+                    <div onClick={cancelRecording} style={{ cursor: 'pointer', color: '#ff4444', padding: '12px', background: 'rgba(255,68,68,0.12)', border: '1px solid rgba(255,68,68,0.3)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s', flexShrink: 0 }} className="menu-hover" title="Скасувати">
+                        <Trash2 size={18} />
                     </div>
                     
-                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: '#111', border: '1px solid rgba(255,255,255,0.1)', padding: '12px 20px', borderRadius: '25px' }}>
-                        <div className="pulse-record" style={{ width: '12px', height: '12px', background: '#ff4444', borderRadius: '50%' }}></div>
-                        <span style={{ color: 'white', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '16px', letterSpacing: '1px' }}>{formatTime(recordingTime)}</span>
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '14px', background: 'rgba(255,68,68,0.06)', border: '1px solid rgba(255,68,68,0.25)', padding: '12px 20px', borderRadius: '25px' }}>
+                        <div style={{ width: '10px', height: '10px', background: '#ff4444', borderRadius: '50%', animation: 'recPulse 1s infinite ease-in-out', boxShadow: '0 0 12px #ff4444' }}></div>
+                        <span style={{ color: '#ff4444', fontWeight: '900', fontFamily: 'monospace', fontSize: '15px', letterSpacing: '1px', minWidth: '50px' }}>{formatTime(recordingTime)}</span>
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '3px', height: '24px', justifyContent: 'center' }}>
+                            {[0,1,2,3,4,5,6,7,8,9,10,11].map(i => (
+                                <span key={i} style={{ width: '3px', background: '#ff4444', borderRadius: '2px', animation: `waveBar 1s ${i*0.08}s infinite ease-in-out`, height: '6px' }} />
+                            ))}
+                        </div>
                     </div>
 
-                    <div onClick={stopRecordingAndSend} style={{ width: '50px', height: '50px', background: '#4caf50', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.3s', flexShrink: 0, boxShadow: '0 0 15px rgba(76, 175, 80, 0.3)' }} className="menu-hover">
-                        <Send size={20} color="white" style={{ marginLeft: '-2px' }} />
+                    <div onClick={stopRecordingAndSend} style={{ width: '46px', height: '46px', background: '#4caf50', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.2s', flexShrink: 0, boxShadow: '0 4px 14px rgba(76, 175, 80, 0.35)' }} className="menu-hover" title="Надіслати">
+                        <Send size={18} color="white" style={{ marginLeft: '-2px' }} />
                     </div>
+
+                    <style>{`
+                        @keyframes recPulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.4); opacity: 0.6; } }
+                        @keyframes waveBar { 0%,100% { height: 6px; } 50% { height: 22px; } }
+                    `}</style>
                 </div>
             ) : (
                 <div style={{ padding: '15px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', background: '#0a0a0f', display: 'flex', gap: '15px', alignItems: 'center', flexShrink: 0 }}>
