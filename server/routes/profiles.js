@@ -270,6 +270,49 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 // ─────────────────────────────────────────────────────────────────
 
 // Отримати список вибраних для юзера
+// ───────────────────────────────────────────────────────────────────
+// GET /profiles/lounge  — VIP Лаунж (тільки для клієнтів CONCIERGE)
+// Повертає топ-моделей рівня DIAMOND (3) та PREMIUM (2) з рейтингом
+// ───────────────────────────────────────────────────────────────────
+router.get('/lounge', authMiddleware, async (req, res) => {
+    try {
+        // 🔒 Клієнти: тільки активний CONCIERGE. Моделі: тільки DIAMOND або PREMIUM
+        const user = await User.findById(req.user.id).select('vipPackage vipExpiresAt role').lean();
+        if (!user) return res.status(401).json({ success: false, message: 'Не авторизовано' });
+
+        const isVipActive = user.vipExpiresAt && new Date(user.vipExpiresAt) > new Date();
+
+        const clientHasAccess = user.role === 'client' && user.vipPackage === 'concierge' && isVipActive;
+        const modelHasAccess  = user.role === 'model'  && ['diamond', 'premium'].includes(user.vipPackage) && isVipActive;
+
+        if (user.role !== 'admin' && !clientHasAccess && !modelHasAccess) {
+            return res.status(403).json({ success: false, message: 'Доступ тільки для CONCIERGE / DIAMOND / PREMIUM' });
+        }
+
+        // Беремо топ-анкети: vLevel >= 2 (PREMIUM + DIAMOND), схвалені, відсортовані
+        const profiles = await Profile.find({ isApproved: true, vLevel: { $gte: 2 } })
+            .populate('userId', 'trustScore lastActive')
+            .sort({ vLevel: -1, averageRating: -1, totalReviews: -1, bumpedAt: -1 })
+            .limit(50)
+            .lean();
+
+        const result = profiles.map(p => ({
+            ...p,
+            id: p._id,
+            priceFrom: p.priceFrom || 500,
+            priceTo: p.priceTo || null,
+            vLevel: p.vLevel || 0,
+            verification: p.verification || 'none',
+            trustScore: parseInt(p.userId?.trustScore) || 100,
+            isApproved: p.isApproved || false,
+        }));
+
+        res.json({ success: true, data: result });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 router.get('/favorites/:userId', async (req, res) => {
     try {
         const user = await User.findById(req.params.userId).populate('favorites');

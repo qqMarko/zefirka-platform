@@ -39,6 +39,7 @@ export const createChatsSlice = (set, get) => {
                                 time: m.time,
                                 type: m.type || 'text',
                                 mediaUrl: m.mediaUrl || null,
+                                priority: m.priority || 0,
                                 sender: String(m.senderId) === String(userId) ? 'me' : 'partner'
                             })),
                             mutedBy: chat.mutedBy || []

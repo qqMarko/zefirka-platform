@@ -83,7 +83,22 @@ export const initSockets = (io) => {
                 console.log(`💬 send_message: roomId=${data.roomId}, from=${data.senderId}, to=${data.partnerId}`);
                 let chat = await Chat.findOne({ roomId: data.roomId });
                 if (!chat) { chat = new Chat({ roomId: data.roomId, participants: [data.senderId, data.partnerId], modelProfile: data.modelProfile, messages: [] }); }
-                const newMsg = { senderId: data.senderId, text: data.text, time: data.time, type: data.type || 'text', mediaUrl: data.mediaUrl || null};
+
+                // 👑 ВИЗНАЧАЄМО VIP-ПРІОРИТЕТ ВІДПРАВНИКА
+                // concierge=3, priority_chat=2, premium_client=1, решта=0
+                const VIP_PRIORITY_MAP = { concierge: 3, priority_chat: 2, premium_client: 1 };
+                let senderPriority = 0;
+                try {
+                    const senderUser = await User.findById(data.senderId).select('vipPackage vipExpiresAt').lean();
+                    if (senderUser && senderUser.vipPackage && senderUser.vipPackage !== 'none') {
+                        const isVipActive = senderUser.vipExpiresAt && new Date(senderUser.vipExpiresAt) > new Date();
+                        if (isVipActive) {
+                            senderPriority = VIP_PRIORITY_MAP[senderUser.vipPackage] || 0;
+                        }
+                    }
+                } catch(e) { console.error('Помилка визначення VIP-пріоритету:', e.message); }
+
+                const newMsg = { senderId: data.senderId, text: data.text, time: data.time, type: data.type || 'text', mediaUrl: data.mediaUrl || null, priority: senderPriority };
                 chat.messages.push(newMsg); 
                 await chat.save();
                 

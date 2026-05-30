@@ -69,13 +69,16 @@ const MessagesTab = ({ setCurrentPage, setSelectedModel }) => {
                 if (data.success) {
                     const formattedChats = data.data.map(chat => {
                         const partnerId = chat.participants.find(p => p !== userUniqueId);
+                        const messages = chat.messages.map(m => ({ 
+                            id: m._id || Math.random(), text: m.text, sender: m.senderId === userUniqueId ? 'me' : 'partner', 
+                            time: m.time, type: m.type || 'text', mediaUrl: m.mediaUrl || null,
+                            priority: m.priority || 0
+                        }));
+                        // 👑 Беремо актуальний пріоритет партнера з сервера (не з історії повідомлень)
+                        const clientPriority = chat.partnerPriority || 0;
                         return {
                             id: chat.roomId, partnerId, model: chat.modelProfile || {},
-                            messages: chat.messages.map(m => ({ 
-                                id: m._id || Math.random(), text: m.text, sender: m.senderId === userUniqueId ? 'me' : 'partner', 
-                                time: m.time, type: m.type || 'text', mediaUrl: m.mediaUrl || null 
-                            })),
-                            mutedBy: chat.mutedBy || []
+                            messages, mutedBy: chat.mutedBy || [], clientPriority
                         };
                     });
                     useStore.setState(state => {
@@ -280,7 +283,7 @@ const MessagesTab = ({ setCurrentPage, setSelectedModel }) => {
 
     const emitMessage = (text, type, mediaUrl) => {
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const newMsgForMe = { id: Date.now(), text, sender: 'me', time, type, mediaUrl };
+        const newMsgForMe = { id: Date.now(), text, sender: 'me', time, type, mediaUrl, priority: 0 };
         
         socket.emit('send_message', {
             roomId: activeChatId, senderId: userUniqueId, partnerId: activeChat.partnerId, 
@@ -336,6 +339,7 @@ const MessagesTab = ({ setCurrentPage, setSelectedModel }) => {
                             <ChatMessageList 
                                 activeChat={activeChat} partnerIsTyping={partnerIsTyping} 
                                 getPartnerInfo={getPartnerInfo} mediaPreview={mediaPreview} isRecording={isRecording} accent={accent}
+                                clientPriority={activeChat?.clientPriority || 0}
                             />
 
                             <ChatInputBox 

@@ -14,7 +14,26 @@ export default (bot, ADMIN_ID) => {
                 return res.status(403).json({ success: false, message: 'Доступ заборонено' });
             }
             const chats = await Chat.find({ participants: req.params.userId }).sort({ updatedAt: -1 });
-            res.status(200).json({ success: true, data: chats });
+
+            // 👑 Підтягуємо актуальний VIP-пакет кожного партнера для правильного бейджу
+            const VIP_PRIORITY_MAP = { concierge: 3, priority_chat: 2, premium_client: 1 };
+            const now = new Date();
+            const chatsWithPriority = await Promise.all(chats.map(async (chat) => {
+                const partnerId = chat.participants.find(p => String(p) !== String(req.params.userId));
+                let partnerPriority = 0;
+                if (partnerId) {
+                    try {
+                        const partner = await User.findById(partnerId).select('vipPackage vipExpiresAt').lean();
+                        if (partner && partner.vipPackage && partner.vipPackage !== 'none') {
+                            const isActive = partner.vipExpiresAt && new Date(partner.vipExpiresAt) > now;
+                            if (isActive) partnerPriority = VIP_PRIORITY_MAP[partner.vipPackage] || 0;
+                        }
+                    } catch(e) { /* не критично */ }
+                }
+                return { ...chat.toObject(), partnerPriority };
+            }));
+
+            res.status(200).json({ success: true, data: chatsWithPriority });
         } catch (error) { res.status(500).json({ success: false }); }
     });
 

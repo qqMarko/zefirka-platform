@@ -121,5 +121,20 @@ export const createCatalogSlice = (set, get) => {
 
         openCreate: () => set({ showCreateModal: true, editingModel: null }),
         openEdit: (model) => set({ showCreateModal: true, editingModel: model }),
+
+        loadLounge: async () => {
+            try {
+                const token = localStorage.getItem('zefirka_token');
+                const res = await fetch('/api/profiles/lounge', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.success) return data.data;
+                return null; // 403 = нема доступу
+            } catch (e) {
+                console.error('Помилка завантаження лаунжу:', e);
+                return null;
+            }
+        },
     };
 };

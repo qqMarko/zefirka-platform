@@ -315,7 +315,8 @@ const Header = ({
     unreadNotifs, showNotifDropdown, setShowNotifDropdown, markNotificationsAsRead,
     notifications, email, userUniqueId, showUserDropdown, setShowUserDropdown,
     setShowVipModal, setShowWalletModal, setShowSettingsModal, hasActiveDisputeAlert,
-    setHasActiveDisputeAlert, setShowSupport, handleLogout, user, hasDisputeAccess
+    setHasActiveDisputeAlert, setShowSupport, handleLogout, user, hasDisputeAccess,
+    setShowLoungeModal
 }) => {
 
     const { deleteNotification, clearAllNotifications } = useStore();
@@ -554,6 +555,26 @@ const Header = ({
         
                                     <div style={{ display: 'grid', gap: '4px' }}>
                                         <div style={{ padding: '10px 15px', color: '#ccc', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', borderRadius: '8px', fontSize: '13px', fontWeight: '600' }} className="dropdown-item-hover" onClick={() => {setShowVipModal(true); setShowUserDropdown(false)}}><Crown size={18} color="#ffc107"/> {userRole === 'model' ? (t[currentLang]?.vip || 'VIP статус') : (t[currentLang]?.clientPremium || 'Преміум')}</div>
+                                        
+                                        {/* VIP ЛАУНЖ — для CONCIERGE клієнтів і DIAMOND/PREMIUM моделей */}
+                                        {(() => {
+                                            const pkg = String(user?.vipPackage || '').toLowerCase();
+                                            const isVipActive = !user?.vipExpiresAt || new Date(user.vipExpiresAt) > new Date();
+                                            const clientHasLounge = userRole === 'client' && pkg === 'concierge' && isVipActive;
+                                            const modelHasLounge = userRole === 'model' && ['diamond', 'premium'].includes(pkg) && isVipActive;
+                                            if (!clientHasLounge && !modelHasLounge) return null;
+                                            return (
+                                                <div
+                                                    style={{ padding: '10px 15px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', borderRadius: '8px', fontSize: '13px', fontWeight: '600', background: 'rgba(255,0,127,0.06)', border: '1px solid rgba(255,0,127,0.2)', color: '#ff007f', position: 'relative', overflow: 'hidden' }}
+                                                    className="dropdown-item-hover"
+                                                    onClick={() => { setShowLoungeModal(true); setShowUserDropdown(false); }}
+                                                >
+                                                    <span style={{ fontSize: '16px' }}>👑</span>
+                                                    <span>VIP Лаунж</span>
+                                                    <span style={{ marginLeft: 'auto', fontSize: '9px', fontWeight: '900', color: '#ff007f', background: 'rgba(255,0,127,0.12)', border: '1px solid rgba(255,0,127,0.3)', padding: '2px 7px', borderRadius: '4px', letterSpacing: '0.5px' }}>CLUB</span>
+                                                </div>
+                                            );
+                                        })()}
                                         <div style={{ padding: '10px 15px', color: '#ccc', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', borderRadius: '8px', fontSize: '13px', fontWeight: '600' }} className="dropdown-item-hover" onClick={() => {setShowWalletModal(true); setShowUserDropdown(false);}}><Wallet size={18}/> {t[currentLang]?.wallet || 'Гаманець'}</div>
                                         <div style={{ padding: '10px 15px', color: '#ccc', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', borderRadius: '8px', fontSize: '13px', fontWeight: '600' }} className="dropdown-item-hover" onClick={() => {setShowSettingsModal(true); setShowUserDropdown(false);}}><Settings size={18}/> {t[currentLang]?.settings || 'Налаштування'}</div>
                                         

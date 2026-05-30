@@ -78,9 +78,10 @@ export const createSocketSlice = (socket, set, get) => ({
             const chatExists = get().myChats.find(c => c.id === data.roomId);
             if (chatExists) {
                 set(state => ({
-                    myChats: state.myChats.map(c =>
-                        c.id === data.roomId ? { ...c, messages: [...c.messages, normalizedMsg] } : c
-                    )
+                    myChats: state.myChats.map(c => {
+                        if (c.id !== data.roomId) return c;
+                        return { ...c, messages: [...c.messages, normalizedMsg] };
+                    })
                 }));
             } else {
                 get().loadChats(userId);

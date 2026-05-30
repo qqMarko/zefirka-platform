@@ -38,6 +38,7 @@ import ContactSelectionModal from './components/ContactSelectionModal';
 import ActiveDisputeOverlay from './components/ActiveDisputeOverlay';
 import VerifyTimerModal from './components/VerifyTimerModal';
 import PaymentLoaderOverlay from './components/PaymentLoaderOverlay';
+import VipLoungeModal from './components/VipLoungeModal';
 
 const getGenderSuffix = (g) => { 
     if (g === 'm' || g === 'g') return '_m'; 
@@ -86,6 +87,7 @@ const ZefirkaPlatform = () => {
     const [showNotifDropdown, setShowNotifDropdown] = useState(false); 
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [showVipModal, setShowVipModal] = useState(false); 
+    const [showLoungeModal, setShowLoungeModal] = useState(false);
     
     const [selectedFetishes, setSelectedFetishes] = useState([]);
     const [selectedHair, setSelectedHair] = useState([]);
@@ -331,6 +333,7 @@ const ZefirkaPlatform = () => {
                     notifications={notifications} email={email} userUniqueId={userUniqueId} showUserDropdown={showUserDropdown} setShowUserDropdown={setShowUserDropdown}
                     setShowVipModal={setShowVipModal} setShowWalletModal={setShowWalletModal} setShowSettingsModal={setShowSettingsModal} hasActiveDisputeAlert={hasActiveDisputeAlert}
                     setHasActiveDisputeAlert={setHasActiveDisputeAlert} setShowSupport={setShowSupport} handleLogout={handleLogout} user={user} hasDisputeAccess={hasDisputeAccess}
+                    setShowLoungeModal={setShowLoungeModal}
                 />
 
                 <SidebarFilters 
@@ -361,7 +364,8 @@ const ZefirkaPlatform = () => {
                                 navigate={navigate} openCreate={openCreate} openEdit={openEdit} 
                                 promptDelete={promptDelete} promptBump={promptBump} 
                                 setSelectedModel={setSelectedModel} setContactSelectionModel={setContactSelectionModel} 
-                                handleToggleFavorite={handleToggleFavorite} t={t} currentLang={currentLang} accent={accent} 
+                                handleToggleFavorite={handleToggleFavorite} t={t} currentLang={currentLang} accent={accent}
+                                setShowLoungeModal={setShowLoungeModal} setShowVipModal={setShowVipModal}
                             />
                         ) : <Navigate to="/" replace /> } />
 
@@ -382,6 +386,7 @@ const ZefirkaPlatform = () => {
                 {showStats && <StatsModal setShowStats={setShowStats} t={t} currentLang={currentLang} accent={accent} />}
                 {showWalletModal && <WalletModal setShowWalletModal={setShowWalletModal} t={t} currentLang={currentLang} accent={accent} openSupport={() => setShowSupport(true)} onPaymentSubmit={handlePaymentInitiated} initialAmount={walletInitialAmount} />}
                 {showVipModal && <VipPackagesModal setShowVipModal={setShowVipModal} t={t} currentLang={currentLang} accent={accent} openWalletWithAmount={openWalletWithAmount} userRole={userRole} />}
+                {showLoungeModal && <VipLoungeModal onClose={() => setShowLoungeModal(false)} setSelectedModel={setSelectedModel} setContactSelectionModel={setContactSelectionModel} />}
 
                 <ActiveDisputeOverlay activeDisputeForMe={activeDisputeForMe} isDisputeMinimized={isDisputeMinimized} toggleDisputeMinimize={toggleDisputeMinimize} userUniqueId={userUniqueId} userRole={userRole} />
             </div>

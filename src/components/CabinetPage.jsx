@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart2, ShieldCheck, Wallet, MessageCircle, Plus, Rocket, Gem, Crown, AlertCircle, CheckCircle2, Trash2, Edit3, Heart } from 'lucide-react';
+import { BarChart2, ShieldCheck, Wallet, MessageCircle, Plus, Rocket, Gem, Crown, AlertCircle, CheckCircle2, Trash2, Edit3, Heart, Sparkles, Clock, Lock, Zap } from 'lucide-react';
 import CatalogGrid from '../components/CatalogGrid';
 import { useMegaphone } from '../context/MegaphoneContext';
 import { C, R, section, btnPrimary, btnGhost } from '../styles/ds';
@@ -12,7 +12,7 @@ const TIER = {
     0: { label: '',        color: '',        border: `1px solid ${C.border}` },
 };
 
-const CabinetPage = ({ userRole, balance, userUniqueId, myModels, favorites, myChats, user, setShowStats, setShowVerifyPromo, setShowWalletModal, setPreviousPage, navigate, openCreate, openEdit, promptDelete, promptBump, setSelectedModel, setContactSelectionModel, handleToggleFavorite, t, currentLang, accent }) => {
+const CabinetPage = ({ userRole, balance, userUniqueId, myModels, favorites, myChats, user, setShowStats, setShowVerifyPromo, setShowWalletModal, setPreviousPage, navigate, openCreate, openEdit, promptDelete, promptBump, setSelectedModel, setContactSelectionModel, handleToggleFavorite, t, currentLang, accent, setShowVipModal, setShowLoungeModal }) => {
     const meg = useMegaphone();
     const discPct = meg.isActive ? (meg.bumpDiscountPercent || 0) : 0;
     const bumpPrice = discPct > 0 ? Math.floor(BUMP_BASE - BUMP_BASE * discPct / 100) : BUMP_BASE;
@@ -147,22 +147,142 @@ const CabinetPage = ({ userRole, balance, userUniqueId, myModels, favorites, myC
                     </div>
                 )
             ) : (
-                favorites.length === 0 ? (
-                    <div style={{ ...section(), textAlign: 'center', padding: '80px 24px', border: `1px dashed ${C.border}` }}>
-                        <Heart size={40} color={C.textMuted} style={{ marginBottom: '14px' }} />
-                        <div style={{ color: C.textSub, marginBottom: '16px' }}>{t[currentLang]?.noFavs || 'Список вибраних порожній'}</div>
-                        <button onClick={() => navigate('/')} style={{ ...btnPrimary(), margin: '0 auto' }}>{t[currentLang]?.goToCatalog || 'До каталогу'}</button>
-                    </div>
-                ) : (
-                    <>
-                        <h2 style={{ fontSize: '20px', fontWeight: '800', color: C.text, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Heart size={18} color={C.accent} fill={C.accent} /> {t[currentLang]?.yourFavorites || 'Вибрані'}
-                        </h2>
-                        <CatalogGrid currentModels={favorites} setSelectedModel={setSelectedModel} setContactSelectionModel={setContactSelectionModel} t={t} currentLang={currentLang} accent={accent} favorites={favorites} handleToggleFavorite={handleToggleFavorite} />
-                    </>
-                )
+                // ══════════════════════════════════════════════
+                // КЛІЄНТСЬКИЙ КАБІНЕТ
+                // ══════════════════════════════════════════════
+                <ClientCabinet
+                    user={user} navigate={navigate} accent={accent}
+                    favorites={favorites} setSelectedModel={setSelectedModel}
+                    setContactSelectionModel={setContactSelectionModel}
+                    handleToggleFavorite={handleToggleFavorite}
+                    setShowVipModal={setShowVipModal} setShowLoungeModal={setShowLoungeModal}
+                    t={t} currentLang={currentLang}
+                />
             )}
         </main>
+    );
+};
+
+// ─────────────────────────────────────────────────────────────
+// КЛІЄНТСЬКИЙ КАБІНЕТ — окремий компонент
+// ─────────────────────────────────────────────────────────────
+const VIP_META = {
+    concierge:      { label: 'CONCIERGE', color: '#ff007f', bg: 'rgba(255,0,127,0.08)',  border: 'rgba(255,0,127,0.25)',  icon: <Sparkles    size={18} color="#ff007f" /> },
+    priority_chat:  { label: 'PRIORITY',  color: '#ffc107', bg: 'rgba(255,193,7,0.08)',  border: 'rgba(255,193,7,0.25)',  icon: <Zap         size={18} color="#ffc107" /> },
+    premium_client: { label: 'GUEST',     color: '#4caf50', bg: 'rgba(76,175,80,0.08)',  border: 'rgba(76,175,80,0.25)', icon: <ShieldCheck  size={18} color="#4caf50" /> },
+};
+
+function getRemainingTime(expiresAt) {
+    if (!expiresAt) return null;
+    const diff = new Date(expiresAt) - Date.now();
+    if (diff <= 0) return null;
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    if (days > 0) return `${days} дн ${hours} год`;
+    return `${hours} год`;
+}
+
+const ClientCabinet = ({ user, navigate, accent, favorites, setSelectedModel, setContactSelectionModel, handleToggleFavorite, setShowVipModal, setShowLoungeModal, t, currentLang }) => {
+    const pkg = String(user?.vipPackage || '').toLowerCase();
+    const isVipActive = user?.vipExpiresAt && new Date(user.vipExpiresAt) > new Date();
+    const vipMeta = VIP_META[pkg];
+    const hasActiveVip = vipMeta && isVipActive;
+    const timeLeft = getRemainingTime(user?.vipExpiresAt);
+    const hasLounge = pkg === 'concierge' && isVipActive;
+    const hasFavAccess = ['premium_client', 'priority_chat', 'concierge'].includes(pkg) && isVipActive;
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+            {/* ── VIP СТАТУС ── */}
+            {hasActiveVip ? (
+                <div style={{ ...section(), padding: '20px 24px', border: `1px solid ${vipMeta.border}`, background: vipMeta.bg, display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: vipMeta.bg, border: `1px solid ${vipMeta.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {vipMeta.icon}
+                    </div>
+                    <div style={{ flex: 1, minWidth: '140px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '15px', fontWeight: '900', color: vipMeta.color }}>{vipMeta.label}</span>
+                            <span style={{ fontSize: '10px', fontWeight: '700', background: vipMeta.bg, border: `1px solid ${vipMeta.border}`, color: vipMeta.color, padding: '2px 8px', borderRadius: '5px' }}>АКТИВНИЙ</span>
+                        </div>
+                        {timeLeft && (
+                            <div style={{ fontSize: '12px', color: C.textMuted, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <Clock size={11} /> Діє ще: <span style={{ color: C.text, fontWeight: '700' }}>{timeLeft}</span>
+                            </div>
+                        )}
+                    </div>
+                    <button onClick={() => setShowVipModal && setShowVipModal(true)} style={{ ...btnGhost(), fontSize: '12px', padding: '8px 14px', flexShrink: 0 }}>
+                        Продовжити
+                    </button>
+                </div>
+            ) : (
+                <div style={{ ...section(), padding: '20px 24px', border: `1px dashed ${C.border}`, display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Crown size={22} color={C.textMuted} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: '140px' }}>
+                        <div style={{ fontSize: '14px', fontWeight: '800', color: C.text, marginBottom: '3px' }}>Без преміум статусу</div>
+                        <div style={{ fontSize: '12px', color: C.textMuted }}>Додайте анкети в обране, отримайте пріоритет в чаті та арбітраж</div>
+                    </div>
+                    <button onClick={() => setShowVipModal && setShowVipModal(true)} style={{ ...btnPrimary(), fontSize: '12px', padding: '10px 16px', flexShrink: 0 }}>
+                        <Crown size={14} /> Активувати
+                    </button>
+                </div>
+            )}
+
+            {/* ── ЛАУНЖ (тільки CONCIERGE) ── */}
+            {hasLounge && (
+                <div
+                    onClick={() => setShowLoungeModal && setShowLoungeModal(true)}
+                    style={{ padding: '18px 24px', background: 'rgba(255,0,127,0.04)', border: '1px solid rgba(255,0,127,0.2)', borderRadius: R.md, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', transition: 'border-color 0.2s' }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,0,127,0.45)'}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,0,127,0.2)'}
+                >
+                    <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(255,0,127,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Crown size={22} color="#ff007f" />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
+                            <span style={{ fontSize: '14px', fontWeight: '900', color: '#ff007f' }}>VIP Лаунж</span>
+                            <span style={{ fontSize: '9px', fontWeight: '900', color: '#ff007f', background: 'rgba(255,0,127,0.1)', border: '1px solid rgba(255,0,127,0.3)', padding: '2px 7px', borderRadius: '4px', letterSpacing: '0.5px' }}>CLUB</span>
+                        </div>
+                        <div style={{ fontSize: '12px', color: C.textMuted }}>Ексклюзивні анкети DIAMOND та PREMIUM моделей — відкрити →</div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── ОБРАНІ ── */}
+            <div>
+                <h2 style={{ fontSize: '18px', fontWeight: '800', color: C.text, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Heart size={16} color={C.accent} fill={C.accent} /> Вибрані анкети
+                    {favorites.length > 0 && <span style={{ fontSize: '12px', background: C.accent, color: '#fff', padding: '2px 8px', borderRadius: '10px', fontWeight: '700' }}>{favorites.length}</span>}
+                </h2>
+
+                {!hasFavAccess ? (
+                    <div style={{ ...section(), textAlign: 'center', padding: '50px 24px', border: `1px dashed ${C.border}` }}>
+                        <Lock size={32} color={C.textMuted} style={{ marginBottom: '12px' }} />
+                        <div style={{ color: C.textSub, fontWeight: '700', marginBottom: '6px' }}>Обрані доступні від статусу GUEST</div>
+                        <div style={{ color: C.textMuted, fontSize: '13px', marginBottom: '16px' }}>Активуйте преміум щоб зберігати анкети</div>
+                        <button onClick={() => setShowVipModal && setShowVipModal(true)} style={{ ...btnPrimary(), margin: '0 auto', fontSize: '13px' }}>
+                            <Crown size={14} /> Активувати GUEST — 499 ₴/міс
+                        </button>
+                    </div>
+                ) : favorites.length === 0 ? (
+                    <div style={{ ...section(), textAlign: 'center', padding: '50px 24px', border: `1px dashed ${C.border}` }}>
+                        <Heart size={32} color={C.textMuted} style={{ marginBottom: '12px' }} />
+                        <div style={{ color: C.textSub, marginBottom: '16px' }}>Список вибраних порожній</div>
+                        <button onClick={() => navigate('/')} style={{ ...btnPrimary(), margin: '0 auto' }}>До каталогу</button>
+                    </div>
+                ) : (
+                    <CatalogGrid
+                        currentModels={favorites} setSelectedModel={setSelectedModel}
+                        setContactSelectionModel={setContactSelectionModel}
+                        t={t} currentLang={currentLang} accent={accent}
+                        favorites={favorites} handleToggleFavorite={handleToggleFavorite}
+                    />
+                )}
+            </div>
+        </div>
     );
 };
 

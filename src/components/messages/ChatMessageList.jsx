@@ -88,7 +88,7 @@ const SmoothScrollArea = ({ children, autoScrollDeps = [], style, className }) =
     );
 };
 
-const ChatMessageList = ({ activeChat, partnerIsTyping, getPartnerInfo, mediaPreview, isRecording, accent }) => {
+const ChatMessageList = ({ activeChat, partnerIsTyping, getPartnerInfo, mediaPreview, isRecording, accent, clientPriority = 0 }) => {
     return (
         <SmoothScrollArea 
             className="custom-scrollbar"
@@ -110,11 +110,41 @@ const ChatMessageList = ({ activeChat, partnerIsTyping, getPartnerInfo, mediaPre
                         }
                     }
 
-                    const isVipMsg = !isMe && (msg.priority || 0) >= 2;
+                    // 👑 Бейдж — завжди за ПОТОЧНИМ VIP клієнта (clientPriority), не за полем повідомлення
+                    const priority = !isMe ? clientPriority : 0;
+                    const isVipMsg = !isMe && priority >= 1;
                     const isAudio = msg.type === 'audio';
+
+                    // 👑 Стилі залежно від рівня VIP
+                    const VIP_STYLES = {
+                        3: { border: '1px solid rgba(255,0,127,0.6)',  shadow: '0 4px 20px rgba(255,0,127,0.2)',  label: '👑 CONCIERGE', labelColor: '#ff007f' },
+                        2: { border: '1px solid rgba(255,193,7,0.6)',  shadow: '0 4px 18px rgba(255,193,7,0.2)',  label: '⭐ PRIORITY',  labelColor: '#ffc107' },
+                        1: { border: '1px solid rgba(76,175,80,0.4)', shadow: '0 4px 15px rgba(76,175,80,0.15)', label: '✓ GUEST',      labelColor: '#4caf50' },
+                    };
+                    const vipStyle = isVipMsg ? VIP_STYLES[priority] : null;
+
                     return (
-                        <div key={msg.id} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', position: 'relative', background: isAudio ? '#1a1a1a' : (isMe ? accent : '#1a1a1a'), border: isVipMsg ? '1px solid #FFD700' : 'none', color: 'white', padding: isAudio ? '6px 10px' : '12px 18px', borderRadius: isMe ? '18px 18px 0 18px' : '18px 18px 18px 0', maxWidth: '85%', fontSize: '14px', lineHeight: '1.5', boxShadow: isVipMsg ? '0 4px 18px rgba(255,215,0,0.25)' : '0 4px 15px rgba(0,0,0,0.5)', fontWeight: '500', wordBreak: 'break-word', flexShrink: 0 }}>
-                            {isVipMsg && <div style={{ fontSize: '10px', fontWeight: '900', color: '#FFD700', marginBottom: '4px', letterSpacing: '0.5px', padding: '0 8px' }}>⭐ VIP КЛІЄНТ</div>}
+                        <div key={msg.id} style={{
+                            alignSelf: isMe ? 'flex-end' : 'flex-start',
+                            position: 'relative',
+                            background: isAudio ? '#1a1a1a' : (isMe ? accent : '#1a1a1a'),
+                            border: vipStyle ? vipStyle.border : 'none',
+                            color: 'white',
+                            padding: isAudio ? '6px 10px' : '12px 18px',
+                            borderRadius: isMe ? '18px 18px 0 18px' : '18px 18px 18px 0',
+                            maxWidth: '85%',
+                            fontSize: '14px',
+                            lineHeight: '1.5',
+                            boxShadow: vipStyle ? vipStyle.shadow : '0 4px 15px rgba(0,0,0,0.5)',
+                            fontWeight: '500',
+                            wordBreak: 'break-word',
+                            flexShrink: 0,
+                        }}>
+                            {vipStyle && (
+                                <div style={{ fontSize: '10px', fontWeight: '900', color: vipStyle.labelColor, marginBottom: '5px', letterSpacing: '0.5px', padding: '0 8px' }}>
+                                    {vipStyle.label}
+                                </div>
+                            )}
                             {msg.type === 'image' && mediaSrc && <img src={mediaSrc} alt="photo" style={{ width: '100%', maxWidth: '300px', borderRadius: '10px', marginBottom: msg.text ? '10px' : '0', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)' }} />}
                             {msg.type === 'video' && mediaSrc && <video src={mediaSrc} controls playsInline webkit-playsinline="true" preload="metadata" style={{ width: '100%', maxWidth: '300px', borderRadius: '10px', marginBottom: msg.text ? '10px' : '0', outline: 'none', background: '#000' }} />}
                             {msg.type === 'audio' && mediaSrc && <CustomAudioPlayer src={mediaSrc} accent={accent} />}
