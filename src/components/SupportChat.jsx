@@ -98,7 +98,7 @@ const SupportChat = ({
                 `}
             </style>
 
-            <div className={`modal-pop ${isClosing ? 'chat-closing' : ''}`} style={{ position: 'fixed', bottom: '20px', right: '20px', width: '360px', height: '600px', background: 'linear-gradient(180deg, rgba(15,15,20,0.95) 0%, rgba(5,5,8,0.98) 100%)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: `1px solid rgba(255,255,255,0.08)`, zIndex: 9999, display: 'flex', flexDirection: 'column', boxShadow: `0 20px 50px rgba(0,0,0,0.8), 0 0 20px ${accent}22`, borderRadius: '24px', overflow: 'hidden' }}>
+            <div className={`modal-pop zef-support-chat ${isClosing ? 'chat-closing' : ''}`} style={{ position: 'fixed', bottom: '20px', right: '20px', width: '360px', height: '600px', background: 'linear-gradient(180deg, rgba(15,15,20,0.95) 0%, rgba(5,5,8,0.98) 100%)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: `1px solid rgba(255,255,255,0.08)`, zIndex: 9999, display: 'flex', flexDirection: 'column', boxShadow: `0 20px 50px rgba(0,0,0,0.8), 0 0 20px ${accent}22`, borderRadius: '24px', overflow: 'hidden' }}>
                 
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.4)', flexShrink: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -186,7 +186,7 @@ const SupportChat = ({
                     </div>
                 )}
 
-                <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.4)', display: 'flex', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
+                <div className="zef-support-input" style={{ padding: '16px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.4)', display: 'flex', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
                     <div onClick={() => supportFileRef.current.click()} style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.2s' }} className="menu-hover"><Camera size={20} color="#aaa" /></div>
                     <input type="file" ref={supportFileRef} hidden accept="image/*" onChange={handleSupportAttach} />
                     <input value={supportInput} onChange={e => setSupportInput(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleSupportSend()} placeholder={t[currentLang]?.supportPlaceholder || 'Повідомлення...'} style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '12px 18px', color: 'white', borderRadius: '24px', outline: 'none', fontSize: '13px', fontFamily: 'inherit', fontWeight: '500', transition: 'border-color 0.3s' }} onFocus={(e) => e.target.style.borderColor = accent} onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.08)'} />
