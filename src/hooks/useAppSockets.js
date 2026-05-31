@@ -12,9 +12,17 @@ export const useAppSockets = ({
     clearSupportSession
 }) => {
     useEffect(() => {
-        // Логіка визначення ID користувача (або гостя для підтримки)
-        const currentUserId = userUniqueId || localStorage.getItem('guest_support_id') || `GUEST_${Math.floor(Math.random()*100000)}`;
-        if (!userUniqueId) localStorage.setItem('guest_support_id', currentUserId);
+        // Якщо є реальний userId — очищаємо гостьовий ID щоб стара переписка не перейшла
+        if (userUniqueId) {
+            localStorage.removeItem('guest_support_id');
+        }
+
+        // ID для підтримки — тільки реальний або новий гостьовий (без читання старого)
+        const currentUserId = userUniqueId || (() => {
+            const newGuestId = `GUEST_${Math.floor(Math.random() * 100000)}`;
+            localStorage.setItem('guest_support_id', newGuestId);
+            return newGuestId;
+        })();
 
         // Підключення користувача
         if (userUniqueId) socket.emit('user_connected', userUniqueId);

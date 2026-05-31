@@ -1,6 +1,6 @@
-import React, { useRef, useCallback, useEffect } from 'react';
+import React, { useRef, useCallback, useEffect, useState } from 'react';
 import CatalogGrid from './CatalogGrid';
-import { Loader2, Lock, ShieldCheck, Zap } from 'lucide-react';
+import { Loader2, Lock, ShieldCheck, Zap, ChevronDown } from 'lucide-react';
 
 const CatalogPage = ({
     isLoggedIn, userRole, t, currentLang, accent,
@@ -8,6 +8,15 @@ const CatalogPage = ({
     setContactSelectionModel, favorites, handleToggleFavorite,
     totalPages, catalogPage, handlePageChange
 }) => {
+    const [whyOpen, setWhyOpen] = useState(() => {
+        try { return localStorage.getItem('zefirka_why_open') !== 'false'; } catch { return true; }
+    });
+
+    const toggleWhy = () => {
+        const next = !whyOpen;
+        setWhyOpen(next);
+        try { localStorage.setItem('zefirka_why_open', next ? 'true' : 'false'); } catch {}
+    };
 
     const sentinelRef = useRef(null);
 
@@ -34,9 +43,37 @@ const CatalogPage = ({
     return (
         <main>
             {(!isLoggedIn || userRole === 'client') && (
-                <div style={{ marginBottom: '80px' }} className="fade-in-up">
-                    <h2 style={{ color: 'white', letterSpacing: '1px', marginBottom: '40px', textAlign: 'center', fontSize: 'clamp(26px, 5vw, 36px)', fontWeight: '900', textTransform: 'uppercase' }}>{t[currentLang]?.whyUsTitle}</h2>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                <div style={{ marginBottom: '60px' }} className="fade-in-up">
+                    {/* ЗАГОЛОВОК З КНОПКОЮ ЗГОРНУТИ */}
+                    <div
+                        onClick={toggleWhy}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '32px', cursor: 'pointer', userSelect: 'none' }}
+                    >
+                        <h2 style={{ color: 'white', letterSpacing: '1px', textAlign: 'center', fontSize: 'clamp(26px, 5vw, 36px)', fontWeight: '900', textTransform: 'uppercase', margin: 0 }}>
+                            {t[currentLang]?.whyUsTitle}
+                        </h2>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.2s' }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+                        >
+                            <ChevronDown size={16} color="#888" style={{ transition: 'transform 0.3s', transform: whyOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }} />
+                        </div>
+                    </div>
+
+                    {/* ОБГОРТКА для плавного колапсу через grid */}
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateRows: whyOpen ? '1fr' : '0fr',
+                        transition: 'grid-template-rows 0.35s ease, opacity 0.3s ease',
+                        opacity: whyOpen ? 1 : 0,
+                    }}>
+                    <div style={{ overflow: 'hidden', marginBottom: whyOpen ? '0' : '0' }}>
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                        gap: '20px',
+                        paddingBottom: '4px',
+                    }}>
                         {[
                             { icon: Lock, color: accent, title: t[currentLang]?.whyUs1, desc: t[currentLang]?.whyUs1Desc },
                             { icon: ShieldCheck, color: '#4caf50', title: t[currentLang]?.whyUs2, desc: t[currentLang]?.whyUs2Desc },
@@ -53,6 +90,8 @@ const CatalogPage = ({
                                 <div style={{ color: '#999', fontSize: '14px', lineHeight: '1.65', fontWeight: '400' }}>{f.desc}</div>
                             </div>
                         ))}
+                    </div>
+                    </div>
                     </div>
                 </div>
             )}

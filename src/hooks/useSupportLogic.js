@@ -1,22 +1,35 @@
 import { useState, useRef, useEffect } from 'react';
 
-const STORAGE_KEY = (userId) => `zefirka_support_chat_${userId || 'guest'}`;
+const STORAGE_KEY = (userId) => `zefirka_support_chat_${userId}`;
 
 export const useSupportLogic = (userUniqueId, email) => {
     const [showSupport, setShowSupport] = useState(false);
-    const [agentName, setAgentName] = useState(null); // ім'я адміна що взяв тікет
-    const [supportMessages, setSupportMessages] = useState(() => {
-        try {
-            const raw = localStorage.getItem(STORAGE_KEY(userUniqueId));
-            return raw ? JSON.parse(raw) : [];
-        } catch { return []; }
-    });
+    const [agentName, setAgentName] = useState(null);
+    // Не читаємо з localStorage при ініціалізації — userUniqueId може ще не бути
+    const [supportMessages, setSupportMessages] = useState([]);
     const [supportInput, setSupportInput] = useState('');
     const [supportAttachedImg, setSupportAttachedImg] = useState(null);
     const supportFileRef = useRef(null);
+    const loadedForUser = useRef(null);
 
-    // Зберігаємо переписку при кожній зміні
+    // Завантажуємо історію тільки коли userUniqueId відомий — і тільки раз на юзера
     useEffect(() => {
+        if (!userUniqueId || loadedForUser.current === userUniqueId) return;
+        loadedForUser.current = userUniqueId;
+        // Скидаємо попередні повідомлення (могли бути від іншого юзера)
+        setSupportMessages([]);
+        // Видаляємо гостьовий ключ — він більше не потрібен
+        try { localStorage.removeItem(`zefirka_support_chat_guest`); } catch {}
+        // Завантажуємо переписку конкретного юзера
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY(userUniqueId));
+            if (raw) setSupportMessages(JSON.parse(raw));
+        } catch {}
+    }, [userUniqueId]);
+
+    // Зберігаємо переписку при кожній зміні (тільки якщо є реальний userId)
+    useEffect(() => {
+        if (!userUniqueId) return;
         try { localStorage.setItem(STORAGE_KEY(userUniqueId), JSON.stringify(supportMessages)); } catch {}
     }, [supportMessages, userUniqueId]);
 
