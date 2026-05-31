@@ -87,6 +87,56 @@
     .zef-profile-cta button {
         min-height: 52px !important;
     }
+
+    /* ══════════════ СТВОРЕННЯ АНКЕТИ ══════════════ */
+
+    /* Контейнер модалки — фіксована ширина, без анімації max-width */
+    .zef-create-modal {
+        max-width: 100% !important;
+        width: calc(100% - 16px) !important;
+        max-height: 90dvh !important;
+        transition: none !important;
+        overflow: hidden !important;
+    }
+
+    /* Скрол — тільки вертикальний, ніякого горизонтального */
+    .zef-create-scroll {
+        padding: 24px 16px max(24px, env(safe-area-inset-bottom)) 16px !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    /* Усе всередині скролу — не ширше контейнера */
+    .zef-create-scroll * {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    /* Будь-які гріди в 2+ колонки — в один стовпець */
+    .zef-create-scroll [style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Степпер — компактніший, лінія в межах */
+    .zef-create-stepper {
+        margin-bottom: 28px !important;
+        width: 100% !important;
+    }
+
+    /* Кнопки Скасувати/Далі — рівні, з відступом між ними */
+    .zef-create-actions {
+        gap: 12px !important;
+        margin-top: 28px !important;
+        padding-top: 20px !important;
+    }
+    .zef-create-actions button {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        padding: 14px 10px !important;
+        font-size: 14px !important;
+        justify-content: center !important;
+        white-space: nowrap !important;
+    }
 }
 
 /* ── ДУЖЕ МАЛІ ЕКРАНИ (≤360px) ────────────────────────── */

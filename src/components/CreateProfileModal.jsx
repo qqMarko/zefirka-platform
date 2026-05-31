@@ -269,7 +269,7 @@ const CreateProfileModal = () => {
         const activeLineWidth = `calc((100% - 48px) * ${(step - 1) / 3})`;
 
         return (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '45px', position: 'relative' }}>
+            <div className="zef-create-stepper" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '45px', position: 'relative' }}>
                 <div style={{ position: 'absolute', top: '50%', left: '24px', right: '24px', height: '2px', background: 'rgba(255,255,255,0.08)', zIndex: 1, transform: 'translateY(-50%)', borderRadius: '2px' }}></div>
                 <div style={{ position: 'absolute', top: '50%', left: '24px', width: activeLineWidth, height: '2px', background: `linear-gradient(90deg, ${accent}, #ff4081)`, zIndex: 2, transition: 'width 0.5s ease', transform: 'translateY(-50%)', borderRadius: '2px', boxShadow: `0 0 15px ${accent}` }}></div>
                 
@@ -296,7 +296,7 @@ const CreateProfileModal = () => {
             <div onClick={() => setShowCreateModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', zIndex: 3999 }}></div>
 
             <div style={{ position: 'fixed', inset: 0, zIndex: 4000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                <div className="modal-pop" style={{ 
+                <div className="modal-pop zef-create-modal" style={{ 
                     width: '100%', 
                     maxWidth: (step === 4 || showModerationScreen) ? '550px' : '750px', 
                     maxHeight: '90vh', 
@@ -315,7 +315,7 @@ const CreateProfileModal = () => {
                         <button onClick={() => setShowCreateModal(false)} style={{ ...closeBtn, top: 20, right: 20, zIndex: 50 }}><X size={16} /></button>
                     )}
 
-                    <div ref={scrollContainerRef} data-lenis-prevent="true" className="custom-scrollbar" style={{ 
+                    <div ref={scrollContainerRef} data-lenis-prevent="true" className="custom-scrollbar zef-create-scroll" style={{ 
                         overflowY: 'auto', 
                         padding: '45px', 
                         width: '100%',
@@ -546,7 +546,7 @@ const CreateProfileModal = () => {
                                     )}
                                 </div>
 
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '40px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '30px' }}>
+                                <div className="zef-create-actions" style={{ display: 'flex', justifyContent: 'space-between', marginTop: '40px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '30px' }}>
                                     <button onClick={() => step > 1 ? setStep(step - 1) : setShowCreateModal(false)} style={{ ...btnGhost(), padding: '14px 28px' }}>
                                         {step > 1 ? <><ChevronLeft size={20} /> НАЗАД</> : 'СКАСУВАТИ'}
                                     </button>
