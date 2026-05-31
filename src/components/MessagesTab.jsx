@@ -12,7 +12,7 @@ import ChatInputBox from './messages/ChatInputBox';
 import MicPermissionModal from './messages/MicPermissionModal';
 
 const MessagesTab = ({ setCurrentPage, setSelectedModel }) => {
-    const { currentLang, myChats, activeChatId, setActiveChatId, userUniqueId, onlineUsers, setOnlineUser } = useStore();
+    const { currentLang, myChats, activeChatId, setActiveChatId, userUniqueId, onlineUsers, setOnlineUser, user } = useStore();
     
     // СТЕЙТИ
     const [chatInput, setChatInput] = useState('');
