@@ -137,6 +137,76 @@
         justify-content: center !important;
         white-space: nowrap !important;
     }
+
+    /* ══════════════ АРБІТРАЖ (master-detail) ══════════════ */
+
+    /* Layout — одна панель на весь екран, не дві поряд */
+    .zef-disputes-layout {
+        height: calc(100dvh - 140px) !important;
+        max-height: none !important;
+        border-radius: 12px !important;
+    }
+
+    /* Сайдбар і чат — кожен на всю ширину */
+    .zef-disputes-sidebar {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+    }
+    .zef-disputes-main {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+    }
+
+    /* Коли спір НЕ вибраний — показуємо список, ховаємо праву панель */
+    .zef-disputes-layout.no-active .zef-disputes-main {
+        display: none !important;
+    }
+    /* Коли спір вибраний — показуємо чат, ховаємо список */
+    .zef-disputes-layout.has-active .zef-disputes-sidebar {
+        display: none !important;
+    }
+
+    /* Кнопка "назад до списку" — показуємо на мобілці */
+    .zef-disputes-back {
+        display: block !important;
+        width: 100% !important;
+        padding: 12px 16px !important;
+        background: rgba(255,255,255,0.04) !important;
+        border: none !important;
+        border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+        color: #fff !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        text-align: left !important;
+        cursor: pointer !important;
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 5 !important;
+    }
+
+    /* Внутрішній div сайдбара — на всю ширину (був фіксований 300px) */
+    .zef-dispute-sidebar-inner {
+        width: 100% !important;
+    }
+
+    /* Створення скарги — на всю ширину, менший padding */
+    .zef-dispute-create {
+        padding: 16px !important;
+        max-width: 100% !important;
+    }
+    /* Кнопка назад у створенні скарги */
+    .zef-dispute-create-back {
+        display: block !important;
+        width: auto !important;
+        padding: 8px 14px 8px 0 !important;
+        margin-bottom: 12px !important;
+        background: transparent !important;
+        border: none !important;
+        color: #fff !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+    }
 }
 
 /* ── ДУЖЕ МАЛІ ЕКРАНИ (≤360px) ────────────────────────── */

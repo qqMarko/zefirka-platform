@@ -30,7 +30,11 @@ const DisputeCreate = ({ userUniqueId, fetchDisputes, setIsCreatingDispute, setA
     };
 
     return (
-        <div style={{ padding: '32px', maxWidth: '560px', margin: '0 auto', width: '100%', overflowY: 'auto', boxSizing: 'border-box' }} className="custom-scrollbar fade-in">
+        <div className="zef-dispute-create custom-scrollbar fade-in" style={{ padding: '32px', maxWidth: '560px', margin: '0 auto', width: '100%', overflowY: 'auto', boxSizing: 'border-box' }}>
+            {/* Кнопка назад — тільки мобілка */}
+            <button type="button" className="zef-dispute-create-back" onClick={() => setIsCreatingDispute(false)} style={{ display: 'none' }}>
+                ‹ Назад
+            </button>
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '28px' }}>
                 <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: `${accent}18`, border: `1px solid ${accent}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>

@@ -8,7 +8,7 @@ const DisputeSidebar = ({ disputes, activeDispute, setActiveDispute, setIsCreati
     const filteredDisputes = disputes.filter(d => viewMode === 'active' ? d.status === 'open' : d.status === 'closed');
 
     return (
-        <div style={{ width: '300px', borderRight: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', background: '#0b0b15', flexShrink: 0 }}>
+        <div className="zef-dispute-sidebar-inner" style={{ width: '300px', borderRight: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', background: '#0b0b15', flexShrink: 0 }}>
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'flex', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '4px' }}>
                     <button onClick={() => setViewMode('active')} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', background: viewMode === 'active' ? accent : 'transparent', color: viewMode === 'active' ? '#fff' : '#666', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>

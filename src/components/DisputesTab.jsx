@@ -186,7 +186,7 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
     }
 
     return (
-        <div style={{
+        <div className={`zef-disputes-layout ${activeDispute || isCreatingDispute ? 'has-active' : 'no-active'}`} style={{
             display: 'flex', height: forcedDispute ? '100%' : 'calc(100vh - 180px)', minHeight: forcedDispute ? '0' : '500px', maxHeight: forcedDispute ? 'none' : '800px',
             width: '100%', background: '#0b0b15', borderRadius: forcedDispute ? '0' : '16px', border: forcedDispute ? 'none' : '1px solid rgba(255,255,255,0.08)', overflow: 'hidden'
         }}>
@@ -205,19 +205,25 @@ const DisputesTab = ({ userUniqueId, userRole, hasDisputeAccess, forcedDispute, 
             )}
 
             {!forcedDispute && (
-                <DisputeSidebar
-                    disputes={disputes} activeDispute={activeDispute} setActiveDispute={setActiveDispute}
-                    setIsCreatingDispute={setIsCreatingDispute} userRole={userRole}
-                    setVerdictResultModal={setVerdictResultModal} accent={accent}
-                    onDeleteDispute={deleteDispute}
-                />
+                <div className="zef-disputes-sidebar">
+                    <DisputeSidebar
+                        disputes={disputes} activeDispute={activeDispute} setActiveDispute={setActiveDispute}
+                        setIsCreatingDispute={setIsCreatingDispute} userRole={userRole}
+                        setVerdictResultModal={setVerdictResultModal} accent={accent}
+                        onDeleteDispute={deleteDispute}
+                    />
+                </div>
             )}
 
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#07070d', position: 'relative', overflow: 'hidden' }}>
+            <div className="zef-disputes-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#07070d', position: 'relative', overflow: 'hidden' }}>
                 {isCreatingDispute ? (
                     <DisputeCreate userUniqueId={userUniqueId} fetchDisputes={fetchDisputes} setIsCreatingDispute={setIsCreatingDispute} setActiveDispute={setActiveDispute} accent={accent} />
                 ) : activeDispute ? (
                     <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto' }}>
+                        {/* Кнопка "назад до списку" — тільки на мобілці */}
+                        <button className="zef-disputes-back" onClick={() => setActiveDispute(null)} style={{ display: 'none' }}>
+                            ‹ До списку спорів
+                        </button>
                         <DisputeChat
                             activeDispute={activeDispute} userUniqueId={userUniqueId} userRole={userRole}
                             setFullscreenImage={setFullscreenImage} adminActions={adminActions} setAdminActions={setAdminActions}
