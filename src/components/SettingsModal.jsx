@@ -297,7 +297,7 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
                     <div style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px' }}>{t[currentLang]?.twoFactor || "Двофакторна автентифікація (2FA)"}</div>
                     <div style={{ color: '#888', fontSize: '12px' }}>{t[currentLang]?.twoFactorDesc || "Додатковий захист вашого акаунту"}</div>
                 </div>
-                <div onClick={handleToggle2FA} style={{ width: '44px', height: '24px', background: twoFactor ? accent : '#333', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: '0.3s' }}>
+                <div onClick={handleToggle2FA} style={{ width: '44px', height: '24px', flexShrink: 0, boxSizing: 'border-box', background: twoFactor ? accent : '#333', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: '0.3s' }}>
                     <div style={{ position: 'absolute', top: '4px', left: twoFactor ? '24px' : '4px', width: '16px', height: '16px', background: 'white', borderRadius: '50%', transition: '0.3s' }}></div>
                 </div>
             </div>
@@ -311,7 +311,7 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
                     <div style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '8px' }}><Mail size={16} color="#ffc107"/> {t[currentLang]?.emailNotif || "Email сповіщення"}</div>
                     <div style={{ color: '#888', fontSize: '12px' }}>{t[currentLang]?.emailNotifDesc || "Отримувати листи про нові повідомлення"}</div>
                 </div>
-                <div onClick={handleToggleEmail} style={{ width: '44px', height: '24px', background: emailNotif ? '#ffc107' : '#333', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: '0.3s' }}>
+                <div onClick={handleToggleEmail} style={{ width: '44px', height: '24px', flexShrink: 0, boxSizing: 'border-box', background: emailNotif ? '#ffc107' : '#333', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: '0.3s' }}>
                     <div style={{ position: 'absolute', top: '4px', left: emailNotif ? '24px' : '4px', width: '16px', height: '16px', background: 'white', borderRadius: '50%', transition: '0.3s' }}></div>
                 </div>
             </div>
@@ -321,7 +321,7 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
                     <div style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '8px' }}><Bell size={16} color="#ffc107"/> {t[currentLang]?.pushNotif || "Push-сповіщення"}</div>
                     <div style={{ color: '#888', fontSize: '12px' }}>{t[currentLang]?.pushNotifDesc || "Сповіщення в браузері та дзвіночок"}</div>
                 </div>
-                <div onClick={togglePushEnabled} style={{ width: '44px', height: '24px', background: pushEnabled ? '#ffc107' : '#333', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: '0.3s' }}>
+                <div onClick={togglePushEnabled} style={{ width: '44px', height: '24px', flexShrink: 0, boxSizing: 'border-box', background: pushEnabled ? '#ffc107' : '#333', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: '0.3s' }}>
                     <div style={{ position: 'absolute', top: '4px', left: pushEnabled ? '24px' : '4px', width: '16px', height: '16px', background: 'white', borderRadius: '50%', transition: '0.3s' }}></div>
                 </div>
             </div>
