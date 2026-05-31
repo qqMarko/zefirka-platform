@@ -393,7 +393,7 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
 
     return (
         <div style={{ ...overlay, zIndex: 9999 }}>
-            <div className="fade-in-up" style={{ ...modalBox('500px', { overflow: 'hidden' }) }}>
+            <div className="fade-in-up modal-pop" style={{ ...modalBox('500px', { overflow: 'hidden' }) }}>
                 
                 <div style={{ padding: '20px 24px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>

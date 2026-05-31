@@ -202,7 +202,7 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
             </style>
 
             <div 
-                className="fade-in-up premium-typography custom-scrollbar" 
+                className="fade-in-up premium-typography custom-scrollbar modal-pop" 
                 style={{ position: 'relative', width: '100%', maxWidth: '1000px', maxHeight: '90vh', overflowY: 'auto', background: 'rgba(15, 15, 20, 0.6)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '32px', padding: '40px', boxShadow: '0 40px 100px rgba(0,0,0,0.8)', zIndex: 1 }}
             >
                 <X 

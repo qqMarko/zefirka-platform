@@ -4,6 +4,7 @@
 @import './platform-desktop.css';
 @import './platform-ios.css';
 @import './platform-android.css';
+@import './mobile.css';
 
 /* ========================================================= */
 /* 🚀 1. ПОВЕРТАЄМО НАТИВНИЙ БРАУЗЕРНИЙ СКРОЛ !              */

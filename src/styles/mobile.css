@@ -1,0 +1,67 @@
+/* ═══════════════════════════════════════════════════════ */
+/* 📱 MOBILE.CSS — імпортується напряму в main.jsx           */
+/* Весь код всередині @media — десктоп НЕ зачіпається.       */
+/* ═══════════════════════════════════════════════════════ */
+
+@media screen and (max-width: 768px) {
+
+    /* ── ЗАГАЛЬНЕ ─────────────────────────────────────── */
+    body, #root { overflow-x: hidden !important; }
+    input, textarea, select { font-size: 16px !important; }
+
+    /* ══════════════ КАТАЛОГ ══════════════ */
+
+    /* ОДНА картка на всю ширину рядка (стандарт для мобілки) */
+    .zef-catalog-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+
+    /* Фото — пропорційне, висота під ширину екрана */
+    .zef-card-photo {
+        height: auto !important;
+        aspect-ratio: 4 / 5 !important;
+    }
+
+    /* ══════════════ FAQ ══════════════ */
+
+    /* Зовнішня обгортка — менший padding щоб контент не вилазив */
+    .zef-faq-bg {
+        padding: 14px !important;
+        border-radius: 16px !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Main — місце знизу під пілюлю мови */
+    .zef-faq-main {
+        padding: 0 0 90px 0 !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+    }
+
+    /* Stats: 3 блоки тиснуться — лишаємо 3 але компактніше */
+    .zef-faq-stats {
+        gap: 8px !important;
+    }
+    .zef-faq-stats > div {
+        padding: 12px 6px !important;
+    }
+    .zef-faq-stats > div > div:nth-child(2) {
+        font-size: 16px !important;
+    }
+    .zef-faq-stats > div > div:last-child {
+        font-size: 9px !important;
+        letter-spacing: 0 !important;
+    }
+
+    /* Пілюля мови — вище нижнього краю, не перекриває FAQ */
+    .mobile-lang-pill {
+        bottom: max(20px, env(safe-area-inset-bottom)) !important;
+        z-index: 1500 !important;
+    }
+}
+
+/* ── ДУЖЕ МАЛІ ЕКРАНИ (≤360px) ────────────────────────── */
+@media screen and (max-width: 360px) {
+    .zef-catalog-grid { gap: 12px !important; }
+}

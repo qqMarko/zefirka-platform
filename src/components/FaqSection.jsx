@@ -153,8 +153,8 @@ const FaqSection = ({ t, currentLang, accent, setShowSupport }) => {
         : FAQ_DATA;
 
     return (
-        <div className="faq-bg fade-in-up" style={{ maxWidth: '900px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
-        <main style={{ padding: '0 0 24px 0' }}>
+        <div className="faq-bg fade-in-up zef-faq-bg" style={{ maxWidth: '900px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+        <main className="zef-faq-main" style={{ padding: '0 0 24px 0' }}>
             <style>{`
                 /* FAQ glass — backdrop-filter works over faq-bg container */
                 .faq-bg {
@@ -241,7 +241,7 @@ const FaqSection = ({ t, currentLang, accent, setShowSupport }) => {
             </div>
 
             {/* STATS STRIP */}
-            <div style={{ 
+            <div className="zef-faq-stats" style={{ 
                 display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px',
                 marginBottom: '36px',
             }}>

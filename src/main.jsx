@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
+import './styles/mobile.css';
 import Lenis from '@studio-freight/lenis';
 import { MegaphoneProvider } from './context/MegaphoneContext'; // Імпорт є
 

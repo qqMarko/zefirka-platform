@@ -43,13 +43,14 @@ const CatalogPage = ({
     return (
         <main>
             {(!isLoggedIn || userRole === 'client') && (
-                <div style={{ marginBottom: '60px' }} className="fade-in-up">
+                <div className="zef-why-section fade-in-up" style={{ marginBottom: '60px' }}>
                     {/* ЗАГОЛОВОК З КНОПКОЮ ЗГОРНУТИ */}
                     <div
                         onClick={toggleWhy}
+                        className="zef-why-header"
                         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '32px', cursor: 'pointer', userSelect: 'none' }}
                     >
-                        <h2 style={{ color: 'white', letterSpacing: '1px', textAlign: 'center', fontSize: 'clamp(26px, 5vw, 36px)', fontWeight: '900', textTransform: 'uppercase', margin: 0 }}>
+                        <h2 className="zef-why-title" style={{ color: 'white', letterSpacing: '1px', textAlign: 'center', fontSize: 'clamp(26px, 5vw, 36px)', fontWeight: '900', textTransform: 'uppercase', margin: 0 }}>
                             {t[currentLang]?.whyUsTitle}
                         </h2>
                         <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.2s' }}

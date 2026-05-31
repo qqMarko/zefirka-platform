@@ -237,7 +237,7 @@ const CatalogGrid = ({
             {/* Глобальні стилі рамок — рендеримось один раз */}
             <style>{VIP_STYLES}</style>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '25px' }}>
+            <div className="zef-catalog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '25px' }}>
                 {currentModels.map(m => {
                     const isFav    = favorites?.some(fav => fav.id === m.id);
                     const ownerId  = m.userId?._id ? String(m.userId._id) : String(m.userId);
@@ -315,6 +315,7 @@ const CatalogGrid = ({
                             {/* Фото */}
                             <div
                                 onClick={() => setSelectedModel(m)}
+                                className="zef-card-photo"
                                 style={{ position: 'relative', height: 380, overflow: 'hidden', background: '#111', cursor: 'pointer' }}
                             >
                                 {m.photos?.length > 0 ? (
@@ -364,13 +365,13 @@ const CatalogGrid = ({
                             </div>
 
                             {/* Теги + кнопки */}
-                            <div style={{
+                            <div className="zef-card-body" style={{
                                 padding: '16px 18px 18px',
                                 background: tc.bottomBg,
                                 borderTop: tc.main ? `1px solid ${tc.main}1a` : '1px solid rgba(255,255,255,0.04)',
                             }}>
                                 {/* Теги */}
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14, minHeight: 50 }}>
+                                <div className="zef-card-tags" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14, minHeight: 50 }}>
                                     {m.fetishes?.slice(0, 4).map((f, i) => (
                                         <span key={i} style={{
                                             fontSize: 11, fontWeight: 600,
