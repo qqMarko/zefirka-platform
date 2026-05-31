@@ -199,6 +199,20 @@ const ZefirkaPlatform = () => {
     }, [isLoggedIn, userUniqueId]);
 
     const toggleDisputeMinimize = (val) => { setIsDisputeMinimized(val); localStorage.setItem('zefir_dispute_minimized', val ? 'true' : 'false'); };
+
+    // 🔔 Тост "Модель онлайн" для PRIORITY/CONCIERGE клієнтів
+    useEffect(() => {
+        const handler = (e) => {
+            const { modelName } = e.detail;
+            toast(`🟢 ${modelName} зараз онлайн!`, {
+                icon: '🔔',
+                duration: 6000,
+                style: { background: '#111', color: '#fff', border: '1px solid #ffc107' }
+            });
+        };
+        window.addEventListener('vip_model_online', handler);
+        return () => window.removeEventListener('vip_model_online', handler);
+    }, []);
     const handlePageChange = (newPage) => { setCatalogPage(newPage); };
     // Скидаємо на першу сторінку при зміні фільтрів (useEffect нижче)
     const closeMenu = () => { setIsMenuOpen(false); };

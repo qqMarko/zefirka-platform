@@ -35,17 +35,44 @@ export const initSockets = (io) => {
             console.log(`📡 user_status_change відправлено для: ${idStr}`);
             socket.emit('sync_online_users', Array.from(onlineUsers.keys()));
 
-            // 🟢 Фіксуємо вхід у базу даних
-            try {
-                await User.findByIdAndUpdate(idStr, { lastActive: new Date() });
-            } catch (e) {
-                console.error('Помилка оновлення lastActive при підключенні:', e.message);
-            }
+            try { await User.findByIdAndUpdate(idStr, { lastActive: new Date() }); }
+            catch (e) { console.error('Помилка оновлення lastActive при підключенні:', e.message); }
 
             if (pendingEmails.has(idStr)) {
                 clearTimeout(pendingEmails.get(idStr));
                 pendingEmails.delete(idStr);
             }
+
+            // 🔔 СПОВІЩЕННЯ: якщо це МОДЕЛЬ — повідомляємо PRIORITY/CONCIERGE клієнтів
+            // які додали цю модель в обране
+            try {
+                const connectedUser = await User.findById(idStr).select('role').lean();
+                if (connectedUser?.role === 'model') {
+                    // Шукаємо профіль цієї моделі
+                    const Profile = (await import('../models/Profile.js')).default;
+                    const modelProfile = await Profile.findOne({ userId: idStr }).select('_id').lean();
+                    if (modelProfile) {
+                        // Знаходимо PRIORITY/CONCIERGE клієнтів що мають цю модель в обраних
+                        const VIP_NOTIFY = ['priority_chat', 'concierge'];
+                        const interestedClients = await User.find({
+                            role: 'client',
+                            vipPackage: { $in: VIP_NOTIFY },
+                            vipExpiresAt: { $gt: new Date() },
+                            favorites: modelProfile._id
+                        }).select('_id').lean();
+
+                        interestedClients.forEach(client => {
+                            const clientSocketId = onlineUsers.get(String(client._id));
+                            if (clientSocketId) {
+                                io.to(clientSocketId).emit('favorite_model_online', {
+                                    modelUserId: idStr,
+                                    modelProfileId: String(modelProfile._id)
+                                });
+                            }
+                        });
+                    }
+                }
+            } catch (e) { console.error('Помилка сповіщення про онлайн моделі:', e.message); }
         });
 
         socket.on('user_away', async (userId) => {
@@ -75,6 +102,47 @@ export const initSockets = (io) => {
         });
 
         socket.on('join_room', (roomId) => { socket.join(roomId); });
+
+        // 👁 READ RECEIPTS — партнер відкрив чат, позначаємо повідомлення як прочитані
+        socket.on('mark_as_read', async ({ roomId, readerId }) => {
+            try {
+                const chat = await Chat.findOne({ roomId });
+                if (!chat) return;
+
+                // Перевіряємо чи відправник повідомлень має PRIORITY або CONCIERGE
+                // (тільки тоді показуємо read receipts)
+                const senderId = chat.participants.find(p => String(p) !== String(readerId));
+                if (!senderId) return;
+
+                const sender = await User.findById(senderId).select('vipPackage vipExpiresAt').lean();
+                const VIP_READ = ['priority_chat', 'concierge'];
+                const senderHasReadReceipt = sender && VIP_READ.includes(sender.vipPackage) &&
+                    sender.vipExpiresAt && new Date(sender.vipExpiresAt) > new Date();
+
+                if (!senderHasReadReceipt) return;
+
+                const now = new Date();
+                let updated = false;
+                chat.messages.forEach(msg => {
+                    if (String(msg.senderId) === String(senderId) && !msg.readAt) {
+                        msg.readAt = now;
+                        updated = true;
+                    }
+                });
+
+                if (updated) {
+                    await chat.save();
+                    // Повідомляємо відправника що його повідомлення прочитані
+                    const senderSocketId = onlineUsers.get(String(senderId));
+                    if (senderSocketId) {
+                        io.to(senderSocketId).emit('messages_read', {
+                            roomId,
+                            readAt: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        });
+                    }
+                }
+            } catch (e) { console.error('Помилка mark_as_read:', e.message); }
+        });
         
         socket.on('send_message', async (data) => {
             try {

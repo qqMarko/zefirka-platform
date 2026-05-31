@@ -93,6 +93,35 @@ export const createSocketSlice = (socket, set, get) => ({
             get().setOnlineUser(id, { status, lastSeen });
         });
 
+        // 👁 READ RECEIPTS — партнер прочитав наші повідомлення
+        socket.off('messages_read');
+        socket.on('messages_read', ({ roomId, readAt }) => {
+            set(state => ({
+                myChats: state.myChats.map(c => {
+                    if (c.id !== roomId) return c;
+                    return {
+                        ...c,
+                        messages: c.messages.map(m =>
+                            m.sender === 'me' && !m.readAt ? { ...m, readAt } : m
+                        )
+                    };
+                })
+            }));
+        });
+
+        // 🔔 СПОВІЩЕННЯ — улюблена модель з'явилась онлайн
+        socket.off('favorite_model_online');
+        socket.on('favorite_model_online', ({ modelUserId, modelProfileId }) => {
+            const { myChats } = get();
+            // Знаходимо ім'я моделі з активних чатів (якщо є)
+            const chat = myChats.find(c => String(c.partnerId) === String(modelUserId));
+            const modelName = chat?.model?.name || 'Модель';
+            // Показуємо тост через глобальну подію
+            window.dispatchEvent(new CustomEvent('vip_model_online', {
+                detail: { modelName, modelProfileId }
+            }));
+        });
+
         socket.off(`instant_sync_${userId}`);
         socket.on(`instant_sync_${userId}`, (data) => {
             if (data.action === 'ban') {

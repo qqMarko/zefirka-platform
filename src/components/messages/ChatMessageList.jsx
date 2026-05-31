@@ -88,7 +88,14 @@ const SmoothScrollArea = ({ children, autoScrollDeps = [], style, className }) =
     );
 };
 
-const ChatMessageList = ({ activeChat, partnerIsTyping, getPartnerInfo, mediaPreview, isRecording, accent, clientPriority = 0 }) => {
+const ChatMessageList = ({ activeChat, partnerIsTyping, getPartnerInfo, mediaPreview, isRecording, accent, clientPriority = 0, userUniqueId, socket }) => {
+
+    // 👁 Емітуємо mark_as_read коли відкриваємо чат
+    React.useEffect(() => {
+        if (!activeChat?.id || !userUniqueId || !socket) return;
+        socket.emit('mark_as_read', { roomId: activeChat.id, readerId: userUniqueId });
+    }, [activeChat?.id, userUniqueId, socket]);
+
     return (
         <SmoothScrollArea 
             className="custom-scrollbar"
@@ -149,7 +156,12 @@ const ChatMessageList = ({ activeChat, partnerIsTyping, getPartnerInfo, mediaPre
                             {msg.type === 'video' && mediaSrc && <video src={mediaSrc} controls playsInline webkit-playsinline="true" preload="metadata" style={{ width: '100%', maxWidth: '300px', borderRadius: '10px', marginBottom: msg.text ? '10px' : '0', outline: 'none', background: '#000' }} />}
                             {msg.type === 'audio' && mediaSrc && <CustomAudioPlayer src={mediaSrc} accent={accent} />}
                             {msg.text && <div style={{marginTop: (msg.type === 'image' || msg.type === 'video' || msg.type === 'audio') ? '8px' : '0'}}>{msg.text}</div>}
-                            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.5)', marginTop: '5px', textAlign: 'right' }}>{msg.time}</div>
+                            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.5)', marginTop: '5px', textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+                                {msg.time}
+                                {isMe && msg.readAt && (
+                                    <span style={{ color: '#4caf50', fontWeight: '700' }}>✓✓ {msg.readAt}</span>
+                                )}
+                            </div>
                         </div>
                     )
                 })

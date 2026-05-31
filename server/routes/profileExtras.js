@@ -15,19 +15,32 @@ export default (sendNotification) => {
             const profile = await Profile.findById(req.params.id);
             if (!profile) return res.status(404).json({ success: false });
 
-            // Визначаємо ключ глядача: ID юзера (з токена) або IP гостя
-            let viewerKey = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'anon';
+            // 👻 РЕЖИМ ПРИВИД — CONCIERGE клієнти не залишають сліду в статистиці
             const authHeader = req.headers.authorization;
             if (authHeader && authHeader.startsWith('Bearer ')) {
                 try {
                     const jwt = (await import('jsonwebtoken')).default;
                     const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET || 'super_secret_key');
-                    // 🔒 Власник анкети не накручує собі
                     if (String(decoded.id) === String(profile.userId)) {
                         return res.json({ success: true, skipped: 'own_profile' });
                     }
-                    viewerKey = `u_${decoded.id}`; // залогінений — ключ по ID
+                    // Перевіряємо чи це CONCIERGE клієнт з активним VIP
+                    const viewer = await User.findById(decoded.id).select('vipPackage vipExpiresAt role').lean();
+                    if (viewer && viewer.role === 'client' && viewer.vipPackage === 'concierge') {
+                        const isActive = viewer.vipExpiresAt && new Date(viewer.vipExpiresAt) > new Date();
+                        if (isActive) return res.json({ success: true, skipped: 'ghost_mode' });
+                    }
                 } catch (e) { /* невалідний токен — лишаємо IP */ }
+            }
+
+            // Визначаємо ключ глядача: ID юзера (з токена) або IP гостя
+            let viewerKey = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'anon';
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                try {
+                    const jwt = (await import('jsonwebtoken')).default;
+                    const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET || 'super_secret_key');
+                    viewerKey = `u_${decoded.id}`;
+                } catch (e) { /* невалідний токен */ }
             }
 
             const isClick = action === 'click';

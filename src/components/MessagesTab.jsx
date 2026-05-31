@@ -334,12 +334,14 @@ const MessagesTab = ({ setCurrentPage, setSelectedModel }) => {
                                 setActiveChatId={setActiveChatId} setSelectedModel={setSelectedModel} setCurrentPage={setCurrentPage}
                                 showMenu={showMenu} setShowMenu={setShowMenu} getPartnerInfo={getPartnerInfo}
                                 handleToggleMute={handleToggleMute} handleClearHistory={handleClearHistory} handleDeleteChat={handleDeleteChat}
+                                userVipPackage={user?.vipPackage} userVipExpires={user?.vipExpiresAt}
                             />
 
                             <ChatMessageList 
                                 activeChat={activeChat} partnerIsTyping={partnerIsTyping} 
                                 getPartnerInfo={getPartnerInfo} mediaPreview={mediaPreview} isRecording={isRecording} accent={accent}
                                 clientPriority={activeChat?.clientPriority || 0}
+                                userUniqueId={userUniqueId} socket={socket}
                             />
 
                             <ChatInputBox 

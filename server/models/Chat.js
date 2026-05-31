@@ -2,13 +2,12 @@ import mongoose from 'mongoose';
 
 const messageSchema = new mongoose.Schema({
     senderId: { type: String, required: true },
-    text: { type: String, default: '' }, // Зробили default: '', бо повідомлення може бути просто фоткою без тексту
+    text: { type: String, default: '' },
     time: { type: String, required: true },
-    
-    // 🔥 НОВІ ПОЛЯ ДЛЯ МЕДІА
     type: { type: String, enum: ['text', 'image', 'video', 'audio'], default: 'text' }, 
     mediaUrl: { type: String, default: null },
-    priority: { type: Number, default: 0 } 
+    priority: { type: Number, default: 0 },
+    readAt: { type: Date, default: null }  // 👁 Коли партнер прочитав
 }, { _id: true });
 
 const chatSchema = new mongoose.Schema({

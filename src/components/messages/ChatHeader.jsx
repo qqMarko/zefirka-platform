@@ -1,15 +1,20 @@
 import React from 'react';
 import { ArrowLeft, User, MoreVertical, Bell, BellOff, Eraser, Trash2 } from 'lucide-react';
 
-const ChatHeader = ({ activeChat, activeChatId, userUniqueId, onlineUsers, accent, t, currentLang, setActiveChatId, setSelectedModel, setCurrentPage, showMenu, setShowMenu, getPartnerInfo, handleToggleMute, handleClearHistory, handleDeleteChat }) => {
+const ChatHeader = ({ activeChat, activeChatId, userUniqueId, onlineUsers, accent, t, currentLang, setActiveChatId, setSelectedModel, setCurrentPage, showMenu, setShowMenu, getPartnerInfo, handleToggleMute, handleClearHistory, handleDeleteChat, userVipPackage, userVipExpires }) => {
     
     const pInfo = getPartnerInfo(activeChat);
+
+    // 👑 Точний last seen — тільки для VIP клієнтів (GUEST і вище)
+    const VIP_PACKAGES = ['premium_client', 'priority_chat', 'concierge'];
+    const hasVipLastSeen = VIP_PACKAGES.includes(String(userVipPackage || '').toLowerCase()) &&
+        (!userVipExpires || new Date(userVipExpires) > new Date());
 
     const getPartnerStatus = () => {
         if (!activeChat) return null;
         const statusData = onlineUsers[activeChat.partnerId];
         if (statusData?.status === 'online') return <div style={{ fontSize: '11px', color: '#4caf50', fontWeight: 'bold' }}>• {t[currentLang]?.onlineStatus || 'Онлайн'}</div>;
-        if (statusData?.lastSeen) {
+        if (hasVipLastSeen && statusData?.lastSeen) {
             const timeString = new Date(statusData.lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             return <div style={{ fontSize: '11px', color: '#888', fontWeight: '500' }}>{t[currentLang]?.seenAt || 'Був(-ла) о'} {timeString}</div>;
         }
