@@ -274,6 +274,7 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
 
                     {/* ── Photos ── */}
                     <div
+                        className="zef-profile-photo"
                         style={{ position: 'relative', width: '100%', aspectRatio: '3/4', maxHeight: '560px', background: '#0a0a0f', overflow: 'hidden', cursor: 'zoom-in' }}
                         onClick={() => model?.photos?.length > 0 && openLightbox(photoIndex)}
                     >
@@ -329,7 +330,7 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
                     )}
 
                                         {/* ── Main info ── */}
-                    <div style={{ padding: '24px 24px 150px 24px', position: 'relative', zIndex: 20 }}>
+                    <div className="zef-profile-content" style={{ padding: '24px 24px 150px 24px', position: 'relative', zIndex: 20 }}>
 
                         {/* Name + status */}
                         <div style={{ marginBottom: '24px' }}>

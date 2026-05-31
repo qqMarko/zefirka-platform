@@ -7,7 +7,7 @@ const BottomCTA = ({
     availableSocials, contactNetworks,
     handleInternalChatClick, handleSocialClick, accent
 }) => (
-    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 24px 24px', background: 'linear-gradient(0deg, #09090b 80%, rgba(9,9,11,0) 100%)', zIndex: 100 }}>
+    <div className="zef-profile-cta" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 24px 24px', background: 'linear-gradient(0deg, #09090b 80%, rgba(9,9,11,0) 100%)', zIndex: 100 }}>
         {isOwner ? (
             <div style={{ ...section(), padding: '16px 18px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', color: C.textSub, fontSize: '14px', fontWeight: '700' }}>
                 <ShieldCheck size={20} color="#71717a" /> ЦЕ ВАША АНКЕТА

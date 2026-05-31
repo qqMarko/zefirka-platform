@@ -59,6 +59,27 @@
         bottom: max(20px, env(safe-area-inset-bottom)) !important;
         z-index: 1500 !important;
     }
+
+    /* ══════════════ ПРОФІЛЬ МОДЕЛІ ══════════════ */
+
+    /* Контент — менші бічні відступи на мобілці */
+    .zef-profile-content {
+        padding: 18px 16px 160px 16px !important;
+    }
+
+    /* Фото — не задирати висоту на малому екрані */
+    .zef-profile-photo {
+        max-height: 60dvh !important;
+    }
+
+    /* Нижній блок дій — над home-indicator iPhone */
+    .zef-profile-cta {
+        padding: 16px 16px max(20px, env(safe-area-inset-bottom)) 16px !important;
+    }
+    /* Кнопки CTA — комфортний тап */
+    .zef-profile-cta button {
+        min-height: 52px !important;
+    }
 }
 
 /* ── ДУЖЕ МАЛІ ЕКРАНИ (≤360px) ────────────────────────── */
