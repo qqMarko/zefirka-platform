@@ -304,7 +304,7 @@ export const t = {
         bodyLabel: 'Фігура',
         hairLabel: 'Волосся',
         aboutMe: 'Про мене',
-        myPrefs: 'Мої переваги',
+        myPrefs: 'Послуги які я надаю',
         reviewsTitle: 'Відгуки клієнтів',
         reviewsTotal: 'Всього',
         reviewsRating: 'Загальна оцінка на основі відгуків',

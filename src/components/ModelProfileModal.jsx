@@ -341,15 +341,15 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                                 <h1 style={{ margin: 0, fontSize: '30px', fontWeight: '900', color: '#fff', letterSpacing: '-0.5px' }}>{model.name}</h1>
                                 {model.verification === 'video' && (
-                                    <span title="Верифіковано по відео" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(255,215,0,0.12)', border: '1px solid rgba(255,215,0,0.4)', borderRadius: '20px', padding: '3px 10px' }}>
+                                    <span title="Акаунт пройшов відеоверифікацію" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(255,215,0,0.12)', border: '1px solid rgba(255,215,0,0.4)', borderRadius: '20px', padding: '3px 10px' }}>
                                         <CheckCircle2 size={15} color="#FFD700" />
-                                        <span style={{ fontSize: '11px', fontWeight: '800', color: '#FFD700' }}>VIDEO</span>
+                                        <span style={{ fontSize: '11px', fontWeight: '800', color: '#FFD700' }}>Відео-верифікація</span>
                                     </span>
                                 )}
                                 {model.verification === 'photo' && (
-                                    <span title="Верифіковано по фото" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(192,192,192,0.12)', border: '1px solid rgba(192,192,192,0.4)', borderRadius: '20px', padding: '3px 10px' }}>
+                                    <span title="Акаунт пройшов фотоверифікацію" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(192,192,192,0.12)', border: '1px solid rgba(192,192,192,0.4)', borderRadius: '20px', padding: '3px 10px' }}>
                                         <CheckCircle2 size={15} color="#C0C0C0" />
-                                        <span style={{ fontSize: '11px', fontWeight: '800', color: '#C0C0C0' }}>PHOTO</span>
+                                        <span style={{ fontSize: '11px', fontWeight: '800', color: '#C0C0C0' }}>Фото-верифікація</span>
                                     </span>
                                 )}
                             </div>
@@ -420,7 +420,7 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
                         {/* Fetishes */}
                         {modelFetishes.length > 0 && (
                             <div style={{ marginBottom: '40px' }}>
-                                <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#fff', marginBottom: '12px' }}>{T('myPrefs', 'Мої переваги')}</h3>
+                                <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#fff', marginBottom: '12px' }}>{T('myPrefs', 'Послуги які я надаю')}</h3>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                                     {modelFetishes.map(f => (
                                         <span key={f} style={{ background: '#141417', border: '1px solid #232326', padding: '8px 14px', borderRadius: '10px', fontSize: '13px', color: '#e4e4e7', fontWeight: '500' }}>

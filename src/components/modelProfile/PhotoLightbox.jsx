@@ -18,7 +18,7 @@ const PhotoLightbox = ({
 
     return (
         <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.97)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
-            <button onClick={onClose} style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', borderRadius: '50%', width: '44px', height: '44px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', zIndex: 10, backdropFilter: 'blur(8px)' }}>✕</button>
+            <button onClick={e => { e.stopPropagation(); onClose(); }} className="zef-lightbox-close" style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', borderRadius: '50%', width: '44px', height: '44px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', zIndex: 10, backdropFilter: 'blur(8px)' }}>✕</button>
 
             <div style={{ position: 'absolute', top: '16px', left: '16px', display: 'flex', gap: '8px', zIndex: 10 }}>
                 {photos.length > 1 && (
@@ -32,7 +32,7 @@ const PhotoLightbox = ({
             </div>
 
             {/* Zoom controls */}
-            <div style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '10px', zIndex: 10 }}>
+            <div className="zef-lightbox-zoom" style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '10px', zIndex: 10 }}>
                 <button onClick={e => { e.stopPropagation(); setZoom(p => Math.max(1, +(p - 0.5).toFixed(1))); if (zoom <= 1.5) setOffset({ x: 0, y: 0 }); }} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '50%', width: '44px', height: '44px', cursor: 'pointer', fontSize: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>−</button>
                 <button onClick={e => { e.stopPropagation(); setZoom(1); setOffset({ x: 0, y: 0 }); }} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '12px', padding: '0 16px', height: '44px', cursor: 'pointer', fontSize: '12px', fontWeight: '700', backdropFilter: 'blur(8px)' }}>СКИНУТИ</button>
                 <button onClick={e => { e.stopPropagation(); setZoom(p => Math.min(4, +(p + 0.5).toFixed(1))); }} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '50%', width: '44px', height: '44px', cursor: 'pointer', fontSize: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>+</button>
@@ -55,7 +55,7 @@ const PhotoLightbox = ({
             >
                 <img
                     src={photos[index]} alt="" draggable={false}
-                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', transform: `scale(${zoom}) translate(${offset.x / zoom}px, ${offset.y / zoom}px)`, transition: dragStart ? 'none' : 'transform 0.15s ease', userSelect: 'none', borderRadius: zoom === 1 ? '8px' : '0' }}
+                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', transform: `scale(${zoom}) translate(${offset.x / zoom}px, ${offset.y / zoom}px)`, transition: zoom === 1 ? 'transform 0.25s ease' : 'none', userSelect: 'none', borderRadius: zoom === 1 ? '8px' : '0', willChange: 'transform' }}
                 />
             </div>
 

@@ -227,6 +227,17 @@
     .zef-support-input {
         padding: 12px 16px max(12px, env(safe-area-inset-bottom)) 16px !important;
     }
+
+    /* ══════════════ ЛАЙТБОКС ФОТО ══════════════ */
+
+    /* Кнопки зуму — вище home-indicator, не за краєм */
+    .zef-lightbox-zoom {
+        bottom: max(24px, calc(env(safe-area-inset-bottom) + 16px)) !important;
+    }
+    /* Кнопка закрити — нижче статус-бару iPhone */
+    .zef-lightbox-close {
+        top: max(16px, calc(env(safe-area-inset-top) + 8px)) !important;
+    }
 }
 
 /* ── ДУЖЕ МАЛІ ЕКРАНИ (≤360px) ────────────────────────── */
