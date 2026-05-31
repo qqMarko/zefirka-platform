@@ -53,11 +53,12 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
         const loadingToast = toast.loading('Оновлення налаштувань...');
 
         try {
+            const token = useStore.getState().token || localStorage.getItem('token') || localStorage.getItem('zefirka_token') || localStorage.getItem('auth_token');
             const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
             const res = await fetch(`${BASE_URL}/auth/toggle-2fa`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: userUniqueId, enabled: newStatus })
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ enabled: newStatus })
             });
             const data = await res.json();
 
@@ -81,11 +82,12 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
         const loadingToast = toast.loading('Оновлення налаштувань...');
 
         try {
+            const token = useStore.getState().token || localStorage.getItem('token') || localStorage.getItem('zefirka_token') || localStorage.getItem('auth_token');
             const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
             const res = await fetch(`${BASE_URL}/auth/toggle-email-notif`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: userUniqueId, enabled: newStatus })
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ enabled: newStatus })
             });
             const data = await res.json();
 
