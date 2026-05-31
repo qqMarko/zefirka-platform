@@ -67,9 +67,10 @@
         padding: 18px 16px 160px 16px !important;
     }
 
-    /* Фото — не задирати висоту на малому екрані */
+    /* Фото — пропорція ближча до вертикального селфі, менше порожнечі */
     .zef-profile-photo {
-        max-height: 60dvh !important;
+        aspect-ratio: 4 / 5 !important;
+        max-height: 65dvh !important;
     }
 
     /* Нижній блок дій — над home-indicator iPhone */

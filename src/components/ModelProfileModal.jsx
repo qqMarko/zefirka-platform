@@ -35,6 +35,7 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
     const scrollRef = useRef(null);
     const lightboxImgRef = useRef(null);
     const lastTouchDist = useRef(null);
+    const lastTap = useRef(0);
     useSmoothScroll(scrollRef);
 
     const myId = user?._id || user?.id || userUniqueId;
@@ -189,18 +190,38 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
     const handleMouseUp   = ()  => setDragStart(null);
 
     const handleTouchStart = (e) => {
-        if (e.touches.length === 2)
+        if (e.touches.length === 2) {
             lastTouchDist.current = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        } else if (e.touches.length === 1) {
+            const now = Date.now();
+            if (now - lastTap.current < 300) {
+                // Подвійний тап — зум туди/назад
+                if (zoom > 1) { setZoom(1); setOffset({ x: 0, y: 0 }); }
+                else { setZoom(2.5); }
+                lastTap.current = 0;
+                return;
+            }
+            lastTap.current = now;
+            if (zoom > 1) setDragStart({ x: e.touches[0].clientX - offset.x, y: e.touches[0].clientY - offset.y });
+        }
     };
     const handleTouchMove = (e) => {
         if (e.touches.length === 2 && lastTouchDist.current) {
+            if (e.cancelable) e.preventDefault();
             const dist  = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
             const delta = dist - lastTouchDist.current;
-            setZoom(p => Math.min(4, Math.max(1, p + delta * 0.01)));
+            setZoom(p => Math.min(4, Math.max(1, +(p + delta * 0.008).toFixed(2))));
             lastTouchDist.current = dist;
+        } else if (e.touches.length === 1 && dragStart && zoom > 1) {
+            if (e.cancelable) e.preventDefault();
+            setOffset({ x: e.touches[0].clientX - dragStart.x, y: e.touches[0].clientY - dragStart.y });
         }
     };
-    const handleTouchEnd = () => { lastTouchDist.current = null; };
+    const handleTouchEnd = () => {
+        lastTouchDist.current = null;
+        setDragStart(null);
+        if (zoom <= 1) setOffset({ x: 0, y: 0 });
+    };
 
     if (!model) return null;
 
@@ -311,23 +332,6 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
                             </>
                         )}
                     </div>
-
-                    {/* ── Lightbox ── */}
-                    {lightboxOpen && (
-                        <PhotoLightbox
-                            photos={model.photos}
-                            index={lightboxIndex} setIndex={setLightboxIndex}
-                            zoom={zoom} setZoom={setZoom}
-                            offset={offset} setOffset={setOffset}
-                            onClose={closeLightbox}
-                            onNext={lightboxNext} onPrev={lightboxPrev}
-                            imgRef={lightboxImgRef}
-                            dragStart={dragStart}
-                            onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}
-                            onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
-                            accent={accent}
-                        />
-                    )}
 
                                         {/* ── Main info ── */}
                     <div className="zef-profile-content" style={{ padding: '24px 24px 150px 24px', position: 'relative', zIndex: 20 }}>
@@ -447,6 +451,23 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
                     accent={accent}
                 />
             </div>
+
+            {/* ── Lightbox (верхній рівень — перекриває весь екран на мобілці) ── */}
+            {lightboxOpen && (
+                <PhotoLightbox
+                    photos={model.photos}
+                    index={lightboxIndex} setIndex={setLightboxIndex}
+                    zoom={zoom} setZoom={setZoom}
+                    offset={offset} setOffset={setOffset}
+                    onClose={closeLightbox}
+                    onNext={lightboxNext} onPrev={lightboxPrev}
+                    imgRef={lightboxImgRef}
+                    dragStart={dragStart}
+                    onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}
+                    onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
+                    accent={accent}
+                />
+            )}
 
             {/* ── Warning modal ── */}
             <SocialWarningModal
