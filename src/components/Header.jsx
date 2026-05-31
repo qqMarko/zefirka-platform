@@ -385,7 +385,7 @@ const Header = ({
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    {isLoggedIn && <TrustBattery score={trustScore} t={t} currentLang={currentLang} />}
+                    {isLoggedIn && <span className="zef-trust-battery"><TrustBattery score={trustScore} t={t} currentLang={currentLang} /></span>}
                     
                     {/* ── BELL ── */}
                     {isLoggedIn && (

@@ -9,6 +9,12 @@
     body, #root { overflow-x: hidden !important; }
     input, textarea, select { font-size: 16px !important; }
 
+    /* Значок довіри ховаємо в хедері ТІЛЬКИ на мобілці (не влазить).
+       На ПК він лишається. На мобілці довіру видно в кабінеті. */
+    .zef-trust-battery { display: none !important; }
+    /* Блок довіри в кабінеті — показуємо тільки на мобілці */
+    .zef-cabinet-trust { display: flex !important; }
+
     /* ══════════════ КАТАЛОГ ══════════════ */
 
     /* ОДНА картка на всю ширину рядка (стандарт для мобілки) */

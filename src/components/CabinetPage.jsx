@@ -12,7 +12,7 @@ const TIER = {
     0: { label: '',        color: '',        border: `1px solid ${C.border}` },
 };
 
-const CabinetPage = ({ userRole, balance, userUniqueId, myModels, favorites, myChats, user, setShowStats, setShowVerifyPromo, setShowWalletModal, setPreviousPage, navigate, openCreate, openEdit, promptDelete, promptBump, setSelectedModel, setContactSelectionModel, handleToggleFavorite, t, currentLang, accent, setShowVipModal, setShowLoungeModal }) => {
+const CabinetPage = ({ userRole, balance, userUniqueId, myModels, favorites, myChats, user, setShowStats, setShowVerifyPromo, setShowWalletModal, setPreviousPage, navigate, openCreate, openEdit, promptDelete, promptBump, setSelectedModel, setContactSelectionModel, handleToggleFavorite, t, currentLang, accent, setShowVipModal, setShowLoungeModal, trustScore = 100 }) => {
     const meg = useMegaphone();
     const discPct = meg.isActive ? (meg.bumpDiscountPercent || 0) : 0;
     const bumpPrice = discPct > 0 ? Math.floor(BUMP_BASE - BUMP_BASE * discPct / 100) : BUMP_BASE;
@@ -38,6 +38,31 @@ const CabinetPage = ({ userRole, balance, userUniqueId, myModels, favorites, myC
                     <div style={{ fontSize: '28px', fontWeight: '900', color: C.accent }}>{(balance || 0).toFixed(2)} <span style={{ fontSize: '14px', color: C.textSub, fontWeight: '500' }}>UAH</span></div>
                     <div style={{ marginTop: '6px', fontSize: '12px', color: C.textMuted }}>{t[currentLang]?.yourId || 'Ваш ID'}: <span style={{ color: C.text, fontWeight: '700' }}>ID{userUniqueId}</span></div>
                 </div>
+
+                {/* ── ДОВІРА (TrustScore) — тільки на мобілці (на ПК є в хедері) ── */}
+                {(() => {
+                    const s = trustScore ?? 100;
+                    const col = s >= 80 ? '#4caf50' : s >= 50 ? '#ffc107' : '#ff4444';
+                    const bg  = s >= 80 ? 'rgba(76,175,80,0.08)' : s >= 50 ? 'rgba(255,193,7,0.08)' : 'rgba(255,68,68,0.08)';
+                    return (
+                        <div className="zef-cabinet-trust" style={{ display: 'none', alignItems: 'center', gap: '12px', background: bg, border: `1px solid ${col}40`, padding: '14px 18px', borderRadius: R.sm, minWidth: '150px' }}>
+                            <div style={{ position: 'relative', width: '44px', height: '44px', flexShrink: 0 }}>
+                                <svg width="44" height="44" viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)' }}>
+                                    <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
+                                    <circle cx="18" cy="18" r="15" fill="none" stroke={col} strokeWidth="3" strokeLinecap="round"
+                                        strokeDasharray={`${(s / 100) * 94.2} 94.2`} />
+                                </svg>
+                                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '900', color: col }}>{s}%</div>
+                            </div>
+                            <div>
+                                <div style={{ fontSize: '10px', color: C.textMuted, textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.6px' }}>{t[currentLang]?.trustScore || 'Довіра'}</div>
+                                <div style={{ fontSize: '13px', color: col, fontWeight: '800', marginTop: '2px' }}>
+                                    {s >= 80 ? 'Високий рівень' : s >= 50 ? 'Середній' : 'Низький'}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()}
 
                 {userRole === 'model' && (() => {
                     const v = myModels?.[0]?.verification || 'none';

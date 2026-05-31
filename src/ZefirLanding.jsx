@@ -380,6 +380,7 @@ const ZefirkaPlatform = () => {
                                 setSelectedModel={setSelectedModel} setContactSelectionModel={setContactSelectionModel} 
                                 handleToggleFavorite={handleToggleFavorite} t={t} currentLang={currentLang} accent={accent}
                                 setShowLoungeModal={setShowLoungeModal} setShowVipModal={setShowVipModal}
+                                trustScore={trustScore}
                             />
                         ) : <Navigate to="/" replace /> } />
 
