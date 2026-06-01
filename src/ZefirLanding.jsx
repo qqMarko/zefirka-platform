@@ -399,7 +399,7 @@ const ZefirkaPlatform = () => {
                 {showSupport && <SupportChat setShowSupport={setShowSupport} supportMessages={supportMessages} supportInput={supportInput} setSupportInput={setSupportInput} supportAttachedImg={supportAttachedImg} setSupportAttachedImg={setSupportAttachedImg} supportFileRef={supportFileRef} handleSupportAttach={handleSupportAttach} handleSupportSend={handleSupportSend} agentName={agentName} t={t} currentLang={currentLang} accent={accent} />}
                 {selectedModel && <ModelProfileModal model={selectedModel} onClose={() => setSelectedModel(null)} openPrivateChat={openPrivateChat} favorites={favorites} handleToggleFavorite={handleToggleFavorite} />}
                 {showStats && <StatsModal setShowStats={setShowStats} t={t} currentLang={currentLang} accent={accent} />}
-                {showWalletModal && <WalletModal setShowWalletModal={setShowWalletModal} t={t} currentLang={currentLang} accent={accent} openSupport={() => setShowSupport(true)} onPaymentSubmit={handlePaymentInitiated} initialAmount={walletInitialAmount} />}
+                {showWalletModal && <WalletModal setShowWalletModal={setShowWalletModal} t={t} currentLang={currentLang} accent={accent} openSupport={() => setShowSupport(true)} onPaymentSubmit={handlePaymentInitiated} initialAmount={walletInitialAmount} balance={balance} />}
                 {showVipModal && <VipPackagesModal setShowVipModal={setShowVipModal} t={t} currentLang={currentLang} accent={accent} openWalletWithAmount={openWalletWithAmount} userRole={userRole} />}
                 {showLoungeModal && <VipLoungeModal onClose={() => setShowLoungeModal(false)} setSelectedModel={setSelectedModel} setContactSelectionModel={setContactSelectionModel} />}
 

@@ -3,7 +3,7 @@ import { X, Wallet, CreditCard, Bitcoin, MessageCircle, Copy, Check, DollarSign,
 import useStore from '../store/useStore';
 import { C, R, overlay, modalBox, closeBtn, section, btnPrimary, btnGhost, input, label } from '../styles/ds';
 
-const WalletModal = ({ setShowWalletModal, t, currentLang, accent, openSupport, initialAmount = '500' }) => {
+const WalletModal = ({ setShowWalletModal, t, currentLang, accent, openSupport, initialAmount = '500', balance = 0 }) => {
   const [selectedMethod, setSelectedMethod] = useState('crypto');
   const [selectedCrypto, setSelectedCrypto] = useState('usdt_trc20');
   const [selectedCardSystem, setSelectedCardSystem] = useState('easypay'); 
@@ -107,7 +107,7 @@ const WalletModal = ({ setShowWalletModal, t, currentLang, accent, openSupport, 
                 <>
                     <div style={{ ...section(), textAlign: 'center', marginBottom: '20px' }}>
                         <div style={{ fontSize: '11px', fontWeight: '800', color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.9px', marginBottom: '6px' }}>{t[currentLang]?.currentBalance || 'Поточний баланс'}</div>
-                        <div style={{ fontSize: '36px', fontWeight: '900', color: 'white' }}>0.00 <span style={{fontSize: '18px', color: accent}}>UAH</span></div>
+                        <div style={{ fontSize: '36px', fontWeight: '900', color: 'white' }}>{Number(balance || 0).toFixed(2)} <span style={{fontSize: '18px', color: accent}}>UAH</span></div>
                     </div>
 
                     <div style={{ display: 'flex', gap: '6px', marginBottom: '20px', background: C.surface2, padding: '4px', borderRadius: R.sm, border: `1px solid ${C.border}` }}>
