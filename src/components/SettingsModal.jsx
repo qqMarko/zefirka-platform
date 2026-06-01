@@ -48,12 +48,16 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
     };
 
     const handleToggle2FA = async () => {
+        const token = useStore.getState().token || localStorage.getItem('zefirka_token');
+        if (!token) {
+            toast.error('Сесія застаріла. Увійдіть заново.');
+            return;
+        }
         const newStatus = !twoFactor;
         setTwoFactor(newStatus); 
         const loadingToast = toast.loading('Оновлення налаштувань...');
 
         try {
-            const token = useStore.getState().token || localStorage.getItem('token') || localStorage.getItem('zefirka_token') || localStorage.getItem('auth_token');
             const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
             const res = await fetch(`${BASE_URL}/auth/toggle-2fa`, {
                 method: 'POST',
@@ -68,7 +72,7 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
                 localStorage.setItem('zefirka_2fa', newStatus);
             } else {
                 setTwoFactor(!newStatus); 
-                toast.error('Помилка оновлення', { id: loadingToast });
+                toast.error(data.message || 'Помилка оновлення', { id: loadingToast });
             }
         } catch (error) {
             setTwoFactor(!newStatus);
@@ -77,12 +81,16 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
     };
 
     const handleToggleEmail = async () => {
+        const token = useStore.getState().token || localStorage.getItem('zefirka_token');
+        if (!token) {
+            toast.error('Сесія застаріла. Увійдіть заново.');
+            return;
+        }
         const newStatus = !emailNotif;
         setEmailNotif(newStatus);
         const loadingToast = toast.loading('Оновлення налаштувань...');
 
         try {
-            const token = useStore.getState().token || localStorage.getItem('token') || localStorage.getItem('zefirka_token') || localStorage.getItem('auth_token');
             const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
             const res = await fetch(`${BASE_URL}/auth/toggle-email-notif`, {
                 method: 'POST',
@@ -97,7 +105,7 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
                 localStorage.setItem('zefirka_emailNotif', newStatus);
             } else {
                 setEmailNotif(!newStatus);
-                toast.error('Помилка оновлення', { id: loadingToast });
+                toast.error(data.message || 'Помилка оновлення', { id: loadingToast });
             }
         } catch (error) {
             setEmailNotif(!newStatus);

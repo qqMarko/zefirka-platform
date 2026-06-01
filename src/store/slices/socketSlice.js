@@ -52,13 +52,8 @@ export const createSocketSlice = (socket, set, get) => ({
         socket.off('connect');
         socket.on('connect', () => { socket.emit('user_connected', userId); });
 
-        socket.off(`new_notification_${userId}`);
-        socket.on(`new_notification_${userId}`, (notif) => {
-            set((state) => ({
-                notifications: [notif, ...state.notifications],
-                unreadNotifs: state.unreadNotifs + 1
-            }));
-        });
+        // Сповіщення обробляються в useAppSockets (handleNotif) — тут не дублюємо,
+        // інакше лічильник і список сповіщень оновлюються двічі.
 
         socket.off(`receive_direct_message_${userId}`);
         socket.on(`receive_direct_message_${userId}`, (data) => {

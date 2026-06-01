@@ -137,8 +137,9 @@ initCronJobs(sendNotification);
 // 🔗 ОСНОВНІ РОУТИ
 // ==========================================
 // 1. Стандартні роути
-// 🔒 authLimiter — захист від перебору паролів (max 10 спроб за 15 хвилин)
-app.use('/api/auth', authLimiter, authRoutes);
+// 🔒 Ліміт застосовується точково всередині auth.js (тільки login/register),
+// щоб перемикачі налаштувань і зміна пароля не з'їдали ліміт
+app.use('/api/auth', authRoutes);
 app.use('/api/profiles', profileRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes(sendNotification));

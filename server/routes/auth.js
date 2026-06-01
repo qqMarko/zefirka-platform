@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
+import rateLimit from 'express-rate-limit';
 import { UAParser } from 'ua-parser-js'; 
 import User from '../models/User.js';
 import authMiddleware from '../middlewares/auth.js';
@@ -9,6 +10,16 @@ import { getIO } from '../sockets/socketManager.js';
 
 const router = express.Router();
 const otpStore = new Map();
+
+// 🔒 Ліміт ТІЛЬКИ на вхід/реєстрацію/відновлення (захист від брутфорсу).
+// Не чіпає перемикачі налаштувань, зміну пароля, сесії.
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 15,
+    message: { success: false, message: 'Забагато спроб. Спробуйте через 15 хвилин.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 
 let _transporter = null;
 const getTransporter = () => {
@@ -52,7 +63,7 @@ const getDeviceInfo = (req) => {
     }
 };
 
-router.post('/register-init', async (req, res) => {
+router.post('/register-init', loginLimiter, async (req, res) => {
     try {
         let { email, password, phone, role } = req.body;
         email = (email || '').trim().toLowerCase();
@@ -123,7 +134,7 @@ router.post('/register-verify', async (req, res) => {
     }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
     try {
         let { email, password } = req.body;
         email = (email || '').trim().toLowerCase();
@@ -162,7 +173,7 @@ router.post('/login', async (req, res) => {
     }
 });
 
-router.post('/verify-2fa-login', async (req, res) => {
+router.post('/verify-2fa-login', loginLimiter, async (req, res) => {
     try {
         let { email, code } = req.body;
         email = (email || '').trim().toLowerCase();
@@ -303,7 +314,7 @@ router.post('/change-password', authMiddleware, async (req, res) => {
     }
 });
 
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', loginLimiter, async (req, res) => {
     try {
         let { email } = req.body;
         email = (email || '').trim().toLowerCase();
