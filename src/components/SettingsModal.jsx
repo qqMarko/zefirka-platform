@@ -132,11 +132,12 @@ const SettingsModal = ({ setShowSettingsModal, t, currentLang, accent, handleLog
         const loadingToast = toast.loading('Перевірка та збереження...');
 
         try {
+            const token = useStore.getState().token || localStorage.getItem('zefirka_token');
             const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
             const res = await fetch(`${BASE_URL}/auth/change-password`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: userUniqueId, oldPassword, newPassword })
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ oldPassword, newPassword })
             });
             
             const text = await res.text();
