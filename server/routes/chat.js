@@ -1,8 +1,14 @@
 import express from 'express';
+import path from 'path';
+import fs from 'fs';
+import ffmpeg from 'fluent-ffmpeg';
+import ffmpegPath from 'ffmpeg-static';
 import Chat from '../models/Chat.js';
 import User from '../models/User.js';
 import { uploadChat } from '../middlewares/upload.js';
 import authMiddleware from '../middlewares/auth.js';
+
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 export default (bot, ADMIN_ID) => {
     const router = express.Router();
@@ -84,8 +90,33 @@ export default (bot, ADMIN_ID) => {
         } catch (error) { res.status(500).json({ success: false }); }
     });
 
-    router.post('/chat/upload', authMiddleware, uploadChat.single('media'), (req, res) => {
+    router.post('/chat/upload', authMiddleware, uploadChat.single('media'), async (req, res) => {
         if (!req.file) return res.status(400).json({ success: false, message: 'Файл не знайдено' });
+
+        // Голосові конвертуємо в mp3 — універсальний формат, грає навіть на старих iPhone
+        if ((req.file.mimetype || '').startsWith('audio') || /voice_/i.test(req.file.filename)) {
+            const inputPath = req.file.path;
+            const mp3Name = req.file.filename.replace(/\.[^.]+$/, '') + '.mp3';
+            const outputPath = path.join(path.dirname(inputPath), mp3Name);
+            try {
+                await new Promise((resolve, reject) => {
+                    ffmpeg(inputPath)
+                        .toFormat('mp3')
+                        .audioCodec('libmp3lame')
+                        .audioBitrate('96k')
+                        .on('end', resolve)
+                        .on('error', reject)
+                        .save(outputPath);
+                });
+                fs.unlink(inputPath, () => {}); // видаляємо оригінал
+                return res.json({ success: true, mediaUrl: `/uploads/chat/${mp3Name}` });
+            } catch (err) {
+                console.error('❌ Помилка конвертації аудіо:', err.message);
+                // якщо конвертація не вдалась — віддаємо оригінал
+                return res.json({ success: true, mediaUrl: `/uploads/chat/${req.file.filename}` });
+            }
+        }
+
         res.json({ success: true, mediaUrl: `/uploads/chat/${req.file.filename}` });
     });
 

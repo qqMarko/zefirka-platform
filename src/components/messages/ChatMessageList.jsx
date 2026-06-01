@@ -26,24 +26,52 @@ const CustomAudioPlayer = ({ src, accent }) => {
         return `${m}:${s}`;
     };
 
-    const togglePlay = () => { isPlaying ? audioRef.current.pause() : audioRef.current.play(); setIsPlaying(!isPlaying); };
+    // Safari (iPhone 7) часто віддає duration = Infinity для записаних blob.
+    // Трюк: промотуємо в кінець, тоді браузер обчислює реальну тривалість.
+    const fixInfinityDuration = () => {
+        const a = audioRef.current;
+        if (!a) return;
+        if (a.duration === Infinity || isNaN(a.duration)) {
+            a.currentTime = 1e101;
+            a.ontimeupdate = () => {
+                a.ontimeupdate = null;
+                a.currentTime = 0;
+                setDuration(formatTime(a.duration));
+            };
+        } else {
+            setDuration(formatTime(a.duration));
+        }
+    };
+
+    const togglePlay = async () => {
+        const a = audioRef.current;
+        if (!a) return;
+        try {
+            if (isPlaying) { a.pause(); setIsPlaying(false); }
+            else { await a.play(); setIsPlaying(true); }
+        } catch (err) {
+            console.warn('Audio play error:', err);
+            setIsPlaying(false);
+        }
+    };
     const handleTimeUpdate = () => {
         const current = audioRef.current.currentTime;
         const total = audioRef.current.duration;
         setProgress((current / total) * 100 || 0);
         setCurrentTime(formatTime(current));
     };
-    const handleLoadedMetadata = () => setDuration(formatTime(audioRef.current.duration));
+    const handleLoadedMetadata = () => fixInfinityDuration();
     const handleEnded = () => { setIsPlaying(false); setProgress(0); setCurrentTime('0:00'); };
     const handleSeek = (e) => {
         const bounds = e.currentTarget.getBoundingClientRect();
         const percent = Math.max(0, Math.min(1, (e.clientX - bounds.left) / bounds.width));
-        audioRef.current.currentTime = percent * audioRef.current.duration;
+        const total = audioRef.current.duration;
+        if (isFinite(total)) audioRef.current.currentTime = percent * total;
     };
 
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '6px 4px', minWidth: '220px', maxWidth: '260px' }}>
-            <audio ref={audioRef} src={src} onTimeUpdate={handleTimeUpdate} onLoadedMetadata={handleLoadedMetadata} onEnded={handleEnded} preload="metadata" style={{ display: 'none' }} />
+            <audio ref={audioRef} src={src} onTimeUpdate={handleTimeUpdate} onLoadedMetadata={handleLoadedMetadata} onDurationChange={handleLoadedMetadata} onCanPlay={handleLoadedMetadata} onEnded={handleEnded} preload="metadata" playsInline style={{ display: 'none' }} />
             <div onClick={togglePlay} style={{ width: '34px', height: '34px', background: accent, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, transition: 'transform 0.15s', boxShadow: `0 3px 10px ${accent}44` }}
                 onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
