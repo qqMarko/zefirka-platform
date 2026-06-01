@@ -30,6 +30,7 @@ const MessagesTab = ({ setCurrentPage, setSelectedModel }) => {
     const [recordingTime, setRecordingTime] = useState(0);
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
+    const recordMimeRef = useRef('audio/mp4');
     const timerIntervalRef = useRef(null);
     const typingTimeoutRef = useRef(null);
 
@@ -192,13 +193,22 @@ const MessagesTab = ({ setCurrentPage, setSelectedModel }) => {
         try {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return alert("Браузер відмовився вмикати мікрофон.");
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorderRef.current = new MediaRecorder(stream);
+
+            // Обираємо формат, який підтримується і записом, і відтворенням на старих iPhone.
+            // mp4/aac — найсумісніший для Safari (вкл. iPhone 7); webm — для Chrome/Android.
+            let mimeType = '';
+            const candidates = ['audio/mp4', 'audio/aac', 'audio/webm;codecs=opus', 'audio/webm'];
+            for (const c of candidates) {
+                if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(c)) { mimeType = c; break; }
+            }
+            recordMimeRef.current = mimeType || 'audio/mp4';
+            mediaRecorderRef.current = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
             audioChunksRef.current = [];
 
             mediaRecorderRef.current.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
             mediaRecorderRef.current.onstop = async () => {
                 if (!cancelledRef.current && audioChunksRef.current.length > 0) {
-                    const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/mp4' }); 
+                    const audioBlob = new Blob(audioChunksRef.current, { type: recordMimeRef.current }); 
                     await sendAudioFile(audioBlob);
                 }
                 audioChunksRef.current = [];
@@ -240,7 +250,8 @@ const MessagesTab = ({ setCurrentPage, setSelectedModel }) => {
     const sendAudioFile = async (blob) => {
         setIsUploading(true);
         const formData = new FormData();
-        formData.append('media', blob, `voice_${Date.now()}.mp4`); 
+        const ext = (blob.type || recordMimeRef.current).includes('webm') ? 'webm' : 'mp4';
+        formData.append('media', blob, `voice_${Date.now()}.${ext}`); 
 
         try {
             const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;

@@ -296,24 +296,23 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
                     {/* ── Photos ── */}
                     <div
                         className="zef-profile-photo"
-                        style={{ position: 'relative', width: '100%', height: '70vh', maxHeight: '560px', minHeight: '380px', background: '#0a0a0f', overflow: 'hidden', cursor: 'zoom-in' }}
+                        style={{ position: 'relative', width: '100%', height: '70vh', maxHeight: '560px', minHeight: '380px', background: '#0a0a0f', overflow: 'hidden', cursor: 'pointer' }}
                         onClick={() => model?.photos?.length > 0 && openLightbox(photoIndex)}
                     >
                         {model.photos?.length > 0 ? (
                             <>
                                 <img src={model.photos[photoIndex]} alt="" style={{ position: 'absolute', inset: '-10px', width: 'calc(100% + 20px)', height: 'calc(100% + 20px)', objectFit: 'cover', objectPosition: 'center top', filter: 'blur(24px) brightness(0.25) saturate(1.4)', pointerEvents: 'none' }} />
-                                <img src={model.photos[photoIndex]} alt={model.name} style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center top' }} />
+                                <img src={model.photos[photoIndex]} alt={model.name} style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center top', imageRendering: 'auto', WebkitBackfaceVisibility: 'hidden', transform: 'translateZ(0)' }} loading="eager" />
                                 <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '40%', background: 'linear-gradient(to top, #09090b 0%, rgba(9,9,11,0.6) 50%, transparent 100%)', zIndex: 2, pointerEvents: 'none' }} />
                             </>
                         ) : (
                             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3f3f46', fontSize: '14px', letterSpacing: '2px' }}>NO MEDIA</div>
                         )}
 
-                        {/* Zoom badge */}
-                        {model.photos?.length > 0 && (
+                        {/* Лічильник фото — тільки якщо фото більше одного */}
+                        {model.photos?.length > 1 && (
                             <div style={{ position: 'absolute', top: '12px', left: '12px', zIndex: 20, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', borderRadius: '20px', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '5px', color: 'rgba(255,255,255,0.85)', fontSize: '11px', fontWeight: '700', border: '1px solid rgba(255,255,255,0.12)', pointerEvents: 'none', letterSpacing: '0.3px' }}>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/></svg>
-                                {model.photos.length > 1 ? `${photoIndex + 1} / ${model.photos.length}` : T('zoomLabel', 'Збільшити')}
+                                {photoIndex + 1} / {model.photos.length}
                             </div>
                         )}
 
