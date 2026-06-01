@@ -53,7 +53,7 @@ const CatalogPage = ({
                         <h2 className="zef-why-title" style={{ color: 'white', letterSpacing: '1px', textAlign: 'center', fontSize: 'clamp(26px, 5vw, 36px)', fontWeight: '900', textTransform: 'uppercase', margin: 0 }}>
                             {t[currentLang]?.whyUsTitle}
                         </h2>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.2s' }}
+                        <div className="zef-why-arrow" style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.2s' }}
                             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
                             onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
                         >

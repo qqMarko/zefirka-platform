@@ -565,13 +565,11 @@ const Header = ({
                                             if (!clientHasLounge && !modelHasLounge) return null;
                                             return (
                                                 <div
-                                                    style={{ padding: '10px 15px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', borderRadius: '8px', fontSize: '13px', fontWeight: '600', background: 'rgba(255,0,127,0.06)', border: '1px solid rgba(255,0,127,0.2)', color: '#ff007f', position: 'relative', overflow: 'hidden' }}
-                                                    className="dropdown-item-hover"
-                                                    onClick={() => { setShowLoungeModal(true); setShowUserDropdown(false); }}
+                                                    style={{ padding: '10px 15px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'default', borderRadius: '8px', fontSize: '13px', fontWeight: '600', background: 'rgba(255,0,127,0.06)', border: '1px solid rgba(255,0,127,0.2)', color: '#ff007f', position: 'relative', overflow: 'hidden', opacity: 0.65 }}
                                                 >
                                                     <span style={{ fontSize: '16px' }}>👑</span>
                                                     <span>VIP Лаунж</span>
-                                                    <span style={{ marginLeft: 'auto', fontSize: '9px', fontWeight: '900', color: '#ff007f', background: 'rgba(255,0,127,0.12)', border: '1px solid rgba(255,0,127,0.3)', padding: '2px 7px', borderRadius: '4px', letterSpacing: '0.5px' }}>CLUB</span>
+                                                    <span style={{ marginLeft: 'auto', fontSize: '9px', fontWeight: '900', color: '#ffc107', background: 'rgba(255,193,7,0.12)', border: '1px solid rgba(255,193,7,0.3)', padding: '2px 7px', borderRadius: '4px', letterSpacing: '0.5px' }}>СКОРО</span>
                                                 </div>
                                             );
                                         })()}

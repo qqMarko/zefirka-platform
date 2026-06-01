@@ -255,13 +255,10 @@ const ClientCabinet = ({ user, navigate, accent, favorites, setSelectedModel, se
                 </div>
             )}
 
-            {/* ── ЛАУНЖ (тільки CONCIERGE) ── */}
+            {/* ── ЛАУНЖ (тільки CONCIERGE) — СКОРО ── */}
             {hasLounge && (
                 <div
-                    onClick={() => setShowLoungeModal && setShowLoungeModal(true)}
-                    style={{ padding: '18px 24px', background: 'rgba(255,0,127,0.04)', border: '1px solid rgba(255,0,127,0.2)', borderRadius: R.md, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', transition: 'border-color 0.2s' }}
-                    onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,0,127,0.45)'}
-                    onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,0,127,0.2)'}
+                    style={{ padding: '18px 24px', background: 'rgba(255,0,127,0.04)', border: '1px solid rgba(255,0,127,0.2)', borderRadius: R.md, cursor: 'default', display: 'flex', alignItems: 'center', gap: '16px', opacity: 0.7 }}
                 >
                     <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(255,0,127,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <Crown size={22} color="#ff007f" />
@@ -269,9 +266,9 @@ const ClientCabinet = ({ user, navigate, accent, favorites, setSelectedModel, se
                     <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
                             <span style={{ fontSize: '14px', fontWeight: '900', color: '#ff007f' }}>VIP Лаунж</span>
-                            <span style={{ fontSize: '9px', fontWeight: '900', color: '#ff007f', background: 'rgba(255,0,127,0.1)', border: '1px solid rgba(255,0,127,0.3)', padding: '2px 7px', borderRadius: '4px', letterSpacing: '0.5px' }}>CLUB</span>
+                            <span style={{ fontSize: '9px', fontWeight: '900', color: '#ffc107', background: 'rgba(255,193,7,0.12)', border: '1px solid rgba(255,193,7,0.3)', padding: '2px 7px', borderRadius: '4px', letterSpacing: '0.5px' }}>СКОРО</span>
                         </div>
-                        <div style={{ fontSize: '12px', color: C.textMuted }}>Ексклюзивні анкети DIAMOND та PREMIUM моделей — відкрити →</div>
+                        <div style={{ fontSize: '12px', color: C.textMuted }}>Ексклюзивний доступ до топ-моделей. Запрацює найближчим часом.</div>
                     </div>
                 </div>
             )}

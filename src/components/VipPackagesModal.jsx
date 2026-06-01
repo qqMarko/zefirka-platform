@@ -184,7 +184,7 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
     const detailsPkg = packages.find(p => p.id === selectedDetailsId);
 
     return (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div className="zef-vip-overlay" style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
             <div 
                 style={{ position: 'absolute', inset: 0, background: 'rgba(5, 5, 10, 0.9)', backdropFilter: 'blur(25px)', cursor: 'pointer' }} 
                 onClick={() => setShowVipModal(false)} 
@@ -202,7 +202,7 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
             </style>
 
             <div 
-                className="fade-in-up premium-typography custom-scrollbar modal-pop" 
+                className="fade-in-up premium-typography custom-scrollbar modal-pop zef-vip-modal" 
                 style={{ position: 'relative', width: '100%', maxWidth: '1000px', maxHeight: '90vh', overflowY: 'auto', background: 'rgba(15, 15, 20, 0.6)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '32px', padding: '40px', boxShadow: '0 40px 100px rgba(0,0,0,0.8)', zIndex: 1 }}
             >
                 <X 
@@ -229,7 +229,7 @@ const VipPackagesModal = ({ setShowVipModal, userRole, openWalletWithAmount }) =
                     </div>
                 )}
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+                <div className="zef-vip-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
                     {packages.map((pkg) => {
                         const activePkgId = localVip ? localVip.packageId : user?.vipPackage;
                         const activeExpire = localVip ? localVip.expiresAt : user?.vipExpiresAt;

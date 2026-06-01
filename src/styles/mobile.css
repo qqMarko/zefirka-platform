@@ -9,6 +9,16 @@
     body, #root { overflow-x: hidden !important; }
     input, textarea, select { font-size: 16px !important; }
 
+    /* "Чому обирають" — заголовок по центру, стрілка ПІД ним по центру */
+    .zef-why-header {
+        flex-direction: column !important;
+        gap: 12px !important;
+        width: 100% !important;
+    }
+    .zef-why-title {
+        font-size: 22px !important;
+    }
+
     /* Значок довіри ховаємо в хедері ТІЛЬКИ на мобілці (не влазить).
        На ПК він лишається. На мобілці довіру видно в кабінеті. */
     .zef-trust-battery { display: none !important; }

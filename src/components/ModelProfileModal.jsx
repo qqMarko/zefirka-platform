@@ -311,7 +311,7 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
 
                         {/* Zoom badge */}
                         {model.photos?.length > 0 && (
-                            <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 20, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', borderRadius: '20px', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '5px', color: 'rgba(255,255,255,0.85)', fontSize: '11px', fontWeight: '700', border: '1px solid rgba(255,255,255,0.12)', pointerEvents: 'none', letterSpacing: '0.3px' }}>
+                            <div style={{ position: 'absolute', top: '12px', left: '12px', zIndex: 20, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', borderRadius: '20px', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '5px', color: 'rgba(255,255,255,0.85)', fontSize: '11px', fontWeight: '700', border: '1px solid rgba(255,255,255,0.12)', pointerEvents: 'none', letterSpacing: '0.3px' }}>
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/></svg>
                                 {model.photos.length > 1 ? `${photoIndex + 1} / ${model.photos.length}` : T('zoomLabel', 'Збільшити')}
                             </div>
