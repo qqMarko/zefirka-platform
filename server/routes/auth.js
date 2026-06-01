@@ -34,9 +34,12 @@ const getDeviceInfo = (req) => {
 
 router.post('/register-init', async (req, res) => {
     try {
-        const { email, password, phone, role } = req.body;
+        let { email, password, phone, role } = req.body;
+        email = (email || '').trim().toLowerCase();
+        if (!email) return res.status(400).json({ success: false, message: 'Введіть пошту' });
+
         const existingUser = await User.findOne({ email });
-        if (existingUser) return res.status(400).json({ success: false, message: 'Пошта зареєстрована' });
+        if (existingUser) return res.status(400).json({ success: false, message: 'Пошта вже зареєстрована' });
         
         const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
         otpStore.set(email, { otpCode, password, phone, role, expires: Date.now() + 10 * 60 * 1000 }); 
@@ -55,12 +58,20 @@ router.post('/register-init', async (req, res) => {
 
 router.post('/register-verify', async (req, res) => {
     try {
-        const { email, otp } = req.body;
+        let { email, otp } = req.body;
+        email = (email || '').trim().toLowerCase();
         const stored = otpStore.get(email);
         if (!stored || Date.now() > stored.expires || stored.otpCode !== otp) {
             return res.status(400).json({ success: false, message: 'Невірний код' });
         }
-        
+
+        // Подвійна перевірка — раптом акаунт створили між init і verify
+        const alreadyExists = await User.findOne({ email });
+        if (alreadyExists) {
+            otpStore.delete(email);
+            return res.status(400).json({ success: false, message: 'Пошта вже зареєстрована' });
+        }
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(stored.password, salt);
         const newUser = new User({ 
@@ -90,7 +101,8 @@ router.post('/register-verify', async (req, res) => {
 
 router.post('/login', async (req, res) => {
     try {
-        const { email, password } = req.body;
+        let { email, password } = req.body;
+        email = (email || '').trim().toLowerCase();
         const user = await User.findOne({ email });
         
         if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -128,7 +140,8 @@ router.post('/login', async (req, res) => {
 
 router.post('/verify-2fa-login', async (req, res) => {
     try {
-        const { email, code } = req.body;
+        let { email, code } = req.body;
+        email = (email || '').trim().toLowerCase();
         const stored = otpStore.get(email + '_2fa');
         
         if (!stored || Date.now() > stored.expires || stored.otpCode !== code) {
@@ -268,7 +281,8 @@ router.post('/change-password', authMiddleware, async (req, res) => {
 
 router.post('/forgot-password', async (req, res) => {
     try {
-        const { email } = req.body;
+        let { email } = req.body;
+        email = (email || '').trim().toLowerCase();
         const user = await User.findOne({ email });
         if (!user) return res.status(404).json({ success: false, message: 'Користувача не знайдено' });
 
@@ -291,7 +305,8 @@ router.post('/forgot-password', async (req, res) => {
 
 router.post('/reset-password', async (req, res) => {
     try {
-        const { email, code, newPassword } = req.body;
+        let { email, code, newPassword } = req.body;
+        email = (email || '').trim().toLowerCase();
         const user = await User.findOne({ email, resetPasswordToken: code, resetPasswordExpires: { $gt: Date.now() } });
         
         if (!user) return res.status(400).json({ success: false, message: 'Невірний або прострочений код' });

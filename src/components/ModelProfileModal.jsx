@@ -296,7 +296,7 @@ const ModelProfileModal = ({ model, onClose, openPrivateChat, favorites = [], ha
                     {/* ── Photos ── */}
                     <div
                         className="zef-profile-photo"
-                        style={{ position: 'relative', width: '100%', aspectRatio: '3/4', maxHeight: '560px', background: '#0a0a0f', overflow: 'hidden', cursor: 'zoom-in' }}
+                        style={{ position: 'relative', width: '100%', height: '70vh', maxHeight: '560px', minHeight: '380px', background: '#0a0a0f', overflow: 'hidden', cursor: 'zoom-in' }}
                         onClick={() => model?.photos?.length > 0 && openLightbox(photoIndex)}
                     >
                         {model.photos?.length > 0 ? (

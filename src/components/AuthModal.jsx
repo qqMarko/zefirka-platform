@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Mail, Lock, Phone, ShieldAlert, ArrowLeft } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import useStore from '../store/useStore';
@@ -27,6 +27,7 @@ const AuthModal = ({ accent: _a }) => {
     const [phone, setPhone]     = useState('');
     const [role, setRole]       = useState('client');
     const [otp, setOtp]         = useState('');
+    const [resendTimer, setResendTimer] = useState(0);
     const [resetCode, setRC]    = useState('');
     const [newPw, setNewPw]     = useState('');
 
@@ -68,6 +69,34 @@ const AuthModal = ({ accent: _a }) => {
     };
 
     const isCode = mode === 'verify' || mode === 'verify-2fa';
+
+    // Таймер зворотного відліку для повторної відправки коду
+    useEffect(() => {
+        if (resendTimer <= 0) return;
+        const id = setInterval(() => setResendTimer(t => Math.max(0, t - 1)), 1000);
+        return () => clearInterval(id);
+    }, [resendTimer]);
+
+    // Запускаємо таймер коли заходимо на екран вводу коду
+    useEffect(() => {
+        if (isCode) setResendTimer(90);
+    }, [isCode]);
+
+    // Повторна відправка коду
+    const handleResend = async () => {
+        if (resendTimer > 0 || loading) return;
+        setLoading(true);
+        try {
+            const endpoint = mode === 'verify-2fa' ? '/auth/login' : '/auth/register-init';
+            const body = mode === 'verify-2fa' ? { email, password } : { email, password, phone, role };
+            const d = await post(endpoint, body);
+            if (d.success || d.require2FA) { toast.success('Код надіслано повторно!'); setResendTimer(90); }
+            else toast.error(d.message || 'Не вдалося надіслати код');
+        } catch { toast.error('Збій з\'єднання'); }
+        finally { setLoading(false); }
+    };
+
+    const fmtTimer = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
     return (
         <div style={overlay} onClick={() => setShowAuth(false)}>
@@ -124,6 +153,16 @@ const AuthModal = ({ accent: _a }) => {
                     <button disabled={loading} type="submit" style={{ ...btnPrimary(), width: '100%', padding: '14px', marginTop: '4px', opacity: loading ? 0.6 : 1 }}>
                         {loading ? 'Обробка...' : mode === 'login' ? 'Увійти' : mode === 'register' ? 'Зареєструватись' : isCode ? 'Підтвердити код' : mode === 'forgot' ? 'Відправити код' : 'Змінити пароль'}
                     </button>
+
+                    {isCode && (
+                        <div style={{ textAlign: 'center', marginTop: '14px', fontSize: '13px' }}>
+                            {resendTimer > 0 ? (
+                                <span style={{ color: C.textSub }}>Надіслати код ще раз через {fmtTimer(resendTimer)}</span>
+                            ) : (
+                                <span onClick={handleResend} style={{ color: C.accent, cursor: 'pointer', fontWeight: '700' }}>Відправити код ще раз</span>
+                            )}
+                        </div>
+                    )}
                 </form>
 
                 <div style={{ textAlign: 'center', marginTop: '20px', color: C.textSub, fontSize: '13px' }}>

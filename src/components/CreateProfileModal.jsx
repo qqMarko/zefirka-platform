@@ -62,7 +62,9 @@ const CreateProfileModal = () => {
     }, [step]); // step важливий, бо елемент з'являється тільки на 3 кроці
 
     useEffect(() => {
-        // Defer NSFW model load so modal opens instantly without lag
+        // Вантажимо важку NSFW-модель лише коли користувач дійшов до кроку з фото (крок 3),
+        // а не при відкритті модалки — це прибирає лаг відкриття
+        if (step < 3 || nsfwModel) return;
         const loadModel = async () => {
             try {
                 const nsfwjs = await import('nsfwjs');
@@ -76,10 +78,10 @@ const CreateProfileModal = () => {
             const id = requestIdleCallback(loadModel, { timeout: 2000 });
             return () => cancelIdleCallback(id);
         } else {
-            const timer = setTimeout(loadModel, 500);
+            const timer = setTimeout(loadModel, 300);
             return () => clearTimeout(timer);
         }
-    }, []);
+    }, [step, nsfwModel]);
 
     useEffect(() => {
         if (editingModel) {
