@@ -10,10 +10,30 @@ import { getIO } from '../sockets/socketManager.js';
 const router = express.Router();
 const otpStore = new Map();
 
-const getTransporter = () => nodemailer.createTransport({ 
-    service: 'gmail', 
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS } 
-});
+let _transporter = null;
+const getTransporter = () => {
+    if (_transporter) return _transporter;
+    _transporter = nodemailer.createTransport({ 
+        service: 'gmail', 
+        pool: true,
+        maxConnections: 1,
+        maxMessages: 100,
+        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS } 
+    });
+    return _transporter;
+};
+
+// Хелпер надсилання з логуванням результату
+const sendCodeMail = async (to, subject, html) => {
+    try {
+        const info = await getTransporter().sendMail({ from: process.env.EMAIL_USER, to, subject, html });
+        console.log(`✉️ Лист надіслано на ${to}: ${info.messageId} | ${info.response}`);
+        return true;
+    } catch (err) {
+        console.error(`❌ Помилка надсилання на ${to}:`, err.message);
+        return false;
+    }
+};
 
 const getJwtSecret = () => process.env.JWT_SECRET;
 
@@ -44,14 +64,18 @@ router.post('/register-init', async (req, res) => {
         const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
         otpStore.set(email, { otpCode, password, phone, role, expires: Date.now() + 10 * 60 * 1000 }); 
         
-        await getTransporter().sendMail({ 
-            from: process.env.EMAIL_USER, 
-            to: email, 
-            subject: 'Ваш код ZEFIRKA', 
-            html: `<h1 style="background:#111;color:#00ffff;padding:15px;text-align:center">${otpCode}</h1>` 
-        });
+        const sent = await sendCodeMail(
+            email,
+            `Код підтвердження ZEFIRKA: ${otpCode}`,
+            `<div style="font-family:Arial,sans-serif;max-width:400px;margin:0 auto">
+                <h1 style="background:#111;color:#00ffff;padding:15px;text-align:center;border-radius:12px;letter-spacing:4px">${otpCode}</h1>
+                <p style="color:#888;text-align:center;font-size:12px">Код дійсний 10 хвилин.</p>
+            </div>`
+        );
+        if (!sent) return res.status(500).json({ success: false, message: 'Не вдалося надіслати лист' });
         res.json({ success: true });
     } catch (error) { 
+        console.error('register-init error:', error.message);
         res.status(500).json({ success: false, message: 'Помилка пошти' }); 
     }
 });

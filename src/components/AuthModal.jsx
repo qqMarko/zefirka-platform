@@ -32,11 +32,11 @@ const AuthModal = ({ accent: _a }) => {
     const [newPw, setNewPw]     = useState('');
 
     const BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
+    const post = (path, body) => fetch(`${BASE}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
 
     const handleSubmit = async (e) => {
         e.preventDefault(); setLoading(true);
         try {
-            const post = (path, body) => fetch(`${BASE}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
 
             if (mode === 'login') {
                 const d = await post('/auth/login', { email, password });
