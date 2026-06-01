@@ -248,6 +248,47 @@
     .zef-lightbox-close {
         top: max(16px, calc(env(safe-area-inset-top) + 8px)) !important;
     }
+
+    /* ══════════════ VIP ПАКЕТИ ══════════════ */
+    .zef-vip-overlay {
+        padding: 0 !important;
+        align-items: flex-end !important;
+    }
+    .zef-vip-modal {
+        max-width: 100% !important;
+        width: 100% !important;
+        max-height: 92dvh !important;
+        border-radius: 24px 24px 0 0 !important;
+        padding: 24px 14px max(20px, env(safe-area-inset-bottom)) 14px !important;
+    }
+    /* Картки одна під одною */
+    .zef-vip-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+    }
+    /* Стискаємо картку помірно — комфортно, не сплюснуто */
+    .zef-vip-grid > div {
+        padding: 30px 22px !important;
+    }
+    /* Іконка пакету */
+    .zef-vip-grid > div > div[style*="width: 80px"] {
+        width: 72px !important;
+        height: 72px !important;
+        margin-bottom: 18px !important;
+    }
+    /* Назва пакету */
+    .zef-vip-grid h3 {
+        font-size: 22px !important;
+        margin-bottom: 12px !important;
+    }
+    /* Блок ціни */
+    .zef-vip-grid > div > div[style*="min-height"] {
+        margin-bottom: 24px !important;
+    }
+    /* Кнопки в картці */
+    .zef-vip-grid button {
+        padding: 14px !important;
+    }
 }
 
 /* ── ДУЖЕ МАЛІ ЕКРАНИ (≤360px) ────────────────────────── */
